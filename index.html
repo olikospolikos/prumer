@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1115">
+<title>Průměr</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Pr%C5%AFm%C4%9Br%22%2C%22short_name%22%3A%22Pr%C5%AFm%C4%9Br%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f1115%22%2C%22theme_color%22%3A%22%230f1115%22%2C%22icons%22%3A%5B%5D%7D">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1115;
+    --bg-elev: #181b22;
+    --bg-elev2: #20242e;
+    --line: #2a2f3a;
+    --ink: #f2f4f8;
+    --ink-dim: #99a0ae;
+    --ink-faint: #5c6373;
+    --accent: #e8b84b;
+    --accent-soft: rgba(232,184,75,0.12);
+    --good: #5ec77a;
+    --warn: #e0894a;
+    --bad: #e25c5c;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Hanken Grotesk', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  body {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 90px);
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 500px at 80% -10%, rgba(232,184,75,0.06), transparent 60%),
+      var(--bg);
+  }
+
+  /* ---------- header ---------- */
+  header {
+    padding: 28px 22px 18px;
+  }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 34px;
+    line-height: 1.05;
+    margin-top: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- overall average card ---------- */
+  .overall {
+    margin: 6px 16px 22px;
+    background: linear-gradient(160deg, var(--bg-elev2), var(--bg-elev));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .overall::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(300px 120px at 90% 0%, var(--accent-soft), transparent 70%);
+    pointer-events: none;
+  }
+  .overall .lbl {
+    font-size: 13px;
+    color: var(--ink-dim);
+    letter-spacing: 0.04em;
+  }
+  .overall .num {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .overall .sub {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 6px;
+  }
+
+  /* ---------- subject list ---------- */
+  .section-label {
+    padding: 4px 22px 12px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  .subjects { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .subject {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .subject.open { border-color: #38404f; }
+
+  .subject-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+  }
+  .pill {
+    min-width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    background: var(--bg-elev2);
+    border: 1px solid var(--line);
+  }
+  .subject-meta { flex: 1; min-width: 0; }
+  .subject-name {
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .subject-count { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
+  .chev {
+    color: var(--ink-faint);
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+  .subject.open .chev { transform: rotate(90deg); }
+
+  /* ---------- grade rows ---------- */
+  .grades { padding: 0 18px 6px; }
+  .grade-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-top: 1px solid var(--line);
+  }
+  .grade-mark {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 15px;
+    flex-shrink: 0;
+  }
+  .grade-info { flex: 1; min-width: 0; }
+  .grade-desc { font-size: 14px; font-weight: 500; }
+  .grade-sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; }
+  .grade-del {
+    color: var(--bad);
+    background: rgba(226,92,92,0.1);
+    border: 1px solid rgba(226,92,92,0.25);
+    border-radius: 9px;
+    padding: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: grid; place-items: center;
+    width: 38px; height: 38px;
+  }
+  .grade-del:active { background: rgba(226,92,92,0.25); }
+
+  .add-grade-btn {
+    width: 100%;
+    background: none;
+    border: 1px dashed var(--line);
+    color: var(--ink-dim);
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    margin: 8px 0 14px;
+    cursor: pointer;
+  }
+  .add-grade-btn:active { background: var(--bg-elev2); }
+
+  /* hypothetical block */
+  .hypo {
+    margin: 0 0 14px;
+    background: var(--accent-soft);
+    border: 1px solid rgba(232,184,75,0.3);
+    border-radius: 12px;
+    padding: 13px 15px;
+  }
+  .hypo-title {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin-bottom: 10px;
+  }
+  .hypo-row { display: flex; gap: 8px; align-items: center; }
+  .hypo-row select, .hypo-row input {
+    flex: 1; min-width: 0;
+  }
+  .hypo-result {
+    margin-top: 11px; font-size: 13.5px; color: var(--ink-dim);
+  }
+  .hypo-result b {
+    font-family: 'Fraunces', serif; color: var(--ink); font-size: 18px;
+    font-weight: 600;
+  }
+  .delta-good { color: var(--good); font-weight: 700; }
+  .delta-bad { color: var(--bad); font-weight: 700; }
+
+  /* ---------- inputs ---------- */
+  input, select {
+    font-family: inherit;
+    font-size: 15px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 11px 12px;
+    width: 100%;
+    appearance: none;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  label.fld { display: block; }
+  label.fld span {
+    display: block; font-size: 12px; color: var(--ink-dim);
+    margin-bottom: 5px; letter-spacing: 0.02em;
+  }
+
+  /* ---------- add subject ---------- */
+  .add-subject {
+    margin: 14px 16px 0;
+  }
+  .add-subject-btn {
+    width: 100%;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    border-radius: var(--radius);
+    padding: 15px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .add-subject-btn:active { background: var(--bg-elev2); }
+
+  /* ---------- modal / sheet ---------- */
+  .sheet-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 40;
+  }
+  .sheet-backdrop.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    max-width: 560px; margin: 0 auto;
+    background: var(--bg-elev);
+    border-top-left-radius: 22px; border-top-right-radius: 22px;
+    border-top: 1px solid var(--line);
+    padding: 8px 20px calc(24px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform .3s cubic-bezier(.32,.72,0,1);
+    z-index: 50;
+  }
+  .sheet.show { transform: translateY(0); }
+  .sheet-grab {
+    width: 38px; height: 4px; border-radius: 2px;
+    background: var(--line); margin: 8px auto 18px;
+  }
+  .sheet h3 {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 22px; margin-bottom: 18px;
+  }
+  .sheet .fields { display: flex; flex-direction: column; gap: 13px; }
+  .row2 { display: flex; gap: 10px; }
+  .row2 > * { flex: 1; }
+  .sheet-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn {
+    flex: 1; padding: 14px; border-radius: 12px;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    border: none; cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: #1a1407; }
+  .btn-ghost { background: var(--bg-elev2); color: var(--ink-dim); }
+  .btn-danger { background: var(--bad); color: #fff; }
+
+  /* custom dialog */
+  .dlg-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 28px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s; z-index: 60;
+  }
+  .dlg-backdrop.show { opacity: 1; pointer-events: auto; }
+  .dlg {
+    width: 100%; max-width: 360px;
+    background: var(--bg-elev); border: 1px solid var(--line);
+    border-radius: 18px; padding: 22px 22px 18px;
+    transform: scale(.94); transition: transform .2s;
+  }
+  .dlg-backdrop.show .dlg { transform: scale(1); }
+  .dlg h4 { font-family:'Fraunces',serif; font-size:20px; font-weight:600; }
+  .dlg p { font-size:14px; color:var(--ink-dim); margin-top:8px; line-height:1.45; }
+  .dlg input { margin-top:14px; }
+  .dlg-actions { display:flex; gap:10px; margin-top:20px; }
+
+  .mark-picker { display: flex; gap: 8px; }
+  .mark-opt {
+    flex: 1; aspect-ratio: 1; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--bg);
+    color: var(--ink); font-family: 'Fraunces', serif;
+    font-size: 22px; font-weight: 600; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .mark-opt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+  .weight-picker { display: flex; gap: 7px; flex-wrap: wrap; }
+  .weight-opt {
+    padding: 9px 13px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--bg);
+    color: var(--ink-dim); font-size: 13px; font-weight: 600;
+    cursor: pointer;
+  }
+  .weight-opt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+  .empty {
+    text-align: center; color: var(--ink-faint);
+    font-size: 13.5px; padding: 30px 20px;
+    line-height: 1.5;
+  }
+
+  .subject-actions {
+    display: flex; gap: 8px; margin: 0 0 14px;
+  }
+  .subj-action {
+    flex: 1; padding: 10px; border-radius: 10px;
+    background: var(--bg-elev2); border: 1px solid var(--line);
+    color: var(--ink-dim); font-family: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .subj-action:active { background: var(--bg); }
+  .subj-action.danger { color: var(--bad); }
+  .subj-action.danger:active { background: rgba(226,92,92,0.1); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Studijní průměr</div>
+  <h1>Moje známky</h1>
+</header>
+
+<div class="overall">
+  <div>
+    <div class="lbl">Celkový vážený průměr</div>
+    <div class="sub" id="overallSub">žádné známky</div>
+  </div>
+  <div class="num" id="overallNum">—</div>
+</div>
+
+<div class="section-label">Předměty</div>
+<div class="subjects" id="subjects"></div>
+
+<div class="add-subject">
+  <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
+</div>
+
+<!-- grade sheet -->
+<div class="sheet-backdrop" id="gradeBackdrop" onclick="closeGradeSheet()"></div>
+<div class="sheet" id="gradeSheet">
+  <div class="sheet-grab"></div>
+  <h3 id="gradeSheetTitle">Nová známka</h3>
+  <div class="fields">
+    <div>
+      <label class="fld"><span>Známka</span></label>
+      <div class="mark-picker" id="markPicker"></div>
+    </div>
+    <div>
+      <label class="fld"><span>Váha</span></label>
+      <div class="weight-picker" id="weightPicker"></div>
+    </div>
+    <label class="fld"><span>Popis (nepovinné)</span>
+      <input type="text" id="gradeDesc" placeholder="např. čtvrtletní práce, aktivita…">
+    </label>
+    <label class="fld"><span>Datum</span>
+      <input type="date" id="gradeDate">
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeGradeSheet()">Zrušit</button>
+    <button class="btn btn-primary" onclick="saveGrade()">Uložit</button>
+  </div>
+</div>
+
+<!-- subject sheet -->
+<div class="sheet-backdrop" id="subjectBackdrop" onclick="closeSubjectSheet()"></div>
+<div class="sheet" id="subjectSheet">
+  <div class="sheet-grab"></div>
+  <h3>Nový předmět</h3>
+  <div class="fields">
+    <label class="fld"><span>Název předmětu</span>
+      <input type="text" id="subjectName" placeholder="např. Dějepis">
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeSubjectSheet()">Zrušit</button>
+    <button class="btn btn-primary" onclick="saveSubject()">Přidat</button>
+  </div>
+</div>
+
+<!-- custom confirm/prompt dialog -->
+<div class="dlg-backdrop" id="dlgBackdrop">
+  <div class="dlg">
+    <h4 id="dlgTitle"></h4>
+    <p id="dlgMsg"></p>
+    <input type="text" id="dlgInput" style="display:none">
+    <div class="dlg-actions">
+      <button class="btn btn-ghost" id="dlgCancel">Zrušit</button>
+      <button class="btn btn-primary" id="dlgOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'prumer_data_v1';
+const WEIGHTS = [
+  { v: 1,   l: 'Velká (1)' },
+  { v: 0.8, l: '0,8' },
+  { v: 0.6, l: '0,6' },
+  { v: 0.4, l: '0,4' },
+  { v: 0.2, l: 'Malá (0,2)' },
+];
+const DEFAULT_SUBJECTS = ['Matematika','Český jazyk','Anglický jazyk','Španělština','Dějepis','Zeměpis','Fyzika','Chemie','Biologie','ZSV','TV','EVV'];
+
+let data = load();
+let editing = { subjectId: null, mark: null, weight: 1 };
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  // first run: seed default subjects
+  const seed = { subjects: DEFAULT_SUBJECTS.map((n,i) => ({ id: 's'+i+'_'+Date.now(), name: n, grades: [], open: false, hypoMark: null, hypoWeight: 1 })) };
+  return seed;
+}
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+
+function weightedAvg(grades, extra) {
+  let all = grades.slice();
+  if (extra) all = all.concat([extra]);
+  if (!all.length) return null;
+  let sw = 0, swm = 0;
+  all.forEach(g => { sw += g.weight; swm += g.weight * g.mark; });
+  if (sw === 0) return null;
+  return swm / sw;
+}
+
+function fmt(n) { return n == null ? '—' : n.toFixed(2).replace('.', ','); }
+
+function markColor(m) {
+  if (m <= 1.5) return 'var(--good)';
+  if (m <= 2.5) return '#a9c75e';
+  if (m <= 3.5) return 'var(--accent)';
+  if (m <= 4.5) return 'var(--warn)';
+  return 'var(--bad)';
+}
+
+function render() {
+  // overall = average of subject averages that have grades
+  const subjAvgs = data.subjects.map(s => weightedAvg(s.grades)).filter(a => a != null);
+  const overall = subjAvgs.length ? subjAvgs.reduce((a,b)=>a+b,0)/subjAvgs.length : null;
+  document.getElementById('overallNum').textContent = fmt(overall);
+  document.getElementById('overallNum').style.color = overall == null ? 'var(--ink)' : markColor(overall);
+  const gc = data.subjects.reduce((a,s)=>a+s.grades.length,0);
+  document.getElementById('overallSub').textContent =
+    gc ? gc + ' známek · ' + subjAvgs.length + ' předmětů' : 'žádné známky';
+
+  const wrap = document.getElementById('subjects');
+  wrap.innerHTML = '';
+  data.subjects.forEach(s => wrap.appendChild(renderSubject(s)));
+}
+
+function renderSubject(s) {
+  const avg = weightedAvg(s.grades);
+  const el = document.createElement('div');
+  el.className = 'subject' + (s.open ? ' open' : '');
+
+  const head = document.createElement('div');
+  head.className = 'subject-head';
+  head.onclick = () => { s.open = !s.open; save(); render(); };
+  head.innerHTML = `
+    <div class="pill" style="color:${avg==null?'var(--ink-faint)':markColor(avg)}">${fmt(avg)}</div>
+    <div class="subject-meta">
+      <div class="subject-name">${esc(s.name)}</div>
+      <div class="subject-count">${s.grades.length ? s.grades.length+' známek' : 'zatím bez známek'}</div>
+    </div>
+    <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>
+  `;
+  el.appendChild(head);
+
+  if (s.open) {
+    const body = document.createElement('div');
+    body.className = 'grades';
+
+    s.grades.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).forEach(g => {
+      const row = document.createElement('div');
+      row.className = 'grade-row';
+      row.innerHTML = `
+        <div class="grade-mark" style="background:${markColor(g.mark)}22;color:${markColor(g.mark)}">${g.mark}</div>
+        <div class="grade-info">
+          <div class="grade-desc">${g.desc ? esc(g.desc) : 'Známka'}</div>
+          <div class="grade-sub">váha ${String(g.weight).replace('.',',')}${g.date ? ' · '+fmtDate(g.date) : ''}</div>
+        </div>
+        <button class="grade-del" aria-label="Smazat známku">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      `;
+      row.querySelector('.grade-del').onclick = () => { delGrade(s.id, g.id); };
+      body.appendChild(row);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-grade-btn';
+    addBtn.textContent = '+ Přidat známku';
+    addBtn.onclick = () => openGradeSheet(s.id);
+    body.appendChild(addBtn);
+
+    const actions = document.createElement('div');
+    actions.className = 'subject-actions';
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'subj-action';
+    renameBtn.textContent = 'Přejmenovat';
+    renameBtn.onclick = () => renameSubject(s.id);
+    const delBtn = document.createElement('button');
+    delBtn.className = 'subj-action danger';
+    delBtn.textContent = 'Smazat předmět';
+    delBtn.onclick = () => delSubject(s.id);
+    actions.appendChild(renameBtn);
+    actions.appendChild(delBtn);
+    body.appendChild(actions);
+
+    el.appendChild(body);
+  }
+  return el;
+}
+
+function esc(t){ return (t||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtDate(d){ const p=d.split('-'); return p.length===3 ? p[2]+'.'+p[1]+'.' : d; }
+
+/* ---- grade sheet ---- */
+function openGradeSheet(subjectId) {
+  editing = { subjectId, mark: 1, weight: 1 };
+  document.getElementById('gradeDesc').value = '';
+  document.getElementById('gradeDate').value = new Date().toISOString().slice(0,10);
+  buildMarkPicker();
+  buildWeightPicker();
+  showSheet('grade');
+}
+function buildMarkPicker(){
+  const p = document.getElementById('markPicker');
+  p.innerHTML='';
+  [1,2,3,4,5].forEach(m=>{
+    const b=document.createElement('button');
+    b.className='mark-opt'+(editing.mark===m?' sel':'');
+    b.textContent=m;
+    b.onclick=()=>{ editing.mark=m; buildMarkPicker(); };
+    p.appendChild(b);
+  });
+}
+function buildWeightPicker(){
+  const p=document.getElementById('weightPicker');
+  p.innerHTML='';
+  WEIGHTS.forEach(w=>{
+    const b=document.createElement('button');
+    b.className='weight-opt'+(editing.weight===w.v?' sel':'');
+    b.textContent=w.l;
+    b.onclick=()=>{ editing.weight=w.v; buildWeightPicker(); };
+    p.appendChild(b);
+  });
+}
+function saveGrade(){
+  const s=data.subjects.find(x=>x.id===editing.subjectId);
+  if(!s) return;
+  s.grades.push({
+    id:'g'+Date.now(),
+    mark:editing.mark,
+    weight:editing.weight,
+    desc:document.getElementById('gradeDesc').value.trim(),
+    date:document.getElementById('gradeDate').value
+  });
+  s.open=true;
+  save(); render(); closeGradeSheet();
+}
+function delGrade(subjectId,gradeId){
+  const s=data.subjects.find(x=>x.id===subjectId);
+  if(!s) return;
+  confirmDialog('Smazat známku?', 'Tuto akci nelze vrátit.', 'Smazat', () => {
+    s.grades=s.grades.filter(g=>g.id!==gradeId);
+    save(); render();
+  });
+}
+
+function renameSubject(subjectId){
+  const s=data.subjects.find(x=>x.id===subjectId);
+  if(!s) return;
+  promptDialog('Přejmenovat předmět', s.name, (t) => {
+    s.name=t; save(); render();
+  });
+}
+
+function delSubject(subjectId){
+  const s=data.subjects.find(x=>x.id===subjectId);
+  if(!s) return;
+  const msg = s.grades.length
+    ? 'Smaže se předmět včetně '+s.grades.length+' známek.'
+    : 'Předmět zatím nemá žádné známky.';
+  confirmDialog('Smazat „'+s.name+'"?', msg, 'Smazat', () => {
+    data.subjects=data.subjects.filter(x=>x.id!==subjectId);
+    save(); render();
+  });
+}
+
+/* ---- subject sheet ---- */
+function openSubjectSheet(){ document.getElementById('subjectName').value=''; showSheet('subject'); }
+function saveSubject(){
+  const n=document.getElementById('subjectName').value.trim();
+  if(!n) return;
+  data.subjects.push({ id:'s'+Date.now(), name:n, grades:[], open:true, hypoMark:1, hypoWeight:1 });
+  save(); render(); closeSubjectSheet();
+}
+
+/* ---- sheet helpers ---- */
+function showSheet(which){
+  const b=document.getElementById(which+'Backdrop');
+  const s=document.getElementById(which+'Sheet');
+  b.classList.add('show'); s.classList.add('show');
+}
+function closeGradeSheet(){ hideSheet('grade'); }
+function closeSubjectSheet(){ hideSheet('subject'); }
+function hideSheet(which){
+  document.getElementById(which+'Backdrop').classList.remove('show');
+  document.getElementById(which+'Sheet').classList.remove('show');
+}
+
+/* ---- custom dialog (confirm/prompt) — funguje i v náhledu ---- */
+function confirmDialog(title, msg, okLabel, onOk){
+  showDialog(title, msg, false, okLabel, onOk);
+}
+function promptDialog(title, value, onOk){
+  showDialog(title, '', true, 'Uložit', onOk, value);
+}
+function showDialog(title, msg, isInput, okLabel, onOk, value){
+  const bd=document.getElementById('dlgBackdrop');
+  document.getElementById('dlgTitle').textContent=title;
+  const m=document.getElementById('dlgMsg');
+  m.textContent=msg; m.style.display=msg?'block':'none';
+  const inp=document.getElementById('dlgInput');
+  inp.style.display=isInput?'block':'none';
+  if(isInput){ inp.value=value||''; }
+  const ok=document.getElementById('dlgOk');
+  const cancel=document.getElementById('dlgCancel');
+  ok.textContent=okLabel||'OK';
+  ok.className='btn '+(isInput?'btn-primary':'btn-danger');
+  bd.classList.add('show');
+  if(isInput) setTimeout(()=>{ inp.focus(); inp.select(); },50);
+  const close=()=>{ bd.classList.remove('show'); ok.onclick=null; cancel.onclick=null; bd.onclick=null; };
+  ok.onclick=()=>{
+    if(isInput){ const t=inp.value.trim(); if(!t){ return; } close(); onOk(t); }
+    else { close(); onOk(); }
+  };
+  cancel.onclick=close;
+  bd.onclick=(e)=>{ if(e.target===bd) close(); };
+}
+
+render();
+</script>
+</body>
+</html>
