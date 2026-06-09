@@ -320,27 +320,6 @@
     cursor: pointer;
   }
   .add-subject-btn:active { background: var(--bg-elev2); }
-  .ocr-btn { margin-top: 10px; font-size: 13px; color: var(--ink-dim); }
-  .ocr-note { font-size: 13px; color: var(--ink-dim); line-height: 1.5; margin-bottom: 16px; }
-  .ocr-status {
-    text-align: center; font-size: 14px; color: var(--ink-dim);
-    padding: 16px; margin-top: 14px;
-    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
-  }
-  .ocr-target { margin: 16px 0 12px; }
-  .ocr-list { display: flex; flex-direction: column; gap: 8px; max-height: 40vh; overflow-y: auto; }
-  .ocr-item {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--bg); border: 1px solid var(--line);
-    border-radius: 10px; padding: 10px 12px;
-  }
-  .ocr-item input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--accent); }
-  .ocr-item .oc-mark {
-    width: 56px; flex-shrink: 0;
-  }
-  .ocr-item .oc-mark select { padding: 8px; font-size: 15px; }
-  .ocr-item .oc-w { flex: 1; }
-  .ocr-item .oc-w select { padding: 8px; font-size: 13px; }
 
   /* ---------- modal / sheet ---------- */
   .sheet-backdrop {
@@ -384,6 +363,20 @@
   .btn-primary { background: var(--accent); color: #1a1407; }
   .btn-ghost { background: var(--bg-elev2); color: var(--ink-dim); }
   .btn-danger { background: var(--bad); color: #fff; }
+
+  /* bulk grade entry */
+  .bulk-note { font-size: 13px; color: var(--ink-dim); line-height:1.5; margin-bottom: 14px; }
+  .bulk-head {
+    display: flex; gap: 10px; padding: 0 2px 6px;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600;
+  }
+  .bulk-head span:first-child { width: 90px; }
+  .bulk-head span:last-child { flex: 1; }
+  .bulk-rows { display: flex; flex-direction: column; gap: 8px; max-height: 42vh; overflow-y: auto; }
+  .bulk-row { display: flex; gap: 10px; }
+  .bulk-row .bulk-mark { width: 90px; flex-shrink: 0; }
+  .bulk-row .bulk-weight { flex: 1; }
 
   /* custom dialog */
   .dlg-backdrop {
@@ -495,30 +488,6 @@
 
 <div class="add-subject">
   <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
-  <button class="add-subject-btn ocr-btn" onclick="openOcr()">📷 Načíst známky ze snímku (experiment)</button>
-</div>
-
-<!-- OCR sheet -->
-<div class="sheet-backdrop" id="ocrBackdrop" onclick="closeOcr()"></div>
-<div class="sheet" id="ocrSheet">
-  <div class="sheet-grab"></div>
-  <h3>Načíst ze snímku</h3>
-  <p class="ocr-note">Vyber screenshot ze Škola OnLine. Appka se z něj pokusí přečíst známky. Je to experiment — co přečte špatně, opravíš nebo smažeš ručně.</p>
-  <input type="file" id="ocrFile" accept="image/*" style="display:none">
-  <button class="btn btn-primary" id="ocrPick" style="width:100%">Vybrat obrázek</button>
-  <div id="ocrStatus" class="ocr-status" style="display:none"></div>
-  <div id="ocrReview" style="display:none">
-    <div class="ocr-target">
-      <label class="fld"><span>Zařadit do předmětu</span>
-        <select id="ocrSubject"></select>
-      </label>
-    </div>
-    <div id="ocrList" class="ocr-list"></div>
-    <div class="sheet-actions">
-      <button class="btn btn-ghost" onclick="closeOcr()">Zrušit</button>
-      <button class="btn btn-primary" id="ocrImport">Přidat vybrané</button>
-    </div>
-  </div>
 </div>
 
 <!-- grade sheet -->
@@ -564,6 +533,21 @@
   </div>
 </div>
 
+<!-- bulk grade sheet -->
+<div class="sheet-backdrop" id="bulkBackdrop" onclick="closeBulkSheet()"></div>
+<div class="sheet" id="bulkSheet">
+  <div class="sheet-grab"></div>
+  <h3 id="bulkTitle">Přidat víc známek</h3>
+  <p class="bulk-note">Naťukej známky a u každé vyber váhu. Prázdné řádky se ignorují.</p>
+  <div class="bulk-head"><span>Známka</span><span>Váha</span></div>
+  <div id="bulkRows" class="bulk-rows"></div>
+  <button class="add-grade-btn" id="bulkAddRow" style="margin:10px 0 0">+ Další řádek</button>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeBulkSheet()">Zrušit</button>
+    <button class="btn btn-primary" id="bulkSave">Uložit známky</button>
+  </div>
+</div>
+
 <!-- custom confirm/prompt dialog -->
 <div class="dlg-backdrop" id="dlgBackdrop">
   <div class="dlg">
@@ -577,7 +561,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 const STORE_KEY = 'prumer_data_v1';
 const WEIGHTS = [
@@ -682,6 +665,12 @@ function renderSubject(s) {
     addBtn.textContent = '+ Přidat známku';
     addBtn.onclick = () => openGradeSheet(s.id);
     body.appendChild(addBtn);
+
+    const bulkBtn = document.createElement('button');
+    bulkBtn.className = 'add-grade-btn';
+    bulkBtn.textContent = '+ Přidat víc známek najednou';
+    bulkBtn.onclick = () => openBulkSheet(s.id);
+    body.appendChild(bulkBtn);
 
     const actions = document.createElement('div');
     actions.className = 'subject-actions';
@@ -884,96 +873,55 @@ function showDialog(title, msg, isInput, okLabel, onOk, value){
   };
 })();
 
-/* ---- OCR import (experiment) ---- */
-let ocrFound = [];
+/* ---- hromadné zadání známek ---- */
+let bulkSubjectId = null;
+const BULK_START_ROWS = 5;
 
-function openOcr(){
-  document.getElementById('ocrStatus').style.display='none';
-  document.getElementById('ocrReview').style.display='none';
-  const sel=document.getElementById('ocrSubject');
-  sel.innerHTML=data.subjects.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
-  showSheet('ocr');
+function openBulkSheet(subjectId){
+  bulkSubjectId = subjectId;
+  const s = data.subjects.find(x=>x.id===subjectId);
+  document.getElementById('bulkTitle').textContent = 'Přidat víc známek – ' + (s ? s.name : '');
+  const rows = document.getElementById('bulkRows');
+  rows.innerHTML = '';
+  for(let i=0;i<BULK_START_ROWS;i++) rows.appendChild(makeBulkRow());
+  showSheet('bulk');
 }
-function closeOcr(){ hideSheet('ocr'); }
+function closeBulkSheet(){ hideSheet('bulk'); }
 
-document.getElementById('ocrPick').onclick=()=>document.getElementById('ocrFile').click();
-document.getElementById('ocrFile').onchange=async function(){
-  const file=this.files[0];
-  if(!file) return;
-  const status=document.getElementById('ocrStatus');
-  status.style.display='block';
-  document.getElementById('ocrReview').style.display='none';
-  status.textContent='Načítám knihovnu a čtu obrázek… (může to chvíli trvat)';
-  if(typeof Tesseract==='undefined'){
-    status.textContent='Nepodařilo se načíst OCR knihovnu (potřebuje internet). Zkus to na telefonu/webu, ne v náhledu.';
-    return;
-  }
-  try{
-    const { data:{ text } } = await Tesseract.recognize(file, 'ces', {
-      logger: m => { if(m.status==='recognizing text'){ status.textContent='Čtu text… '+Math.round(m.progress*100)+' %'; } }
-    });
-    ocrFound = parseGrades(text);
-    if(!ocrFound.length){
-      status.textContent='Nepodařilo se přečíst žádné známky. Zkus ostřejší snímek, nebo zadej ručně.';
-      return;
-    }
-    status.style.display='none';
-    renderOcrReview();
-  }catch(e){
-    status.textContent='Chyba při čtení: '+e.message;
-  }
+function makeBulkRow(){
+  const row = document.createElement('div');
+  row.className = 'bulk-row';
+  row.innerHTML = `
+    <select class="bulk-mark">
+      <option value="">–</option>
+      ${[1,2,3,4,5].map(m=>`<option value="${m}">${m}</option>`).join('')}
+    </select>
+    <select class="bulk-weight">
+      ${WEIGHTS.map(w=>`<option value="${w.v}" ${w.v===1?'selected':''}>${w.l}</option>`).join('')}
+    </select>
+  `;
+  return row;
+}
+
+document.getElementById('bulkAddRow').onclick = () => {
+  document.getElementById('bulkRows').appendChild(makeBulkRow());
 };
 
-function parseGrades(text){
-  const out=[];
-  const tokens=text.split(/\s+/);
-  tokens.forEach(t=>{
-    const m=t.replace(/[^0-9]/g,'');
-    if(m.length===1 && m>='1' && m<='5'){
-      out.push({ mark:+m, weight:1, use:true });
+document.getElementById('bulkSave').onclick = () => {
+  const s = data.subjects.find(x=>x.id===bulkSubjectId);
+  if(!s) return;
+  const today = new Date().toISOString().slice(0,10);
+  const rows = document.querySelectorAll('#bulkRows .bulk-row');
+  let n = 0;
+  rows.forEach(r => {
+    const mark = r.querySelector('.bulk-mark').value;
+    const weight = +r.querySelector('.bulk-weight').value;
+    if(mark){
+      s.grades.push({ id:'g'+Date.now()+'_'+(n++), mark:+mark, weight, desc:'', date:today });
     }
   });
-  return out;
-}
-
-function renderOcrReview(){
-  const review=document.getElementById('ocrReview');
-  const list=document.getElementById('ocrList');
-  list.innerHTML='';
-  ocrFound.forEach((g,i)=>{
-    const row=document.createElement('div');
-    row.className='ocr-item';
-    row.innerHTML=`
-      <input type="checkbox" ${g.use?'checked':''} data-i="${i}" class="oc-use">
-      <div class="oc-mark">
-        <select class="oc-mark-sel" data-i="${i}">
-          ${[1,2,3,4,5].map(m=>`<option value="${m}" ${m===g.mark?'selected':''}>${m}</option>`).join('')}
-        </select>
-      </div>
-      <div class="oc-w">
-        <select class="oc-w-sel" data-i="${i}">
-          ${WEIGHTS.map(w=>`<option value="${w.v}" ${w.v===g.weight?'selected':''}>${w.l}</option>`).join('')}
-        </select>
-      </div>
-    `;
-    list.appendChild(row);
-  });
-  list.querySelectorAll('.oc-use').forEach(c=>c.onchange=e=>{ ocrFound[+e.target.dataset.i].use=e.target.checked; });
-  list.querySelectorAll('.oc-mark-sel').forEach(c=>c.onchange=e=>{ ocrFound[+e.target.dataset.i].mark=+e.target.value; });
-  list.querySelectorAll('.oc-w-sel').forEach(c=>c.onchange=e=>{ ocrFound[+e.target.dataset.i].weight=+e.target.value; });
-  review.style.display='block';
-}
-
-document.getElementById('ocrImport').onclick=()=>{
-  const sid=document.getElementById('ocrSubject').value;
-  const s=data.subjects.find(x=>x.id===sid);
-  if(!s) return;
-  const today=new Date().toISOString().slice(0,10);
-  let n=0;
-  ocrFound.filter(g=>g.use).forEach(g=>{
-    s.grades.push({ id:'g'+Date.now()+'_'+(n++), mark:g.mark, weight:g.weight, desc:'', date:today });
-  });
-  s.open=true; save(); render(); closeOcr();
+  if(n>0){ s.open = true; save(); render(); }
+  closeBulkSheet();
 };
 
 render();
