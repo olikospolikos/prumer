@@ -452,10 +452,104 @@
   .subj-action:active { background: var(--bg); }
   .subj-action.danger { color: var(--bad); }
   .subj-action.danger:active { background: rgba(226,92,92,0.1); }
+
+  /* ---------- backup ---------- */
+  .backup { display: flex; gap: 8px; margin: 0 16px; }
+  .backup button { flex: 1; }
+  .backup-note {
+    font-size: 12px; color: var(--ink-faint); line-height: 1.5;
+    margin: 10px 22px 0;
+  }
+
+  /* ---------- tab bar ---------- */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    max-width: 560px; margin: 0 auto;
+    display: flex; gap: 4px;
+    background: rgba(24,27,34,0.92);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  }
+  .tab {
+    flex: 1; border: none; background: none; cursor: pointer;
+    font-family: inherit; font-size: 11.5px; font-weight: 700;
+    color: var(--ink-faint);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 6px; border-radius: 12px;
+  }
+  .tab svg { width: 22px; height: 22px; }
+  .tab.sel { color: var(--accent); }
+
+  /* ---------- materials ---------- */
+  .mat-notice {
+    margin: 6px 16px; padding: 18px;
+    background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius);
+  }
+  .mat-notice-t { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .mat-notice-m { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+
+  .mat-gate { margin: 6px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .mat-lead { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+  .code-boxes { display: flex; gap: 10px; }
+  .code-box {
+    flex: 1; aspect-ratio: 1; text-align: center; padding: 0;
+    font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600;
+  }
+  .mat-or {
+    text-align: center; font-size: 12px; color: var(--ink-faint);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .mat-classbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin: 6px 16px 18px; padding: 14px 18px;
+    background: linear-gradient(160deg, var(--bg-elev2), var(--bg-elev));
+    border: 1px solid var(--line); border-radius: var(--radius);
+  }
+  .mat-code-lbl {
+    font-size: 11px; color: var(--ink-faint);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .mat-code-val {
+    font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; letter-spacing: 0.1em;
+  }
+
+  .mat-subjects { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; }
+  .mat-subj {
+    padding: 16px 14px; border-radius: 14px; cursor: pointer; text-align: left;
+    background: var(--bg-elev); border: 1px solid var(--line);
+    color: var(--ink); font-family: inherit; font-size: 14.5px; font-weight: 600;
+  }
+  .mat-subj:active { background: var(--bg-elev2); }
+
+  .mat-back {
+    margin: 0 16px 14px; background: none; border: none; cursor: pointer;
+    color: var(--ink-dim); font-family: inherit; font-size: 14px; font-weight: 600;
+  }
+  .mat-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  .mat-file {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .mat-file-ic { font-size: 22px; flex-shrink: 0; }
+  .mat-file-meta { flex: 1; min-width: 0; }
+  .mat-file-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mat-file-sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+  .mat-dl {
+    width: 38px; height: 38px; flex-shrink: 0; cursor: pointer;
+    border-radius: 9px; border: 1px solid rgba(232,184,75,0.3);
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 18px; font-weight: 700; display: grid; place-items: center;
+  }
+  .mat-del { width: 38px; height: 38px; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
 <body>
 
+<div id="pageGrades">
 <header>
   <div class="eyebrow">Studijní průměr</div>
   <h1>Moje známky</h1>
@@ -507,6 +601,24 @@
 
 <div class="add-subject">
   <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
+</div>
+
+<div class="section-label" style="margin-top:28px">Záloha dat</div>
+<div class="backup">
+  <button class="subj-action" onclick="exportData()">Zálohovat</button>
+  <button class="subj-action" onclick="document.getElementById('importFile').click()">Obnovit ze zálohy</button>
+</div>
+<input type="file" id="importFile" accept="application/json,.json" style="display:none">
+<p class="backup-note">Záloha je jeden soubor se všemi známkami. Ulož si ho do Souborů nebo pošli sám sobě. Obnova přepíše současná data.</p>
+</div><!-- /pageGrades -->
+
+<div id="pageMaterials" style="display:none">
+  <header>
+    <div class="eyebrow">Sdílení ve třídě</div>
+    <h1 id="matH1">Materiály</h1>
+  </header>
+  <div id="matBody"></div>
+  <input type="file" id="matFile" style="display:none">
 </div>
 
 <!-- grade sheet -->
@@ -580,6 +692,17 @@
   </div>
 </div>
 
+<nav class="tabbar">
+  <button class="tab sel" id="tabGrades" onclick="setPage('grades')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Známky
+  </button>
+  <button class="tab" id="tabMaterials" onclick="setPage('materials')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    Materiály
+  </button>
+</nav>
+
 <script>
 const STORE_KEY = 'prumer_data_v1';
 const WEIGHTS = [
@@ -591,9 +714,24 @@ const WEIGHTS = [
 ];
 const DEFAULT_SUBJECTS = ['Matematika','Český jazyk','Anglický jazyk','Španělština','Dějepis','Zeměpis','Fyzika','Chemie','Biologie','ZSV','TV','EVV'];
 
+/* ===== Supabase (strana Materiály) — vyplň po nastavení, návod níže ===== */
+const SB_URL    = 'https://dnnccafulifvwpjkpjoj.supabase.co';
+const SB_KEY    = 'sb_publishable_hyfVk9DDQgArAQz-MWly8g_l0kqmAFD';
+const SB_BUCKET = 'materialy';
+/* ======================================================================= */
+
 let data = load();
 let editing = { subjectId: null, mark: null, weight: 1 };
 
+function migrate(d) {
+  d.sem = d.sem === 2 ? 2 : 1;
+  if (!Array.isArray(d.subjects)) d.subjects = [];
+  d.subjects.forEach(s => {
+    if (!Array.isArray(s.grades)) s.grades = [];
+    s.grades.forEach(g => { if (g.sem !== 1 && g.sem !== 2) g.sem = 1; });
+  });
+  return d;
+}
 function load() {
   let d = null;
   try {
@@ -603,10 +741,7 @@ function load() {
   if (!d) {
     d = { subjects: DEFAULT_SUBJECTS.map((n,i) => ({ id: 's'+i+'_'+Date.now(), name: n, grades: [], open: false })) };
   }
-  // migrace: pololetí (starší data bez pololetí spadnou do 1.)
-  d.sem = d.sem === 2 ? 2 : 1;
-  d.subjects.forEach(s => (s.grades||[]).forEach(g => { if(g.sem!==1 && g.sem!==2) g.sem = 1; }));
-  return d;
+  return migrate(d);
 }
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
 
@@ -840,7 +975,11 @@ function confirmDialog(title, msg, okLabel, onOk){
 function promptDialog(title, value, onOk){
   showDialog(title, '', true, 'Uložit', onOk, value);
 }
-function showDialog(title, msg, isInput, okLabel, onOk, value){
+function alertDialog(title, msg){
+  showDialog(title, msg, false, 'OK', ()=>{}, null, { primary:true, hideCancel:true });
+}
+function showDialog(title, msg, isInput, okLabel, onOk, value, opts){
+  opts = opts || {};
   const bd=document.getElementById('dlgBackdrop');
   document.getElementById('dlgTitle').textContent=title;
   const m=document.getElementById('dlgMsg');
@@ -851,10 +990,11 @@ function showDialog(title, msg, isInput, okLabel, onOk, value){
   const ok=document.getElementById('dlgOk');
   const cancel=document.getElementById('dlgCancel');
   ok.textContent=okLabel||'OK';
-  ok.className='btn '+(isInput?'btn-primary':'btn-danger');
+  ok.className='btn '+((opts.primary||isInput)?'btn-primary':'btn-danger');
+  cancel.style.display=opts.hideCancel?'none':'';
   bd.classList.add('show');
   if(isInput) setTimeout(()=>{ inp.focus(); inp.select(); },50);
-  const close=()=>{ bd.classList.remove('show'); ok.onclick=null; cancel.onclick=null; bd.onclick=null; };
+  const close=()=>{ bd.classList.remove('show'); ok.onclick=null; cancel.onclick=null; bd.onclick=null; cancel.style.display=''; };
   ok.onclick=()=>{
     if(isInput){ const t=inp.value.trim(); if(!t){ return; } close(); onOk(t); }
     else { close(); onOk(); }
@@ -968,7 +1108,328 @@ document.getElementById('bulkSave').onclick = () => {
   closeBulkSheet();
 };
 
+/* ---- záloha a obnova dat ---- */
+async function exportData(){
+  const payload = JSON.stringify(data, null, 2);
+  const d = new Date().toISOString().slice(0,10);
+  const fname = 'prumer-zaloha-'+d+'.json';
+  // na iPhonu nabídne sdílení (uložit do Souborů, poslat sám sobě…)
+  try {
+    const file = new File([payload], fname, { type:'application/json' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file], title:'Záloha známek' });
+      return;
+    }
+  } catch(e){ if(e && e.name==='AbortError') return; }
+  // jinak klasické stažení souboru
+  const blob = new Blob([payload], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed = null;
+    try { parsed = JSON.parse(reader.result); } catch(e){}
+    if(!parsed || !Array.isArray(parsed.subjects)){
+      alertDialog('Soubor nejde načíst', 'Tohle nevypadá jako záloha této aplikace. Vyber soubor prumer-zaloha-….json.');
+      return;
+    }
+    const subjN = parsed.subjects.length;
+    const gradeN = parsed.subjects.reduce((a,s)=>a+((s.grades&&s.grades.length)||0),0);
+    confirmDialog('Obnovit ze zálohy?',
+      'Načte se '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+'. Současná data se přepíšou.',
+      'Obnovit', () => {
+        data = migrate(parsed);
+        save(); render();
+        alertDialog('Hotovo', 'Data byla obnovena ze zálohy.');
+      });
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('importFile').addEventListener('change', function(e){
+  const f = e.target.files && e.target.files[0];
+  if(f) importData(f);
+  e.target.value = '';
+});
+
+/* ===================== Materiály ===================== */
+
+/* přepínání stran */
+function setPage(p){
+  const grades = p === 'grades';
+  document.getElementById('pageGrades').style.display = grades ? '' : 'none';
+  document.getElementById('pageMaterials').style.display = grades ? 'none' : '';
+  document.getElementById('tabGrades').classList.toggle('sel', grades);
+  document.getElementById('tabMaterials').classList.toggle('sel', !grades);
+  window.scrollTo(0,0);
+  if(!grades) renderMaterials();
+}
+
+let sb = null;
+function getSB(){
+  if(!sb && SB_URL && SB_KEY && window.supabase){
+    try { sb = window.supabase.createClient(SB_URL, SB_KEY); } catch(e){}
+  }
+  return sb;
+}
+function sbConfigured(){ return !!(SB_URL && SB_KEY); }
+
+function uid(){
+  let u = localStorage.getItem('prumer_uid');
+  if(!u){ u = 'u'+Date.now()+Math.random().toString(36).slice(2,8); localStorage.setItem('prumer_uid', u); }
+  return u;
+}
+
+const MAT_CATS = [ { id:'zapisky', label:'Zápisky' }, { id:'testy', label:'Testy' } ];
+let mat = { view:'gate', code:null, name:null, subject:null, category:'zapisky' };
+
+function matSaveClass(){
+  if(mat.code) localStorage.setItem('prumer_mat_class', JSON.stringify({ code:mat.code, name:mat.name }));
+  else localStorage.removeItem('prumer_mat_class');
+}
+function initMaterials(){
+  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.view='class'; } } catch(e){}
+}
+
+function matNotice(title, msg){
+  const d = document.createElement('div');
+  d.className = 'mat-notice';
+  d.innerHTML = '<div class="mat-notice-t">'+esc(title)+'</div><div class="mat-notice-m">'+esc(msg)+'</div>';
+  return d;
+}
+
+function renderMaterials(){
+  const wrap = document.getElementById('matBody');
+  const h1 = document.getElementById('matH1');
+  wrap.innerHTML = '';
+  if(!sbConfigured()){
+    h1.textContent = 'Materiály';
+    wrap.appendChild(matNotice('Materiály ještě nejsou nastavené', 'Sdílení souborů potřebuje cloud (Supabase). V kódu nahoře stačí vyplnit SB_URL a SB_KEY podle návodu. Strana se sama zapne, jakmile je doplníš.'));
+    return;
+  }
+  if(!window.supabase){
+    h1.textContent = 'Materiály';
+    wrap.appendChild(matNotice('Načítám knihovnu…', 'Pokud tahle hláška nezmizí, jsi nejspíš v náhledu, který blokuje externí knihovny. Na živé adrese (GitHub Pages) to poběží.'));
+    return;
+  }
+  if(mat.view === 'gate')    return renderMatGate(wrap, h1);
+  if(mat.view === 'class')   return renderMatClass(wrap, h1);
+  if(mat.view === 'subject') return renderMatSubject(wrap, h1);
+}
+
+function renderMatGate(wrap, h1){
+  h1.textContent = 'Kód třídy';
+  const box = document.createElement('div');
+  box.className = 'mat-gate';
+  box.innerHTML =
+    '<p class="mat-lead">Zadej čtyřmístný kód třídy a uvidíš její zápisky a testy.</p>' +
+    '<div class="code-boxes">' + [0,1,2,3].map(i=>'<input class="code-box" inputmode="numeric" maxlength="1" data-i="'+i+'">').join('') + '</div>' +
+    '<button class="btn btn-primary" id="enterBtn" style="width:100%">Vstoupit</button>' +
+    '<div class="mat-or">nebo</div>' +
+    '<button class="btn btn-ghost" id="createBtn" style="width:100%">Vytvořit novou třídu</button>';
+  wrap.appendChild(box);
+  const inputs = Array.prototype.slice.call(box.querySelectorAll('.code-box'));
+  inputs.forEach((inp,i)=>{
+    inp.oninput = ()=>{ inp.value = inp.value.replace(/\D/g,'').slice(0,1); if(inp.value && i<3) inputs[i+1].focus(); };
+    inp.onkeydown = (e)=>{ if(e.key==='Backspace' && !inp.value && i>0) inputs[i-1].focus(); };
+  });
+  box.querySelector('#enterBtn').onclick = ()=>{
+    const code = inputs.map(x=>x.value).join('');
+    if(code.length !== 4){ alertDialog('Neúplný kód','Zadej všechna čtyři čísla.'); return; }
+    enterClass(code);
+  };
+  box.querySelector('#createBtn').onclick = createClassFlow;
+}
+
+async function enterClass(code){
+  const c = getSB(); if(!c) return;
+  try {
+    const r = await c.from('tridy').select('*').eq('code', code).maybeSingle();
+    if(r.error) throw r.error;
+    if(!r.data){ alertDialog('Třída nenalezena','Pod kódem '+code+' žádná třída není. Zkontroluj číslo, nebo vytvoř novou třídu.'); return; }
+    mat.code = code; mat.name = r.data.name; mat.view = 'class';
+    matSaveClass(); renderMaterials();
+  } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
+}
+
+function createClassFlow(){
+  promptDialog('Nová třída — jméno', '', async (name)=>{
+    const c = getSB(); if(!c) return;
+    try {
+      let code = null;
+      for(let t=0; t<20; t++){
+        const cand = String(Math.floor(1000 + Math.random()*9000));
+        const ex = await c.from('tridy').select('code').eq('code', cand).maybeSingle();
+        if(!ex.data){ code = cand; break; }
+      }
+      if(!code){ alertDialog('Nepovedlo se','Zkus to prosím ještě jednou.'); return; }
+      const ins = await c.from('tridy').insert({ code, name });
+      if(ins.error) throw ins.error;
+      mat.code = code; mat.name = name; mat.view = 'class';
+      matSaveClass(); renderMaterials();
+      alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. Pošli ho spolužákům, ať se připojí.');
+    } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+  });
+}
+
+function renderMatClass(wrap, h1){
+  h1.textContent = mat.name || 'Třída';
+  const bar = document.createElement('div');
+  bar.className = 'mat-classbar';
+  bar.innerHTML = '<div><div class="mat-code-lbl">kód třídy</div><div class="mat-code-val">'+esc(mat.code)+'</div></div>';
+  const out = document.createElement('button');
+  out.className = 'subj-action'; out.style.flex = '0 0 auto'; out.textContent = 'Odhlásit';
+  out.onclick = ()=>{ mat.view='gate'; mat.code=null; mat.name=null; matSaveClass(); renderMaterials(); };
+  bar.appendChild(out);
+  wrap.appendChild(bar);
+
+  const lbl = document.createElement('div');
+  lbl.className = 'section-label'; lbl.style.padding = '4px 6px 12px'; lbl.textContent = 'Předměty';
+  wrap.appendChild(lbl);
+
+  const grid = document.createElement('div');
+  grid.className = 'mat-subjects';
+  DEFAULT_SUBJECTS.forEach(name=>{
+    const b = document.createElement('button');
+    b.className = 'mat-subj'; b.textContent = name;
+    b.onclick = ()=>{ mat.subject = name; mat.category = 'zapisky'; mat.view = 'subject'; renderMaterials(); };
+    grid.appendChild(b);
+  });
+  wrap.appendChild(grid);
+}
+
+function renderMatSubject(wrap, h1){
+  h1.textContent = mat.subject;
+  const back = document.createElement('button');
+  back.className = 'mat-back'; back.textContent = '‹ Předměty';
+  back.onclick = ()=>{ mat.view = 'class'; renderMaterials(); };
+  wrap.appendChild(back);
+
+  const tog = document.createElement('div');
+  tog.className = 'calc-toggle'; tog.style.margin = '0 16px 14px';
+  MAT_CATS.forEach(cat=>{
+    const b = document.createElement('button');
+    b.className = 'calc-mode' + (mat.category===cat.id ? ' sel' : '');
+    b.textContent = cat.label;
+    b.onclick = ()=>{ mat.category = cat.id; renderMaterials(); };
+    tog.appendChild(b);
+  });
+  wrap.appendChild(tog);
+
+  const up = document.createElement('button');
+  up.className = 'add-grade-btn'; up.style.margin = '0 16px 12px'; up.style.width = 'calc(100% - 32px)';
+  up.textContent = '+ Nahrát soubor';
+  up.onclick = ()=> document.getElementById('matFile').click();
+  wrap.appendChild(up);
+
+  const list = document.createElement('div');
+  list.id = 'matList'; list.className = 'mat-list';
+  list.innerHTML = '<div class="empty">Načítám…</div>';
+  wrap.appendChild(list);
+  loadFiles();
+}
+
+async function loadFiles(){
+  const c = getSB(); if(!c) return;
+  const list = document.getElementById('matList'); if(!list) return;
+  try {
+    const r = await c.from('materialy').select('*')
+      .eq('code', mat.code).eq('subject', mat.subject).eq('category', mat.category)
+      .order('created_at', { ascending:false });
+    if(r.error) throw r.error;
+    renderFiles(r.data || []);
+  } catch(e){ list.innerHTML=''; list.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
+}
+
+function renderFiles(rows){
+  const list = document.getElementById('matList'); if(!list) return;
+  list.innerHTML = '';
+  if(!rows.length){ list.innerHTML = '<div class="empty">Zatím tu nic není.<br>Nahraj první soubor.</div>'; return; }
+  const me = uid();
+  rows.forEach(r=>{
+    const mine = r.owner === me;
+    const row = document.createElement('div');
+    row.className = 'mat-file';
+    row.innerHTML =
+      '<div class="mat-file-ic">'+fileEmoji(r.name)+'</div>' +
+      '<div class="mat-file-meta"><div class="mat-file-name">'+esc(r.name)+'</div>' +
+      '<div class="mat-file-sub">'+sizeStr(r.size)+(r.created_at?' · '+dateStr(r.created_at):'')+'</div></div>' +
+      '<button class="mat-dl" aria-label="Stáhnout">↓</button>' +
+      (mine ? '<button class="grade-del mat-del" aria-label="Smazat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' : '');
+    row.querySelector('.mat-dl').onclick = ()=> downloadFile(r);
+    const del = row.querySelector('.mat-del');
+    if(del) del.onclick = ()=> deleteFile(r);
+    list.appendChild(row);
+  });
+}
+
+function fileEmoji(n){
+  const e = (n||'').split('.').pop().toLowerCase();
+  if(['jpg','jpeg','png','gif','heic','webp'].indexOf(e) >= 0) return '🖼';
+  if(e === 'pdf') return '📄';
+  if(['doc','docx'].indexOf(e) >= 0) return '📝';
+  return '📎';
+}
+function sizeStr(b){ if(b==null) return ''; if(b<1024) return b+' B'; if(b<1048576) return Math.round(b/1024)+' kB'; return (b/1048576).toFixed(1)+' MB'; }
+function dateStr(iso){ try { const d=new Date(iso); return d.getDate()+'.'+(d.getMonth()+1)+'.'; } catch(e){ return ''; } }
+function slug(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_'); }
+
+async function uploadFile(file){
+  const c = getSB(); if(!c) return;
+  if(file.size > 50*1024*1024){ alertDialog('Soubor je moc velký','Nahrávej prosím soubory do 50 MB.'); return; }
+  const list = document.getElementById('matList'); if(list) list.innerHTML = '<div class="empty">Nahrávám…</div>';
+  try {
+    const safe = (file.name||'soubor').replace(/[^\w.\-]+/g,'_');
+    const path = mat.code+'/'+slug(mat.subject)+'/'+mat.category+'/'+Date.now()+'_'+safe;
+    const upl = await c.storage.from(SB_BUCKET).upload(path, file, { upsert:false });
+    if(upl.error) throw upl.error;
+    const ins = await c.from('materialy').insert({
+      code:mat.code, subject:mat.subject, category:mat.category,
+      name:file.name, path:path, size:file.size, owner:uid()
+    });
+    if(ins.error) throw ins.error;
+    loadFiles();
+  } catch(e){ alertDialog('Nahrání selhalo', String((e&&e.message)||e)); loadFiles(); }
+}
+
+async function downloadFile(r){
+  const c = getSB(); if(!c) return;
+  try {
+    const pu = c.storage.from(SB_BUCKET).getPublicUrl(r.path);
+    const url = pu && pu.data && pu.data.publicUrl;
+    if(url) window.open(url, '_blank');
+    else alertDialog('Nelze otevřít','Odkaz se nepodařilo získat.');
+  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+}
+
+function deleteFile(r){
+  if(r.owner !== uid()){ alertDialog('Nelze smazat','Smazat soubor může jen ten, kdo ho nahrál.'); return; }
+  confirmDialog('Smazat soubor?', r.name, 'Smazat', async ()=>{
+    const c = getSB(); if(!c) return;
+    try {
+      await c.storage.from(SB_BUCKET).remove([r.path]);
+      const del = await c.from('materialy').delete().eq('id', r.id);
+      if(del.error) throw del.error;
+      loadFiles();
+    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
+  });
+}
+
+const matFileEl = document.getElementById('matFile');
+if(matFileEl) matFileEl.addEventListener('change', function(e){
+  const f = e.target.files && e.target.files[0];
+  if(f) uploadFile(f);
+  e.target.value = '';
+});
+
 render();
+initMaterials();
 </script>
 </body>
 </html>
