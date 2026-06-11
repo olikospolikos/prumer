@@ -557,6 +557,30 @@
     letter-spacing: 0.04em; flex-shrink: 0;
   }
   .mat-sortbar select { flex: 1; }
+
+  /* ---------- calendar ---------- */
+  .cal-item {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .cal-item.past { opacity: 0.45; }
+  .cal-date {
+    width: 50px; flex-shrink: 0; text-align: center;
+    background: var(--accent-soft); border: 1px solid rgba(232,184,75,0.3);
+    border-radius: 11px; padding: 7px 0;
+  }
+  .cal-d {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
+    line-height: 1; color: var(--accent);
+  }
+  .cal-m {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--accent); margin-top: 3px;
+  }
+  .cal-meta { flex: 1; min-width: 0; }
+  .cal-subj { font-size: 14.5px; font-weight: 600; }
+  .cal-theme { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -615,12 +639,6 @@
 <div class="add-subject">
   <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
 </div>
-
-<div class="section-label" style="margin-top:28px">Škola OnLine</div>
-<div class="backup">
-  <button class="subj-action" onclick="openSolSheet()">Načíst známky ze Škola OnLine</button>
-</div>
-<p class="backup-note">Zadáš svoje přihlašovací údaje do Školy Online a aplikace stáhne tvoje známky. Tím se současné známky přepíšou. Heslo se nikam neukládá.</p>
 
 <div class="section-label" style="margin-top:28px">Záloha dat</div>
 <div class="backup">
@@ -695,6 +713,28 @@
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeBulkSheet()">Zrušit</button>
     <button class="btn btn-primary" id="bulkSave">Uložit známky</button>
+  </div>
+</div>
+
+<!-- test calendar sheet -->
+<div class="sheet-backdrop" id="testBackdrop" onclick="closeTestSheet()"></div>
+<div class="sheet" id="testSheet">
+  <div class="sheet-grab"></div>
+  <h3>Nový test</h3>
+  <div class="fields">
+    <label class="fld"><span>Datum</span>
+      <input type="date" id="testDate">
+    </label>
+    <label class="fld"><span>Předmět</span>
+      <select id="testSubject"></select>
+    </label>
+    <label class="fld"><span>Téma</span>
+      <input type="text" id="testTheme" placeholder="např. kvadratické rovnice">
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeTestSheet()">Zrušit</button>
+    <button class="btn btn-primary" onclick="saveTest()">Přidat</button>
   </div>
 </div>
 
@@ -1279,7 +1319,8 @@ function uid(){
 }
 
 const MAT_CATS = [ { id:'zapisky', label:'Zápisky' }, { id:'testy', label:'Testy' } ];
-let mat = { view:'gate', code:null, name:null, subject:null, category:'zapisky', sort: localStorage.getItem('prumer_mat_sort') || 'date' };
+let mat = { view:'gate', code:null, name:null, subject:null, category:'zapisky', tab:'soubory', sort: localStorage.getItem('prumer_mat_sort') || 'date' };
+let calRows = [];
 let matRows = [];
 
 function matSaveClass(){
@@ -1346,7 +1387,7 @@ async function enterClass(code){
     const r = await c.from('tridy').select('*').eq('code', code).maybeSingle();
     if(r.error) throw r.error;
     if(!r.data){ alertDialog('Třída nenalezena','Pod kódem '+code+' žádná třída není. Zkontroluj číslo, nebo vytvoř novou třídu.'); return; }
-    mat.code = code; mat.name = r.data.name; mat.view = 'class';
+    mat.code = code; mat.name = r.data.name; mat.view = 'class'; mat.tab = 'soubory';
     matSaveClass(); renderMaterials();
   } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
 }
@@ -1364,7 +1405,7 @@ function createClassFlow(){
       if(!code){ alertDialog('Nepovedlo se','Zkus to prosím ještě jednou.'); return; }
       const ins = await c.from('tridy').insert({ code, name });
       if(ins.error) throw ins.error;
-      mat.code = code; mat.name = name; mat.view = 'class';
+      mat.code = code; mat.name = name; mat.view = 'class'; mat.tab = 'soubory';
       matSaveClass(); renderMaterials();
       alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. Pošli ho spolužákům, ať se připojí.');
     } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
@@ -1382,6 +1423,19 @@ function renderMatClass(wrap, h1){
   bar.appendChild(out);
   wrap.appendChild(bar);
 
+  const tog = document.createElement('div');
+  tog.className = 'calc-toggle'; tog.style.margin = '0 16px 16px';
+  [['soubory','Materiály'],['kalendar','Kalendář']].forEach(t=>{
+    const b = document.createElement('button');
+    b.className = 'calc-mode' + (mat.tab===t[0] ? ' sel' : '');
+    b.textContent = t[1];
+    b.onclick = ()=>{ mat.tab = t[0]; renderMaterials(); };
+    tog.appendChild(b);
+  });
+  wrap.appendChild(tog);
+
+  if(mat.tab === 'kalendar'){ renderMatCalendar(wrap); return; }
+
   const lbl = document.createElement('div');
   lbl.className = 'section-label'; lbl.style.padding = '4px 6px 12px'; lbl.textContent = 'Předměty';
   wrap.appendChild(lbl);
@@ -1395,6 +1449,92 @@ function renderMatClass(wrap, h1){
     grid.appendChild(b);
   });
   wrap.appendChild(grid);
+}
+
+/* ---- kalendar testu ---- */
+const CZ_MON = ['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro'];
+function calDay(d){ const p=(d||'').split('-'); return p.length===3 ? String(parseInt(p[2],10)) : '?'; }
+function calMon(d){ const p=(d||'').split('-'); return p.length===3 ? (CZ_MON[parseInt(p[1],10)-1]||'') : ''; }
+
+function renderMatCalendar(wrap){
+  const add = document.createElement('button');
+  add.className = 'add-grade-btn'; add.style.margin = '0 16px 12px'; add.style.width = 'calc(100% - 32px)';
+  add.textContent = '+ Přidat test';
+  add.onclick = openTestSheet;
+  wrap.appendChild(add);
+
+  const list = document.createElement('div');
+  list.id = 'calList'; list.className = 'mat-list';
+  list.innerHTML = '<div class="empty">Načítám…</div>';
+  wrap.appendChild(list);
+  loadTests();
+}
+
+async function loadTests(){
+  const c = getSB(); if(!c) return;
+  const list = document.getElementById('calList'); if(!list) return;
+  try {
+    const r = await c.from('kalendar').select('*').eq('code', mat.code);
+    if(r.error) throw r.error;
+    calRows = r.data || [];
+    drawTests();
+  } catch(e){ list.innerHTML=''; list.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
+}
+
+function drawTests(){
+  const list = document.getElementById('calList'); if(!list) return;
+  const today = new Date().toISOString().slice(0,10);
+  const rows = calRows.slice().sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+  list.innerHTML = '';
+  if(!rows.length){ list.innerHTML = '<div class="empty">Zatím tu nejsou žádné testy.<br>Přidej první.</div>'; return; }
+  const me = uid();
+  rows.forEach(r=>{
+    const past = (r.date||'') < today;
+    const mine = r.owner === me;
+    const row = document.createElement('div');
+    row.className = 'cal-item' + (past ? ' past' : '');
+    row.innerHTML =
+      '<div class="cal-date"><div class="cal-d">'+calDay(r.date)+'</div><div class="cal-m">'+calMon(r.date)+'</div></div>' +
+      '<div class="cal-meta"><div class="cal-subj">'+esc(r.subject||'')+'</div><div class="cal-theme">'+esc(r.theme||'bez tématu')+'</div></div>' +
+      (mine ? '<button class="grade-del mat-del" aria-label="Smazat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' : '');
+    const del = row.querySelector('.mat-del');
+    if(del) del.onclick = ()=> deleteTest(r);
+    list.appendChild(row);
+  });
+}
+
+function openTestSheet(){
+  document.getElementById('testDate').value = new Date().toISOString().slice(0,10);
+  const sel = document.getElementById('testSubject');
+  sel.innerHTML = DEFAULT_SUBJECTS.map(s=>'<option>'+esc(s)+'</option>').join('');
+  document.getElementById('testTheme').value = '';
+  showSheet('test');
+}
+function closeTestSheet(){ hideSheet('test'); }
+
+async function saveTest(){
+  const date = document.getElementById('testDate').value;
+  const subject = document.getElementById('testSubject').value;
+  const theme = document.getElementById('testTheme').value.trim();
+  if(!date){ alertDialog('Chybí datum','Vyber, kdy se test píše.'); return; }
+  const c = getSB(); if(!c) return;
+  try {
+    const ins = await c.from('kalendar').insert({ code:mat.code, date, subject, theme, owner:uid() });
+    if(ins.error) throw ins.error;
+    closeTestSheet(); loadTests();
+  } catch(e){ alertDialog('Uložení selhalo', String((e&&e.message)||e)); }
+}
+
+function deleteTest(r){
+  if(r.owner !== uid()){ alertDialog('Nelze smazat','Smazat test může jen ten, kdo ho přidal.'); return; }
+  confirmDialog('Smazat test?', (r.subject||'') + (r.theme ? ' · '+r.theme : ''), 'Smazat', async ()=>{
+    const c = getSB(); if(!c) return;
+    try {
+      const del = await c.from('kalendar').delete().eq('id', r.id);
+      if(del.error) throw del.error;
+      loadTests();
+    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
+  });
 }
 
 function renderMatSubject(wrap, h1){
