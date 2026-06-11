@@ -616,6 +616,12 @@
   <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
 </div>
 
+<div class="section-label" style="margin-top:28px">Škola OnLine</div>
+<div class="backup">
+  <button class="subj-action" onclick="openSolSheet()">Načíst známky ze Škola OnLine</button>
+</div>
+<p class="backup-note">Zadáš svoje přihlašovací údaje do Školy Online a aplikace stáhne tvoje známky. Tím se současné známky přepíšou. Heslo se nikam neukládá.</p>
+
 <div class="section-label" style="margin-top:28px">Záloha dat</div>
 <div class="backup">
   <button class="subj-action" onclick="exportData()">Zálohovat</button>
@@ -689,6 +695,29 @@
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeBulkSheet()">Zrušit</button>
     <button class="btn btn-primary" id="bulkSave">Uložit známky</button>
+  </div>
+</div>
+
+<!-- skola online sheet -->
+<div class="sheet-backdrop" id="solBackdrop" onclick="closeSolSheet()"></div>
+<div class="sheet" id="solSheet">
+  <div class="sheet-grab"></div>
+  <h3>Načíst ze Škola OnLine</h3>
+  <div class="fields">
+    <label class="fld"><span>Přihlašovací jméno</span>
+      <input type="text" id="solUser" autocomplete="username" placeholder="jméno do Škola OnLine">
+    </label>
+    <label class="fld"><span>Heslo</span>
+      <input type="password" id="solPass" autocomplete="current-password" placeholder="heslo">
+    </label>
+    <label class="fld"><span>Server (většinou neměnit)</span>
+      <input type="text" id="solInstance" value="https://aplikace.skolaonline.cz">
+    </label>
+  </div>
+  <p class="backup-note" style="margin:12px 2px 0">Heslo se použije jen pro stažení a nikam se neukládá. Stažení přepíše současné známky.</p>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeSolSheet()">Zrušit</button>
+    <button class="btn btn-primary" id="solBtn" onclick="runSolImport()">Stáhnout</button>
   </div>
 </div>
 
@@ -1170,6 +1199,56 @@ document.getElementById('importFile').addEventListener('change', function(e){
   if(f) importData(f);
   e.target.value = '';
 });
+
+/* ===================== Škola OnLine ===================== */
+function openSolSheet(){
+  document.getElementById('solUser').value = localStorage.getItem('prumer_sol_user') || '';
+  document.getElementById('solPass').value = '';
+  showSheet('sol');
+}
+function closeSolSheet(){ hideSheet('sol'); }
+
+async function runSolImport(){
+  const user = document.getElementById('solUser').value.trim();
+  const pass = document.getElementById('solPass').value;
+  const instance = (document.getElementById('solInstance').value || '').trim() || 'https://aplikace.skolaonline.cz';
+  if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
+  if(!sbConfigured()){ alertDialog('Není nastaveno','Nejdřív musí být nastavený Supabase a nasazená funkce znamky.'); return; }
+
+  const btn = document.getElementById('solBtn');
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Stahuji…';
+  try {
+    const resp = await fetch(SB_URL + '/functions/v1/znamky', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+      body: JSON.stringify({ username:user, password:pass, instance })
+    });
+    let out = null;
+    try { out = await resp.json(); } catch(e){}
+    if(!resp.ok || !out || out.error || !Array.isArray(out.subjects)){
+      const msg = (out && out.error) ? out.error : ('Chyba ' + resp.status);
+      alertDialog('Nepovedlo se', msg);
+      return;
+    }
+    document.getElementById('solPass').value = '';
+    localStorage.setItem('prumer_sol_user', user);
+    const subjN = out.subjects.length;
+    const gradeN = out.subjects.reduce((a,s)=>a+((s.grades&&s.grades.length)||0),0);
+    closeSolSheet();
+    confirmDialog('Načíst známky?',
+      'Stáhlo se '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+'. Současné známky se přepíšou.',
+      'Načíst', ()=>{
+        data = migrate({ sem: out.sem || 1, subjects: out.subjects });
+        save(); render();
+        alertDialog('Hotovo', 'Známky ze Škola OnLine jsou načtené.');
+      });
+  } catch(e){
+    alertDialog('Chyba spojení', String((e&&e.message)||e));
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+}
 
 /* ===================== Materiály ===================== */
 
