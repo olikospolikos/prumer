@@ -558,29 +558,57 @@
   }
   .mat-sortbar select { flex: 1; }
 
-  /* ---------- calendar ---------- */
-  .cal-item {
-    display: flex; align-items: center; gap: 14px;
+  /* ---------- calendar (týdenní pohled) ---------- */
+  .cal-nav { display: flex; align-items: center; gap: 8px; margin: 0 16px 12px; }
+  .cal-arrow {
+    width: 40px; height: 40px; flex-shrink: 0; border-radius: 11px; cursor: pointer;
+    background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink);
+    font-size: 22px; line-height: 1; font-family: inherit;
+  }
+  .cal-arrow:active { background: var(--bg-elev2); }
+  .cal-label {
+    flex: 1; height: 40px; border-radius: 11px; cursor: pointer;
+    background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink);
+    font-family: inherit; font-size: 14px; font-weight: 600;
+  }
+  .cal-week { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .cal-day {
+    display: flex; align-items: stretch; gap: 12px;
     background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px;
-    padding: 12px 14px;
+    padding: 10px 12px;
   }
-  .cal-item.past { opacity: 0.45; }
-  .cal-date {
-    width: 50px; flex-shrink: 0; text-align: center;
-    background: var(--accent-soft); border: 1px solid rgba(232,184,75,0.3);
-    border-radius: 11px; padding: 7px 0;
+  .cal-day.today { border-color: var(--accent); }
+  .cal-dhead {
+    width: 42px; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
-  .cal-d {
-    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
-    line-height: 1; color: var(--accent);
+  .cal-wd {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--ink-faint); font-weight: 700;
   }
-  .cal-m {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--accent); margin-top: 3px;
+  .cal-dn { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; line-height: 1.1; }
+  .cal-day.today .cal-wd, .cal-day.today .cal-dn { color: var(--accent); }
+  .cal-dbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+  .cal-empty { color: var(--ink-faint); font-size: 14px; }
+  .cal-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-elev2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 7px 10px;
   }
-  .cal-meta { flex: 1; min-width: 0; }
-  .cal-subj { font-size: 14.5px; font-weight: 600; }
-  .cal-theme { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
+  .cal-chip-meta { flex: 1; min-width: 0; }
+  .cal-chip-subj { font-size: 13.5px; font-weight: 600; }
+  .cal-chip-theme { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
+  .cal-chip-del {
+    width: 26px; height: 26px; flex-shrink: 0; border-radius: 7px; cursor: pointer;
+    background: rgba(226,92,92,0.12); border: 1px solid rgba(226,92,92,0.25); color: var(--bad);
+    font-size: 16px; line-height: 1; font-family: inherit;
+  }
+  .cal-add {
+    width: 32px; flex-shrink: 0; align-self: center; border-radius: 9px; cursor: pointer;
+    background: none; border: 1px dashed var(--line); color: var(--ink-dim);
+    font-size: 18px; line-height: 1; font-family: inherit; padding: 8px 0;
+  }
+  .cal-add:active { background: var(--bg-elev2); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -1452,59 +1480,102 @@ function renderMatClass(wrap, h1){
 }
 
 /* ---- kalendar testu ---- */
-const CZ_MON = ['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro'];
-function calDay(d){ const p=(d||'').split('-'); return p.length===3 ? String(parseInt(p[2],10)) : '?'; }
-function calMon(d){ const p=(d||'').split('-'); return p.length===3 ? (CZ_MON[parseInt(p[1],10)-1]||'') : ''; }
+const CZ_WD = ['Po','Út','St','Čt','Pá','So','Ne'];
+function mondayOf(d){ const x=new Date(d); x.setHours(0,0,0,0); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function weekStartDate(){ if(!mat.weekStart) mat.weekStart = mondayOf(new Date()); return mat.weekStart; }
 
 function renderMatCalendar(wrap){
-  const add = document.createElement('button');
-  add.className = 'add-grade-btn'; add.style.margin = '0 16px 12px'; add.style.width = 'calc(100% - 32px)';
-  add.textContent = '+ Přidat test';
-  add.onclick = openTestSheet;
-  wrap.appendChild(add);
+  weekStartDate();
+  const nav = document.createElement('div');
+  nav.className = 'cal-nav';
+  const prev = document.createElement('button'); prev.className='cal-arrow'; prev.textContent='‹'; prev.setAttribute('aria-label','Předchozí týden');
+  const label = document.createElement('button'); label.className='cal-label';
+  const next = document.createElement('button'); next.className='cal-arrow'; next.textContent='›'; next.setAttribute('aria-label','Další týden');
+  nav.appendChild(prev); nav.appendChild(label); nav.appendChild(next);
+  wrap.appendChild(nav);
 
-  const list = document.createElement('div');
-  list.id = 'calList'; list.className = 'mat-list';
-  list.innerHTML = '<div class="empty">Načítám…</div>';
-  wrap.appendChild(list);
+  const week = document.createElement('div'); week.id='calWeek'; week.className='cal-week';
+  week.innerHTML = '<div class="empty">Načítám…</div>';
+  wrap.appendChild(week);
+
+  function updateLabel(){
+    const s = mat.weekStart, e = addDays(s,6);
+    label.textContent = s.getDate()+'. '+(s.getMonth()+1)+'. – '+e.getDate()+'. '+(e.getMonth()+1)+'.';
+  }
+  prev.onclick = ()=>{ mat.weekStart = addDays(mat.weekStart,-7); updateLabel(); drawWeek(); };
+  next.onclick = ()=>{ mat.weekStart = addDays(mat.weekStart, 7); updateLabel(); drawWeek(); };
+  label.onclick = ()=>{ mat.weekStart = mondayOf(new Date()); updateLabel(); drawWeek(); };
+  updateLabel();
+
   loadTests();
 }
 
 async function loadTests(){
   const c = getSB(); if(!c) return;
-  const list = document.getElementById('calList'); if(!list) return;
+  const week = document.getElementById('calWeek'); if(!week) return;
   try {
     const r = await c.from('kalendar').select('*').eq('code', mat.code);
     if(r.error) throw r.error;
     calRows = r.data || [];
-    drawTests();
-  } catch(e){ list.innerHTML=''; list.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
+    drawWeek();
+  } catch(e){ week.innerHTML=''; week.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
 }
 
-function drawTests(){
-  const list = document.getElementById('calList'); if(!list) return;
-  const today = new Date().toISOString().slice(0,10);
-  const rows = calRows.slice().sort((a,b)=> (a.date||'').localeCompare(b.date||''));
-  list.innerHTML = '';
-  if(!rows.length){ list.innerHTML = '<div class="empty">Zatím tu nejsou žádné testy.<br>Přidej první.</div>'; return; }
+function drawWeek(){
+  const week = document.getElementById('calWeek'); if(!week) return;
+  const start = weekStartDate();
+  const todayIso = isoLocal(new Date());
   const me = uid();
-  rows.forEach(r=>{
-    const past = (r.date||'') < today;
-    const mine = r.owner === me;
+  week.innerHTML = '';
+  for(let i=0;i<7;i++){
+    const d = addDays(start, i);
+    const iso = isoLocal(d);
+    const dayTests = calRows.filter(r=>r.date===iso).sort((a,b)=>(a.subject||'').localeCompare(b.subject||'','cs'));
+
     const row = document.createElement('div');
-    row.className = 'cal-item' + (past ? ' past' : '');
-    row.innerHTML =
-      '<div class="cal-date"><div class="cal-d">'+calDay(r.date)+'</div><div class="cal-m">'+calMon(r.date)+'</div></div>' +
-      '<div class="cal-meta"><div class="cal-subj">'+esc(r.subject||'')+'</div><div class="cal-theme">'+esc(r.theme||'bez tématu')+'</div></div>' +
-      (mine ? '<button class="grade-del mat-del" aria-label="Smazat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' : '');
-    const del = row.querySelector('.mat-del');
-    if(del) del.onclick = ()=> deleteTest(r);
-    list.appendChild(row);
-  });
+    row.className = 'cal-day' + (iso===todayIso ? ' today' : '');
+
+    const head = document.createElement('div');
+    head.className = 'cal-dhead';
+    head.innerHTML = '<div class="cal-wd">'+CZ_WD[i]+'</div><div class="cal-dn">'+d.getDate()+'</div>';
+    row.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'cal-dbody';
+    if(dayTests.length){
+      dayTests.forEach(r=>{
+        const chip = document.createElement('div');
+        chip.className = 'cal-chip';
+        chip.innerHTML = '<div class="cal-chip-meta"><div class="cal-chip-subj">'+esc(r.subject||'')+'</div>'+(r.theme?'<div class="cal-chip-theme">'+esc(r.theme)+'</div>':'')+'</div>';
+        if(r.owner === me){
+          const del = document.createElement('button');
+          del.className = 'cal-chip-del'; del.textContent = '×'; del.setAttribute('aria-label','Smazat');
+          del.onclick = (e)=>{ e.stopPropagation(); deleteTest(r); };
+          chip.appendChild(del);
+        }
+        body.appendChild(chip);
+      });
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'cal-empty';
+      empty.textContent = '—';
+      body.appendChild(empty);
+    }
+    row.appendChild(body);
+
+    const add = document.createElement('button');
+    add.className = 'cal-add'; add.textContent = '+'; add.setAttribute('aria-label','Přidat test v tento den');
+    add.onclick = ()=> openTestSheet(iso);
+    row.appendChild(add);
+
+    week.appendChild(row);
+  }
 }
 
-function openTestSheet(){
-  document.getElementById('testDate').value = new Date().toISOString().slice(0,10);
+function openTestSheet(prefill){
+  document.getElementById('testDate').value = (typeof prefill === 'string' && prefill) ? prefill : isoLocal(new Date());
   const sel = document.getElementById('testSubject');
   sel.innerHTML = DEFAULT_SUBJECTS.map(s=>'<option>'+esc(s)+'</option>').join('');
   document.getElementById('testTheme').value = '';
