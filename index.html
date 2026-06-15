@@ -257,6 +257,15 @@
   }
   .grade-del:active { background: rgba(226,92,92,0.25); }
 
+  /* hypotetická (ruční) známka – vizuálně odlišená od skutečných ze Škola OnLine */
+  .grade-row.hypo .grade-desc { font-style: italic; }
+  .hypo-badge {
+    display: inline-block; margin-left: 6px; vertical-align: middle;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-soft);
+    border: 1px solid rgba(232,184,75,0.35); border-radius: 6px; padding: 1px 6px;
+  }
+
   .add-grade-btn {
     width: 100%;
     background: none;
@@ -377,20 +386,6 @@
   .btn-primary { background: var(--accent); color: #1a1407; }
   .btn-ghost { background: var(--bg-elev2); color: var(--ink-dim); }
   .btn-danger { background: var(--bad); color: #fff; }
-
-  /* bulk grade entry */
-  .bulk-note { font-size: 13px; color: var(--ink-dim); line-height:1.5; margin-bottom: 14px; }
-  .bulk-head {
-    display: flex; gap: 10px; padding: 0 2px 6px;
-    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--ink-faint); font-weight: 600;
-  }
-  .bulk-head span:first-child { width: 90px; }
-  .bulk-head span:last-child { flex: 1; }
-  .bulk-rows { display: flex; flex-direction: column; gap: 8px; max-height: 42vh; overflow-y: auto; }
-  .bulk-row { display: flex; gap: 10px; }
-  .bulk-row .bulk-mark { width: 90px; flex-shrink: 0; }
-  .bulk-row .bulk-weight { flex: 1; }
 
   /* custom dialog */
   .dlg-backdrop {
@@ -713,6 +708,7 @@
       <input type="date" id="gradeDate">
     </label>
   </div>
+  <p class="backup-note" style="margin:12px 2px 0">Hypotetická známka („co kdyby") se počítá do průměru a je v seznamu odlišená. Synchronizace ze Škola OnLine ji nepřepíše ani nesmaže.</p>
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeGradeSheet()">Zrušit</button>
     <button class="btn btn-primary" onclick="saveGrade()">Uložit</button>
@@ -732,21 +728,6 @@
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeSubjectSheet()">Zrušit</button>
     <button class="btn btn-primary" onclick="saveSubject()">Přidat</button>
-  </div>
-</div>
-
-<!-- bulk grade sheet -->
-<div class="sheet-backdrop" id="bulkBackdrop" onclick="closeBulkSheet()"></div>
-<div class="sheet" id="bulkSheet">
-  <div class="sheet-grab"></div>
-  <h3 id="bulkTitle">Přidat víc známek</h3>
-  <p class="bulk-note">Naťukej známky a u každé vyber váhu. Prázdné řádky se ignorují.</p>
-  <div class="bulk-head"><span>Známka</span><span>Váha</span></div>
-  <div id="bulkRows" class="bulk-rows"></div>
-  <button class="add-grade-btn" id="bulkAddRow" style="margin:10px 0 0">+ Další řádek</button>
-  <div class="sheet-actions">
-    <button class="btn btn-ghost" onclick="closeBulkSheet()">Zrušit</button>
-    <button class="btn btn-primary" id="bulkSave">Uložit známky</button>
   </div>
 </div>
 
@@ -938,11 +919,14 @@ function renderSubject(s) {
 
     gs.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).forEach(g => {
       const row = document.createElement('div');
-      row.className = 'grade-row';
+      row.className = 'grade-row' + (g.hypo ? ' hypo' : '');
+      const markStyle = g.hypo
+        ? `color:${markColor(g.mark)};background:transparent;border:1px dashed ${markColor(g.mark)}`
+        : `background:${markColor(g.mark)}22;color:${markColor(g.mark)}`;
       row.innerHTML = `
-        <div class="grade-mark" style="background:${markColor(g.mark)}22;color:${markColor(g.mark)}">${g.mark}</div>
+        <div class="grade-mark" style="${markStyle}">${g.mark}</div>
         <div class="grade-info">
-          <div class="grade-desc">${g.desc ? esc(g.desc) : 'Známka'}</div>
+          <div class="grade-desc">${g.desc ? esc(g.desc) : 'Známka'}${g.hypo ? '<span class="hypo-badge">hypotetická</span>' : ''}</div>
           <div class="grade-sub">váha ${String(g.weight).replace('.',',')}${g.date ? ' · '+fmtDate(g.date) : ''}</div>
         </div>
         <button class="grade-del" aria-label="Smazat známku">
@@ -955,15 +939,9 @@ function renderSubject(s) {
 
     const addBtn = document.createElement('button');
     addBtn.className = 'add-grade-btn';
-    addBtn.textContent = '+ Přidat známku';
+    addBtn.textContent = '+ Přidat hypotetickou známku';
     addBtn.onclick = () => openGradeSheet(s.id);
     body.appendChild(addBtn);
-
-    const bulkBtn = document.createElement('button');
-    bulkBtn.className = 'add-grade-btn';
-    bulkBtn.textContent = '+ Přidat víc známek najednou';
-    bulkBtn.onclick = () => openBulkSheet(s.id);
-    body.appendChild(bulkBtn);
 
     const actions = document.createElement('div');
     actions.className = 'subject-actions';
@@ -990,7 +968,7 @@ function fmtDate(d){ const p=d.split('-'); return p.length===3 ? p[2]+'.'+p[1]+'
 /* ---- grade sheet ---- */
 function openGradeSheet(subjectId) {
   editing = { subjectId, mark: 1, weight: 1 };
-  document.getElementById('gradeSheetTitle').textContent = 'Nová známka · ' + data.sem + '. pololetí';
+  document.getElementById('gradeSheetTitle').textContent = 'Hypotetická známka · ' + data.sem + '. pololetí';
   document.getElementById('gradeDesc').value = '';
   document.getElementById('gradeDate').value = new Date().toISOString().slice(0,10);
   buildMarkPicker();
@@ -1028,7 +1006,8 @@ function saveGrade(){
     weight:editing.weight,
     desc:document.getElementById('gradeDesc').value.trim(),
     date:document.getElementById('gradeDate').value,
-    sem:data.sem
+    sem:data.sem,
+    hypo:true            // ruční známka = hypotetická: počítá se do průměru, ale sync ji nepřepíše
   });
   s.open=true;
   save(); render(); closeGradeSheet();
@@ -1172,57 +1151,6 @@ function showDialog(title, msg, isInput, okLabel, onOk, value, opts){
     }
   };
 })();
-
-/* ---- hromadné zadání známek ---- */
-let bulkSubjectId = null;
-const BULK_START_ROWS = 5;
-
-function openBulkSheet(subjectId){
-  bulkSubjectId = subjectId;
-  const s = data.subjects.find(x=>x.id===subjectId);
-  document.getElementById('bulkTitle').textContent = 'Přidat víc známek – ' + (s ? s.name : '') + ' · ' + data.sem + '. pol.';
-  const rows = document.getElementById('bulkRows');
-  rows.innerHTML = '';
-  for(let i=0;i<BULK_START_ROWS;i++) rows.appendChild(makeBulkRow());
-  showSheet('bulk');
-}
-function closeBulkSheet(){ hideSheet('bulk'); }
-
-function makeBulkRow(){
-  const row = document.createElement('div');
-  row.className = 'bulk-row';
-  row.innerHTML = `
-    <select class="bulk-mark">
-      <option value="">–</option>
-      ${[1,2,3,4,5].map(m=>`<option value="${m}">${m}</option>`).join('')}
-    </select>
-    <select class="bulk-weight">
-      ${WEIGHTS.map(w=>`<option value="${w.v}" ${w.v===1?'selected':''}>${w.l}</option>`).join('')}
-    </select>
-  `;
-  return row;
-}
-
-document.getElementById('bulkAddRow').onclick = () => {
-  document.getElementById('bulkRows').appendChild(makeBulkRow());
-};
-
-document.getElementById('bulkSave').onclick = () => {
-  const s = data.subjects.find(x=>x.id===bulkSubjectId);
-  if(!s) return;
-  const today = new Date().toISOString().slice(0,10);
-  const rows = document.querySelectorAll('#bulkRows .bulk-row');
-  let n = 0;
-  rows.forEach(r => {
-    const mark = r.querySelector('.bulk-mark').value;
-    const weight = +r.querySelector('.bulk-weight').value;
-    if(mark){
-      s.grades.push({ id:'g'+Date.now()+'_'+(n++), mark:+mark, weight, desc:'', date:today, sem:data.sem });
-    }
-  });
-  if(n>0){ s.open = true; save(); render(); }
-  closeBulkSheet();
-};
 
 /* ---- záloha a obnova dat ---- */
 async function exportData(){
@@ -1395,8 +1323,24 @@ async function solDownloadData(base, auth){
   }
   return { uj, out: solBuildData(results) };
 }
-// zapíše stažená data do aplikace (zachová rozbalené předměty; keepSem = neměnit vybrané pololetí)
+// přenese hypotetické (ruční) známky ze současných dat do nově stažených, ať je sync nesmaže.
+// Páruje předměty podle názvu; pokud předmět ve stažených datech není, vytvoří ho.
+function solAttachHypo(out){
+  const byName = {};
+  (data.subjects||[]).forEach(s=>{
+    (s.grades||[]).forEach(g=>{ if(g.hypo){ (byName[s.name] = byName[s.name] || []).push(g); } });
+  });
+  Object.keys(byName).forEach(name=>{
+    let s = out.subjects.find(x=>x.name===name);
+    if(!s){ s = { id:'hyp_'+name.replace(/\W+/g,'_'), name, grades:[], open:false }; out.subjects.push(s); }
+    s.grades = s.grades.concat(byName[name]);
+  });
+  return out;
+}
+
+// zapíše stažená data do aplikace (zachová rozbalené předměty a hypotetické známky; keepSem = neměnit vybrané pololetí)
 function solApplyData(out, keepSem){
+  solAttachHypo(out);
   const openIds = new Set((data.subjects||[]).filter(s=>s.open).map(s=>s.id));
   out.subjects.forEach(s=>{ if(openIds.has(s.id)) s.open = true; });
   if(keepSem) out.sem = (data && data.sem===2) ? 2 : 1;
