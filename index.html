@@ -672,7 +672,7 @@
 <div class="backup">
   <button class="subj-action" onclick="openSolSheet()">Načíst známky online</button>
 </div>
-<p class="backup-note">Stáhne tvoje aktuální známky přímo ze Škola OnLine. Heslo se nikam neukládá — použije se jen pro jedno stažení a současné známky se přepíšou.</p>
+<div id="solStatus" class="backup-note" style="margin-top:8px"></div>
 
 <div class="section-label" style="margin-top:28px">Záloha dat</div>
 <div class="backup">
@@ -1360,6 +1360,99 @@ function solBuildData(semResults){
   return { sem: solCurrentSem(), subjects };
 }
 
+// získání tokenu heslem
+async function solTokenPassword(base, user, pass){
+  const r = await fetch(base + '/solapi/api/connect/token', {
+    method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type:'password', username:user, password:pass, client_id:'test_client', scope:'offline_access sol_api' })
+  });
+  const j = await r.json().catch(()=>null);
+  return { ok: !!(r.ok && j && j.access_token), status:r.status, j };
+}
+// získání tokenu obnovovacím (refresh) tokenem – bez hesla
+async function solTokenRefresh(base, refresh){
+  const r = await fetch(base + '/solapi/api/connect/token', {
+    method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type:'refresh_token', refresh_token:refresh, client_id:'test_client' })
+  });
+  const j = await r.json().catch(()=>null);
+  return { ok: !!(r.ok && j && j.access_token), status:r.status, j };
+}
+// stáhne účet + obě pololetí a poskládá strukturu aplikace
+async function solDownloadData(base, auth){
+  const ur = await fetch(base + '/solapi/api/v1/user', { headers: auth });
+  const uj = await ur.json().catch(()=>null);
+  if(!ur.ok || !uj || !uj.personID) return null;
+  const pid = uj.personID;
+  const sem1Id = solBumpId(uj.schoolYearId, 1);   // 1. pololetí
+  const sem2Id = solBumpId(uj.schoolYearId, 2);   // 2. pololetí
+  const results = [];
+  if(sem1Id){ const r = await solFetchSemester(base, auth, pid, sem1Id); if(r.ok) results.push({ sem:1, marks:r.marks, subjects:r.subjects }); }
+  if(sem2Id){ const r = await solFetchSemester(base, auth, pid, sem2Id); if(r.ok) results.push({ sem:2, marks:r.marks, subjects:r.subjects }); }
+  if(!results.length){   // pojistka: kdyby odvození ID nesedělo, aspoň aktivní pololetí
+    const r = await solFetchSemester(base, auth, pid, null);
+    if(r.ok && r.marks.length) results.push({ sem: solCurrentSem(), marks:r.marks, subjects:r.subjects });
+  }
+  return { uj, out: solBuildData(results) };
+}
+// zapíše stažená data do aplikace (zachová rozbalené předměty; keepSem = neměnit vybrané pololetí)
+function solApplyData(out, keepSem){
+  const openIds = new Set((data.subjects||[]).filter(s=>s.open).map(s=>s.id));
+  out.subjects.forEach(s=>{ if(openIds.has(s.id)) s.open = true; });
+  if(keepSem) out.sem = (data && data.sem===2) ? 2 : 1;
+  data = migrate(out);
+  save();
+  localStorage.setItem('prumer_sol_lastsync', new Date().toISOString());
+  render(); renderSolStatus();
+}
+
+// stav pod tlačítkem (auto zapnuto / čas poslední synchronizace / odhlásit)
+function renderSolStatus(msg){
+  const el = document.getElementById('solStatus');
+  if(!el) return;
+  if(msg){ el.textContent = msg; return; }
+  const auto = localStorage.getItem('prumer_sol_auto')==='1';
+  if(!auto){ el.textContent = 'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.'; return; }
+  const last = localStorage.getItem('prumer_sol_lastsync');
+  let t = '';
+  if(last){ const d = new Date(last); t = ' · naposledy '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+  el.innerHTML = '✓ Aktualizuje se samo'+t+' · <a href="#" onclick="solLogout();return false" style="color:var(--ink-dim)">odhlásit</a>';
+}
+function solLogout(){
+  confirmDialog('Vypnout automatickou aktualizaci?', 'Smaže se uložené přihlášení. Známky v aplikaci zůstanou, ale dál se nebudou aktualizovat samy.', 'Vypnout', ()=>{
+    localStorage.removeItem('prumer_sol_refresh');
+    localStorage.setItem('prumer_sol_auto','0');
+    renderSolStatus();
+  });
+}
+
+// tichá automatická synchronizace přes refresh token (běží při otevření/návratu appky)
+let solSyncing = false;
+async function solAutoSync(force){
+  if(solSyncing) return;
+  if(localStorage.getItem('prumer_sol_auto')!=='1') return;
+  const refresh = localStorage.getItem('prumer_sol_refresh');
+  if(!refresh) return;
+  const last = localStorage.getItem('prumer_sol_lastsync');
+  if(!force && last && (Date.now() - new Date(last).getTime()) < 2*60*1000) return;  // ne častěji než 1× za 2 min
+  solSyncing = true; renderSolStatus('Aktualizuji známky…');
+  try {
+    const base = SOL_API;
+    const tk = await solTokenRefresh(base, refresh);
+    if(!tk.ok){
+      // refresh token vypršel → vypni auto, ať to neotravuje; uživatel se časem přihlásí znovu
+      if(tk.status===400 || (tk.j && tk.j.error)){ localStorage.removeItem('prumer_sol_refresh'); localStorage.setItem('prumer_sol_auto','0'); }
+      renderSolStatus(); return;
+    }
+    if(tk.j.refresh_token) localStorage.setItem('prumer_sol_refresh', tk.j.refresh_token);  // rotace
+    const auth = { 'Authorization':'Bearer '+tk.j.access_token };
+    const dl = await solDownloadData(base, auth);
+    if(dl && dl.out.subjects.length) solApplyData(dl.out, true);
+    else renderSolStatus();
+  } catch(e){ renderSolStatus(); }
+  finally { solSyncing = false; }
+}
+
 async function runSolImport(){
   const user = document.getElementById('solUser').value.trim();
   const pass = document.getElementById('solPass').value;
@@ -1370,59 +1463,34 @@ async function runSolImport(){
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Přihlašuji…';
   try {
-    // 1) přihlášení → token
-    const tr = await fetch(base + '/solapi/api/connect/token', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type:'password', username:user, password:pass,
-        client_id:'test_client', scope:'offline_access sol_api'
-      })
-    });
-    const tj = await tr.json().catch(()=>null);
-    if(!tr.ok || !tj || !tj.access_token){
-      let msg = tj && tj.error_description ? tj.error_description : ('Přihlášení selhalo ('+tr.status+').');
-      if(tj && tj.error==='invalid_credentials') msg = 'Špatné přihlašovací jméno nebo heslo.';
+    const tk = await solTokenPassword(base, user, pass);
+    if(!tk.ok){
+      let msg = (tk.j && tk.j.error==='invalid_credentials') ? 'Špatné přihlašovací jméno nebo heslo.'
+              : (tk.j && tk.j.error_description ? tk.j.error_description : ('Přihlášení selhalo ('+tk.status+').'));
       alertDialog('Nepovedlo se', msg);
       return;
     }
-    const auth = { 'Authorization': 'Bearer ' + tj.access_token };
-
-    // 2) účet → personID + školní rok
     btn.textContent = 'Stahuji…';
-    const ur = await fetch(base + '/solapi/api/v1/user', { headers: auth });
-    const uj = await ur.json().catch(()=>null);
-    if(!ur.ok || !uj || !uj.personID){ alertDialog('Nepovedlo se','Nepodařilo se načíst účet ('+ur.status+').'); return; }
+    const auth = { 'Authorization': 'Bearer ' + tk.j.access_token };
+    const dl = await solDownloadData(base, auth);
+    if(!dl){ alertDialog('Nepovedlo se','Nepodařilo se načíst účet nebo známky.'); return; }
 
-    // 3) známky – obě pololetí zvlášť (ID roku +1 = 1. pol, +2 = 2. pol)
-    const pid = uj.personID;
-    const sem1Id = solBumpId(uj.schoolYearId, 1);
-    const sem2Id = solBumpId(uj.schoolYearId, 2);
-    const results = [];
-    if(sem1Id){ const r = await solFetchSemester(base, auth, pid, sem1Id); if(r.ok) results.push({ sem:1, marks:r.marks, subjects:r.subjects }); }
-    if(sem2Id){ const r = await solFetchSemester(base, auth, pid, sem2Id); if(r.ok) results.push({ sem:2, marks:r.marks, subjects:r.subjects }); }
-    // pojistka: kdyby odvození ID nesedělo, vezmi aspoň aktivní pololetí napřímo
-    if(!results.length){
-      const r = await solFetchSemester(base, auth, pid, null);
-      if(r.ok && r.marks.length) results.push({ sem: solCurrentSem(), marks:r.marks, subjects:r.subjects });
-    }
-
-    const out = solBuildData(results);
+    const subjN = dl.out.subjects.length;
+    const gradeN = dl.out.subjects.reduce((a,s)=>a+s.grades.length,0);
     document.getElementById('solPass').value = '';
     localStorage.setItem('prumer_sol_user', user);
-    const subjN = out.subjects.length;
-    const gradeN = out.subjects.reduce((a,s)=>a+s.grades.length,0);
     closeSolSheet();
     if(!gradeN){
-      alertDialog('Žádné známky','Pro '+(uj.fullName||'tebe')+' se nepodařilo načíst žádné číselné známky.');
+      alertDialog('Žádné známky','Pro '+(dl.uj.fullName||'tebe')+' se nepodařilo načíst žádné číselné známky.');
       return;
     }
     confirmDialog('Načíst známky?',
-      'Pro '+(uj.fullName||'tebe')+' se stáhlo '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+' (obě pololetí). Současné známky se přepíšou.',
+      'Pro '+(dl.uj.fullName||'tebe')+' se stáhlo '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+' (obě pololetí). Současné známky se přepíšou a od teď se budou aktualizovat samy.',
       'Načíst', ()=>{
-        data = migrate(out);
-        save(); render();
-        alertDialog('Hotovo', 'Známky ze Škola OnLine jsou načtené.');
+        if(tk.j.refresh_token){ localStorage.setItem('prumer_sol_refresh', tk.j.refresh_token); localStorage.setItem('prumer_sol_auto','1'); }
+        dl.out.sem = solCurrentSem();
+        solApplyData(dl.out, false);
+        alertDialog('Hotovo', 'Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
       });
   } catch(e){
     alertDialog('Chyba spojení', String((e&&e.message)||e) + '\n(Zkus to na živé adrese, ne v náhledu — náhled může blokovat cizí spojení.)');
@@ -1886,6 +1954,11 @@ if(matFileEl) matFileEl.addEventListener('change', function(e){
 
 render();
 initMaterials();
+renderSolStatus();
+solAutoSync();   // tichá aktualizace při otevření
+// znovu po návratu do popředí a periodicky, dokud je appka otevřená (jen iniciuje, throttle uvnitř)
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) solAutoSync(); });
+setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
 </script>
 </body>
 </html>
