@@ -712,14 +712,6 @@
 </div>
 <div id="solStatus" class="backup-note" style="margin-top:8px"></div>
 
-<div class="section-label" style="margin-top:28px">Záloha dat</div>
-<div class="backup">
-  <button class="subj-action" onclick="exportData()">Zálohovat</button>
-  <button class="subj-action" onclick="document.getElementById('importFile').click()">Obnovit ze zálohy</button>
-</div>
-<input type="file" id="importFile" accept="application/json,.json" style="display:none">
-<p class="backup-note">Záloha je jeden soubor se všemi známkami. Ulož si ho do Souborů nebo pošli sám sobě. Obnova přepíše současná data.</p>
-
 <div class="section-label" style="margin-top:28px">Zpětná vazba</div>
 <div class="backup">
   <button class="subj-action" onclick="openFeedbackSheet()">Napsat zpětnou vazbu</button>
@@ -1232,56 +1224,6 @@ function showDialog(title, msg, isInput, okLabel, onOk, value, opts){
     }
   };
 })();
-
-/* ---- záloha a obnova dat ---- */
-async function exportData(){
-  const payload = JSON.stringify(data, null, 2);
-  const d = new Date().toISOString().slice(0,10);
-  const fname = 'prumer-zaloha-'+d+'.json';
-  // na iPhonu nabídne sdílení (uložit do Souborů, poslat sám sobě…)
-  try {
-    const file = new File([payload], fname, { type:'application/json' });
-    if(navigator.canShare && navigator.canShare({ files:[file] })){
-      await navigator.share({ files:[file], title:'Záloha známek' });
-      return;
-    }
-  } catch(e){ if(e && e.name==='AbortError') return; }
-  // jinak klasické stažení souboru
-  const blob = new Blob([payload], { type:'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = fname;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
-}
-
-function importData(file){
-  const reader = new FileReader();
-  reader.onload = () => {
-    let parsed = null;
-    try { parsed = JSON.parse(reader.result); } catch(e){}
-    if(!parsed || !Array.isArray(parsed.subjects)){
-      alertDialog('Soubor nejde načíst', 'Tohle nevypadá jako záloha této aplikace. Vyber soubor prumer-zaloha-….json.');
-      return;
-    }
-    const subjN = parsed.subjects.length;
-    const gradeN = parsed.subjects.reduce((a,s)=>a+((s.grades&&s.grades.length)||0),0);
-    confirmDialog('Obnovit ze zálohy?',
-      'Načte se '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+'. Současná data se přepíšou.',
-      'Obnovit', () => {
-        data = migrate(parsed);
-        save(); render();
-        alertDialog('Hotovo', 'Data byla obnovena ze zálohy.');
-      });
-  };
-  reader.readAsText(file);
-}
-
-document.getElementById('importFile').addEventListener('change', function(e){
-  const f = e.target.files && e.target.files[0];
-  if(f) importData(f);
-  e.target.value = '';
-});
 
 /* ===================== Škola OnLine ===================== */
 function openSolSheet(){
