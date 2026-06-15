@@ -308,7 +308,7 @@
   .delta-bad { color: var(--bad); font-weight: 700; }
 
   /* ---------- inputs ---------- */
-  input, select {
+  input, select, textarea {
     font-family: inherit;
     font-size: 15px;
     background: var(--bg);
@@ -319,7 +319,7 @@
     width: 100%;
     appearance: none;
   }
-  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
   label.fld { display: block; }
   label.fld span {
     display: block; font-size: 12px; color: var(--ink-dim);
@@ -719,6 +719,12 @@
 </div>
 <input type="file" id="importFile" accept="application/json,.json" style="display:none">
 <p class="backup-note">Záloha je jeden soubor se všemi známkami. Ulož si ho do Souborů nebo pošli sám sobě. Obnova přepíše současná data.</p>
+
+<div class="section-label" style="margin-top:28px">Zpětná vazba</div>
+<div class="backup">
+  <button class="subj-action" onclick="openFeedbackSheet()">Napsat zpětnou vazbu</button>
+</div>
+<p class="backup-note">Napiš nápad nebo chybu. Zpráva je soukromá — uvidí ji jen autor aplikace, nikde se veřejně nezobrazuje.</p>
 </div><!-- /pageGrades -->
 
 <div id="pageMaterials" style="display:none">
@@ -816,6 +822,26 @@
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeSolSheet()">Zrušit</button>
     <button class="btn btn-primary" id="solBtn" onclick="runSolImport()">Stáhnout</button>
+  </div>
+</div>
+
+<!-- feedback sheet -->
+<div class="sheet-backdrop" id="feedbackBackdrop" onclick="closeFeedbackSheet()"></div>
+<div class="sheet" id="feedbackSheet">
+  <div class="sheet-grab"></div>
+  <h3>Zpětná vazba</h3>
+  <div class="fields">
+    <label class="fld"><span>Tvoje zpráva</span>
+      <textarea id="fbMessage" rows="4" placeholder="Nápad, co zlepšit, nebo chyba…" style="resize:vertical;line-height:1.4"></textarea>
+    </label>
+    <label class="fld"><span>Kontakt (nepovinné)</span>
+      <input type="text" id="fbContact" placeholder="e-mail / jméno, kdybys chtěl odpověď">
+    </label>
+  </div>
+  <p class="backup-note" style="margin:12px 2px 0">Zpráva je soukromá — pošle se jen autorovi aplikace a nikde se veřejně nezobrazuje.</p>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeFeedbackSheet()">Zrušit</button>
+    <button class="btn btn-primary" id="fbBtn" onclick="sendFeedback()">Odeslat</button>
   </div>
 </div>
 
@@ -1264,6 +1290,34 @@ function openSolSheet(){
   showSheet('sol');
 }
 function closeSolSheet(){ hideSheet('sol'); }
+
+/* ===================== Zpětná vazba (soukromá) ===================== */
+function openFeedbackSheet(){
+  document.getElementById('fbMessage').value = '';
+  document.getElementById('fbContact').value = '';
+  showSheet('feedback');
+}
+function closeFeedbackSheet(){ hideSheet('feedback'); }
+async function sendFeedback(){
+  const msg = document.getElementById('fbMessage').value.trim();
+  const contact = document.getElementById('fbContact').value.trim();
+  if(!msg){ alertDialog('Prázdná zpráva','Napiš prosím nejdřív zprávu.'); return; }
+  const c = getSB();
+  if(!c){ alertDialog('Není připojení','Odeslání potřebuje cloud (Supabase).'); return; }
+  const btn = document.getElementById('fbBtn'); const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Odesílám…';
+  try {
+    const meta = 'uid=' + uid() + (mat.code ? (' třída=' + mat.code) : '') + ' · ' + (navigator.userAgent || '').slice(0,120);
+    const ins = await c.from('feedback').insert({ message: msg, contact: contact || null, meta });
+    if(ins.error) throw ins.error;
+    closeFeedbackSheet();
+    alertDialog('Děkuju!', 'Zpráva byla odeslaná. Díky za zpětnou vazbu!');
+  } catch(e){
+    const m = String((e&&e.message)||e);
+    if(/feedback|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Není nastaveno','V Supabase chybí tabulka „feedback" — spusť SQL z návodu v chatu.');
+    else alertDialog('Nepovedlo se', m);
+  } finally { btn.disabled = false; btn.textContent = label; }
+}
 
 /* Škola OnLine je centrálně hostovaná – API běží na aplikace.skolaonline.cz.
    CORS je otevřený (origin *), takže se dá volat přímo z prohlížeče bez serveru.
