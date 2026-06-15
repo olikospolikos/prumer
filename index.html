@@ -668,6 +668,12 @@
   <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
 </div>
 
+<div class="section-label" style="margin-top:28px">Známky ze Škola OnLine</div>
+<div class="backup">
+  <button class="subj-action" onclick="openSolSheet()">Načíst známky online</button>
+</div>
+<p class="backup-note">Stáhne tvoje aktuální známky přímo ze Škola OnLine. Heslo se nikam neukládá — použije se jen pro jedno stažení a současné známky se přepíšou.</p>
+
 <div class="section-label" style="margin-top:28px">Záloha dat</div>
 <div class="backup">
   <button class="subj-action" onclick="exportData()">Zálohovat</button>
@@ -1276,43 +1282,150 @@ function openSolSheet(){
 }
 function closeSolSheet(){ hideSheet('sol'); }
 
+/* Škola OnLine je centrálně hostovaná – API běží na aplikace.skolaonline.cz.
+   CORS je otevřený (origin *), takže se dá volat přímo z prohlížeče bez serveru.
+   Známky: /solapi/api/v1/students/{personID}/marks/list
+     - SigningFilter=all  → vrátí VŠECHNY známky (bez něj jen nepodepsané/nové!)
+     - Pagination.PageSize/PageNumber → stránkování
+     - semesterId určuje pololetí; ID 1. pol = schoolYearId+1, 2. pol = schoolYearId+2 */
+const SOL_API = 'https://aplikace.skolaonline.cz';
+
+function solApiBase(instance){
+  let s = String(instance||'').trim().replace(/\/+$/,'');
+  if(/aplikace\.skolaonline\.cz/i.test(s)) return s.replace(/^http:/,'https:');
+  return SOL_API;
+}
+function solBumpId(id, by){
+  const m = String(id||'').match(/^([^\d]*)(\d+)$/);
+  return m ? m[1] + (parseInt(m[2],10)+by) : null;   // C29933 + 1 → C29934
+}
+function solCurrentSem(){
+  const m = new Date().getMonth()+1;
+  return (m>=9 || m===1) ? 1 : 2;                     // 1. pol: září–leden, 2. pol: únor–srpen
+}
+function solParseMark(txt){
+  const t = String(txt||'').trim();
+  const d = t.match(/[1-5]/);
+  if(!d) return null;                 // slovní hodnocení, „N", „Sl", „–" apod. přeskoč
+  let v = parseInt(d[0],10);
+  if(t.indexOf('-')>=0) v += 0.5;     // např. „1-" bereme jako 1,5
+  else if(t.indexOf('+')>=0) v -= 0.5;
+  return Math.max(1, Math.min(5, v));
+}
+
+// stáhne jedno pololetí (se stránkováním a SigningFilter=all)
+async function solFetchSemester(base, auth, pid, semId){
+  let marks = [], subjects = [], page = 1;
+  for(;;){
+    let url = base + '/solapi/api/v1/students/' + encodeURIComponent(pid) + '/marks/list'
+            + '?SigningFilter=all&Pagination.PageNumber=' + page + '&Pagination.PageSize=200';
+    if(semId) url += '&semesterId=' + encodeURIComponent(semId);
+    const r = await fetch(url, { headers: auth });
+    if(!r.ok) return { ok:false, marks:[], subjects:[] };
+    const j = await r.json().catch(()=>null);
+    if(!j || !Array.isArray(j.marks)) return { ok:false, marks:[], subjects:[] };
+    marks = marks.concat(j.marks);
+    if(Array.isArray(j.subjects) && j.subjects.length) subjects = j.subjects;
+    if(j.marks.length < 200) break;
+    if(++page > 20) break;            // pojistka proti nekonečné smyčce
+  }
+  return { ok:true, marks, subjects };
+}
+
+// poskládá známky z obou pololetí do struktury aplikace
+function solBuildData(semResults){
+  const subjName = {};
+  semResults.forEach(sr => (sr.subjects||[]).forEach(s => { subjName[s.id] = s.name || s.abbrev || 'Předmět'; }));
+  const byId = {}; const order = [];
+  function ensure(id){
+    if(!byId[id]){ byId[id] = { id:'sol_'+id, name: subjName[id] || 'Předmět', grades: [], open:false }; order.push(id); }
+    return byId[id];
+  }
+  semResults.forEach(sr => {
+    (sr.marks||[]).forEach(mk => {
+      if(mk.isPoints || mk.isPercents) return;        // bodové/procentní hodnocení není klasická 1–5
+      const val = solParseMark(mk.markText);
+      if(val==null) return;
+      ensure(mk.subjectId).grades.push({
+        id: 'g'+(mk.id || (Date.now()+'_'+Math.random().toString(36).slice(2,6))),
+        mark: val,
+        weight: (typeof mk.weight==='number' && mk.weight>0) ? mk.weight : 1,
+        desc: mk.theme || '',
+        date: String(mk.markDate||'').slice(0,10),
+        sem: sr.sem                                    // pololetí podle toho, ze kterého dotazu známka je
+      });
+    });
+  });
+  const subjects = order.map(id=>byId[id]).filter(s=>s.grades.length);  // jen předměty se známkami
+  return { sem: solCurrentSem(), subjects };
+}
+
 async function runSolImport(){
   const user = document.getElementById('solUser').value.trim();
   const pass = document.getElementById('solPass').value;
-  const instance = (document.getElementById('solInstance').value || '').trim() || 'https://aplikace.skolaonline.cz';
+  const base = solApiBase(document.getElementById('solInstance').value);
   if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
-  if(!sbConfigured()){ alertDialog('Není nastaveno','Nejdřív musí být nastavený Supabase a nasazená funkce znamky.'); return; }
 
   const btn = document.getElementById('solBtn');
   const label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Stahuji…';
+  btn.disabled = true; btn.textContent = 'Přihlašuji…';
   try {
-    const resp = await fetch(SB_URL + '/functions/v1/znamky', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
-      body: JSON.stringify({ username:user, password:pass, instance })
+    // 1) přihlášení → token
+    const tr = await fetch(base + '/solapi/api/connect/token', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type:'password', username:user, password:pass,
+        client_id:'test_client', scope:'offline_access sol_api'
+      })
     });
-    let out = null;
-    try { out = await resp.json(); } catch(e){}
-    if(!resp.ok || !out || out.error || !Array.isArray(out.subjects)){
-      const msg = (out && out.error) ? out.error : ('Chyba ' + resp.status);
+    const tj = await tr.json().catch(()=>null);
+    if(!tr.ok || !tj || !tj.access_token){
+      let msg = tj && tj.error_description ? tj.error_description : ('Přihlášení selhalo ('+tr.status+').');
+      if(tj && tj.error==='invalid_credentials') msg = 'Špatné přihlašovací jméno nebo heslo.';
       alertDialog('Nepovedlo se', msg);
       return;
     }
+    const auth = { 'Authorization': 'Bearer ' + tj.access_token };
+
+    // 2) účet → personID + školní rok
+    btn.textContent = 'Stahuji…';
+    const ur = await fetch(base + '/solapi/api/v1/user', { headers: auth });
+    const uj = await ur.json().catch(()=>null);
+    if(!ur.ok || !uj || !uj.personID){ alertDialog('Nepovedlo se','Nepodařilo se načíst účet ('+ur.status+').'); return; }
+
+    // 3) známky – obě pololetí zvlášť (ID roku +1 = 1. pol, +2 = 2. pol)
+    const pid = uj.personID;
+    const sem1Id = solBumpId(uj.schoolYearId, 1);
+    const sem2Id = solBumpId(uj.schoolYearId, 2);
+    const results = [];
+    if(sem1Id){ const r = await solFetchSemester(base, auth, pid, sem1Id); if(r.ok) results.push({ sem:1, marks:r.marks, subjects:r.subjects }); }
+    if(sem2Id){ const r = await solFetchSemester(base, auth, pid, sem2Id); if(r.ok) results.push({ sem:2, marks:r.marks, subjects:r.subjects }); }
+    // pojistka: kdyby odvození ID nesedělo, vezmi aspoň aktivní pololetí napřímo
+    if(!results.length){
+      const r = await solFetchSemester(base, auth, pid, null);
+      if(r.ok && r.marks.length) results.push({ sem: solCurrentSem(), marks:r.marks, subjects:r.subjects });
+    }
+
+    const out = solBuildData(results);
     document.getElementById('solPass').value = '';
     localStorage.setItem('prumer_sol_user', user);
     const subjN = out.subjects.length;
-    const gradeN = out.subjects.reduce((a,s)=>a+((s.grades&&s.grades.length)||0),0);
+    const gradeN = out.subjects.reduce((a,s)=>a+s.grades.length,0);
     closeSolSheet();
+    if(!gradeN){
+      alertDialog('Žádné známky','Pro '+(uj.fullName||'tebe')+' se nepodařilo načíst žádné číselné známky.');
+      return;
+    }
     confirmDialog('Načíst známky?',
-      'Stáhlo se '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+'. Současné známky se přepíšou.',
+      'Pro '+(uj.fullName||'tebe')+' se stáhlo '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+' (obě pololetí). Současné známky se přepíšou.',
       'Načíst', ()=>{
-        data = migrate({ sem: out.sem || 1, subjects: out.subjects });
+        data = migrate(out);
         save(); render();
         alertDialog('Hotovo', 'Známky ze Škola OnLine jsou načtené.');
       });
   } catch(e){
-    alertDialog('Chyba spojení', String((e&&e.message)||e));
+    alertDialog('Chyba spojení', String((e&&e.message)||e) + '\n(Zkus to na živé adrese, ne v náhledu — náhled může blokovat cizí spojení.)');
   } finally {
     btn.disabled = false; btn.textContent = label;
   }
