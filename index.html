@@ -1531,6 +1531,7 @@ let mat = { view:'gate', code:null, name:null, subject:null, category:'zapisky',
 let calRows = [];
 let matRows = [];
 let matFolders = [];
+let matSubjects = [];   // vlastní předměty třídy (přidané uživateli), sdílené přes Supabase
 
 function matSaveClass(){
   if(mat.code) localStorage.setItem('prumer_mat_class', JSON.stringify({ code:mat.code, name:mat.name }));
@@ -1651,13 +1652,55 @@ function renderMatClass(wrap, h1){
 
   const grid = document.createElement('div');
   grid.className = 'mat-subjects';
-  DEFAULT_SUBJECTS.forEach(name=>{
+  wrap.appendChild(grid);
+  fillMatSubjectGrid(grid);                 // hned vykresli (s tím, co už víme)
+  loadMatSubjects().then(()=> fillMatSubjectGrid(grid));   // pak doplň vlastní předměty z cloudu
+}
+
+function allMatSubjects(){
+  const names = DEFAULT_SUBJECTS.slice();
+  matSubjects.forEach(n=>{ if(n && !names.some(x=>x.toLowerCase()===n.toLowerCase())) names.push(n); });
+  return names;
+}
+function fillMatSubjectGrid(grid){
+  if(!grid) return;
+  grid.innerHTML = '';
+  allMatSubjects().forEach(name=>{
     const b = document.createElement('button');
     b.className = 'mat-subj'; b.textContent = name;
     b.onclick = ()=>{ mat.subject = name; mat.category = 'zapisky'; mat.folder = ''; mat.view = 'subject'; renderMaterials(); };
     grid.appendChild(b);
   });
-  wrap.appendChild(grid);
+  const add = document.createElement('button');
+  add.className = 'mat-subj'; add.style.borderStyle = 'dashed'; add.style.color = 'var(--ink-dim)';
+  add.textContent = '+ Přidat předmět';
+  add.onclick = addMatSubject;
+  grid.appendChild(add);
+}
+async function loadMatSubjects(){
+  const c = getSB(); if(!c) return;
+  try {
+    const r = await c.from('predmety').select('*').eq('code', mat.code);
+    matSubjects = (r.error ? [] : (r.data||[])).map(x=>x.name).filter(Boolean);
+  } catch(e){ matSubjects = []; }   // tabulka predmety nemusí ještě existovat
+}
+function addMatSubject(){
+  const c = getSB(); if(!c){ alertDialog('Není připojení','Materiály potřebují cloud (Supabase).'); return; }
+  promptDialog('Nový předmět', '', async (name)=>{
+    name = (name||'').trim();
+    if(!name) return;
+    if(allMatSubjects().some(x=>x.toLowerCase()===name.toLowerCase())){ alertDialog('Už existuje','Předmět s tímhle názvem už ve třídě je.'); return; }
+    try {
+      const ins = await c.from('predmety').insert({ code:mat.code, name, owner:uid() });
+      if(ins.error) throw ins.error;
+      await loadMatSubjects();
+      renderMaterials();
+    } catch(e){
+      const m = String((e&&e.message)||e);
+      if(/predmety|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Předměty nejsou nastavené','V Supabase je potřeba spustit SQL pro tabulku „predmety" (viz návod v chatu).');
+      else alertDialog('Nepovedlo se', m);
+    }
+  });
 }
 
 /* ---- kalendar testu ---- */
@@ -1755,10 +1798,11 @@ function drawWeek(){
   }
 }
 
-function openTestSheet(prefill){
+async function openTestSheet(prefill){
   document.getElementById('testDate').value = (typeof prefill === 'string' && prefill) ? prefill : isoLocal(new Date());
   const sel = document.getElementById('testSubject');
-  sel.innerHTML = DEFAULT_SUBJECTS.map(s=>'<option>'+esc(s)+'</option>').join('');
+  if(!matSubjects.length){ try { await loadMatSubjects(); } catch(e){} }   // ať jsou vlastní předměty i tady
+  sel.innerHTML = allMatSubjects().map(s=>'<option>'+esc(s)+'</option>').join('');
   document.getElementById('testTheme').value = '';
   showSheet('test');
 }
