@@ -7,7 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0f1115">
 <title>Průměr</title>
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Pr%C5%AFm%C4%9Br%22%2C%22short_name%22%3A%22Pr%C5%AFm%C4%9Br%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f1115%22%2C%22theme_color%22%3A%22%230f1115%22%2C%22icons%22%3A%5B%5D%7D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -647,6 +649,28 @@
     font-size: 18px; line-height: 1; font-family: inherit; padding: 8px 0;
   }
   .cal-add:active { background: var(--bg-elev2); }
+
+  /* ---------- obrácená kalkulačka (co potřebuju) ---------- */
+  .need-box{
+    margin:6px 0 12px; background:var(--accent-soft);
+    border:1px solid rgba(232,184,75,0.25); border-radius:12px; padding:12px 14px;
+  }
+  .need-title{ font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:8px; }
+  .need-row{ font-size:13px; color:var(--ink-dim); line-height:1.6; }
+  .need-row .need-n{ display:inline-block; min-width:42px; color:var(--ink); font-weight:700; }
+  .need-row b{ color:var(--ink); font-weight:700; }
+
+  /* ---------- blížící se testy (hlavní strana) ---------- */
+  .up-list{ padding:0 16px; display:flex; flex-direction:column; gap:8px; margin-bottom:22px; }
+  .up-item{ display:flex; align-items:center; gap:12px; background:var(--bg-elev); border:1px solid var(--line); border-radius:14px; padding:11px 14px; }
+  .up-when{
+    flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent);
+    background:var(--accent-soft); border:1px solid rgba(232,184,75,0.3);
+    border-radius:9px; padding:6px 10px; min-width:64px; text-align:center;
+  }
+  .up-meta{ flex:1; min-width:0; }
+  .up-subj{ font-size:14px; font-weight:600; }
+  .up-theme{ font-size:12px; color:var(--ink-faint); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -670,6 +694,8 @@
   </div>
   <div class="num" id="overallNum">—</div>
 </div>
+
+<div id="upcoming"></div>
 
 <div class="calc">
   <div class="calc-head" id="calcHead">
@@ -944,6 +970,36 @@ function markColor(m) {
   return 'var(--bad)';
 }
 
+/* ---- obrácená kalkulačka: co je potřeba z příští práce ---- */
+function roundedGrade(cur){
+  if(cur==null) return 1;
+  if(cur<=1.5) return 1; if(cur<=2.5) return 2; if(cur<=3.5) return 3; if(cur<=4.5) return 4; return 5;
+}
+// A = cílový průměr (≤ A → vyjde na danou známku). Vrátí text požadavku na 1 velkou práci.
+function reqText(S, T, A){
+  const W = 1;                       // velká váha
+  const Mmax = (A*(T+W) - S) / W;    // nejhorší známka, co ještě udrží průměr ≤ A
+  if(Mmax >= 5) return 'stačí cokoliv za velkou váhu';
+  if(Mmax >= 1) return 'stačí nejhůř <b>'+Math.floor(Mmax+1e-9)+'</b> za velkou váhu';
+  const denom = W*(A-1);
+  if(denom > 0){
+    const k = Math.ceil((S - A*T)/denom - 1e-9);   // kolik jedniček za velkou váhu
+    if(k>0 && k<=6) return 'potřebuješ <b>'+k+'×&nbsp;1</b> za velkou váhu';
+  }
+  return 'jednou prací už to nedáš';
+}
+function needHTML(grades){
+  let T=0, S=0;
+  grades.forEach(g=>{ T += g.weight; S += g.weight*g.mark; });
+  const cur = T>0 ? S/T : null;
+  const R = roundedGrade(cur);
+  let rows = '';
+  for(let n=1; n<=Math.min(3, R||1); n++){
+    rows += '<div class="need-row"><span class="need-n">Na '+n+'</span> '+reqText(S,T,n+0.5)+'</div>';
+  }
+  return '<div class="need-title">Co potřebuješ z příští práce</div>'+rows;
+}
+
 function render() {
   updateSemUI();
   // overall = average of subject averages that have grades (jen aktuální pololetí)
@@ -1009,6 +1065,13 @@ function renderSubject(s) {
       row.querySelector('.grade-del').onclick = () => { delGrade(s.id, g.id); };
       body.appendChild(row);
     });
+
+    if(gs.length){
+      const need = document.createElement('div');
+      need.className = 'need-box';
+      need.innerHTML = needHTML(gs);
+      body.appendChild(need);
+    }
 
     const addBtn = document.createElement('button');
     addBtn.className = 'add-grade-btn';
@@ -1505,6 +1568,7 @@ function setPage(p){
   document.getElementById('tabMaterials').classList.toggle('sel', !grades);
   window.scrollTo(0,0);
   if(!grades) renderMaterials();
+  else renderUpcoming();
 }
 
 let sb = null;
@@ -1705,6 +1769,34 @@ function mondayOf(d){ const x=new Date(d); x.setHours(0,0,0,0); const wd=(x.getD
 function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
 function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function weekStartDate(){ if(!mat.weekStart) mat.weekStart = mondayOf(new Date()); return mat.weekStart; }
+
+/* ---- blížící se testy na hlavní straně ---- */
+function parseLocalDate(iso){ const p=String(iso||'').split('-'); return new Date(+p[0], (+p[1]||1)-1, +p[2]||1); }
+function daysUntil(d){ const t=new Date(); t.setHours(0,0,0,0); return Math.round((d - t)/86400000); }
+async function renderUpcoming(){
+  const box = document.getElementById('upcoming');
+  if(!box) return;
+  const c = getSB();
+  if(!c || !mat.code){ box.innerHTML=''; return; }   // bez třídy / cloudu nic
+  try {
+    const today = isoLocal(new Date());
+    const r = await c.from('kalendar').select('*').eq('code', mat.code).gte('date', today).order('date',{ascending:true}).limit(6);
+    if(r.error) throw r.error;
+    const rows = r.data || [];
+    if(!rows.length){ box.innerHTML=''; return; }
+    let html = '<div class="section-label" style="margin-top:6px">Blížící se testy</div><div class="up-list">';
+    rows.forEach(t=>{
+      const days = daysUntil(parseLocalDate(t.date));
+      const when = days<=0 ? 'dnes' : days===1 ? 'zítra' : ('za '+days+' '+plur(days,'den','dny','dní'));
+      html += '<div class="up-item"><div class="up-when">'+when+'</div>'
+            + '<div class="up-meta"><div class="up-subj">'+esc(t.subject||'')+'</div>'
+            + (t.theme ? '<div class="up-theme">'+esc(t.theme)+'</div>' : '')
+            + '</div></div>';
+    });
+    html += '</div>';
+    box.innerHTML = html;
+  } catch(e){ box.innerHTML=''; }
+}
 
 function renderMatCalendar(wrap){
   weekStartDate();
@@ -2138,8 +2230,14 @@ initMaterials();
 renderSolStatus();
 solAutoSync();   // tichá aktualizace při otevření
 // znovu po návratu do popředí a periodicky, dokud je appka otevřená (jen iniciuje, throttle uvnitř)
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) solAutoSync(); });
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ solAutoSync(); renderUpcoming(); } });
 setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
+
+// Supabase i ikony/fonty se načítají až po tomto skriptu → dořeš po 'load'
+window.addEventListener('load', ()=>{
+  renderUpcoming();   // blížící se testy (potřebuje načtený Supabase)
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }   // PWA offline
+});
 </script>
 </body>
 </html>
