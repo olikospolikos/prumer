@@ -1,6 +1,8 @@
-/* Service worker pro appku Průměr – offline cache stránky, fontů a ikon.
-   Verzi zvyš (v2, v3…) při změnách, ať se cache obnoví. */
-const CACHE = 'prumer-v1';
+/* Service worker pro appku Průměr.
+   Stránka (HTML) = network-first → vždy čerstvá, když jsi online; offline z cache.
+   Fonty/ikony/knihovny = stale-while-revalidate (rychlé z cache, na pozadí se obnoví).
+   Verzi cache zvyš (v3, v4…) při změnách, ať se stará vyhodí. */
+const CACHE = 'prumer-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -11,9 +13,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -28,26 +28,34 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // dynamická data nikdy necacheovat (Supabase, Škola OnLine)
-  if (/supabase\.co|skolaonline\.cz/.test(url.host)) return;
+  if (/supabase\.co|skolaonline\.cz/.test(url.host)) return;   // dynamická data necacheovat
 
+  const isDoc = req.mode === 'navigate' || req.destination === 'document';
+  if (isDoc) {
+    // network-first: čerstvá stránka online, cache jako záloha offline
+    e.respondWith((async () => {
+      try {
+        const res = await fetch(req);
+        const c = await caches.open(CACHE);
+        c.put('./index.html', res.clone());
+        return res;
+      } catch (err) {
+        return (await caches.match('./index.html')) || (await caches.match('./'))
+            || new Response('Offline', { status: 504 });
+      }
+    })());
+    return;
+  }
+
+  // ostatní zdroje: vrať z cache hned a na pozadí obnov
   e.respondWith((async () => {
     const cached = await caches.match(req);
-    if (cached) return cached;
-    try {
-      const res = await fetch(req);
-      // ulož i fonty/knihovny z cizích domén (opaque) pro offline běh
+    const network = fetch(req).then(res => {
       if (res && (res.ok || res.type === 'opaque')) {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(req, copy));
+        caches.open(CACHE).then(c => c.put(req, res.clone()));
       }
       return res;
-    } catch (err) {
-      if (req.mode === 'navigate') {
-        const idx = await caches.match('./index.html');
-        if (idx) return idx;
-      }
-      return new Response('', { status: 504, statusText: 'offline' });
-    }
+    }).catch(() => cached);
+    return cached || network;
   })());
 });

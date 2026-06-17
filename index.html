@@ -984,10 +984,10 @@ function reqText(S, T, A){
   if(Wneed <= 1.000001){
     const opts = [0.2, 0.4, 0.6, 0.8, 1];
     const w = opts.find(o => o >= Wneed - 1e-9) || 1;
-    return 'jednička s váhou <b>'+String(w).replace('.', ',')+'</b>';
+    return 'potřebuješ <b>1 za váhu '+w.toFixed(1).replace('.', ',')+'</b>';
   }
   const k = Math.ceil(Wneed - 1e-9);       // jedna plná jednička nestačí → kolik jich je třeba
-  if(k <= 6) return '<b>'+k+'×</b> jednička s plnou váhou';
+  if(k <= 6) return 'potřebuješ <b>'+k+'× 1 za váhu 1,0</b>';
   return 'jednou prací už to nedáš';
 }
 // o stupeň horší: jak velkou váhu by musela mít pětka, aby tě stáhla na R+1
@@ -997,8 +997,8 @@ function dropText(S, T, R){
   const Wneed = (A*T - S) / denom;          // pětka musí mít víc než tahle váha
   const opts = [0.2, 0.4, 0.6, 0.8, 1];
   const w = opts.find(o => o > Wneed + 1e-9);
-  if(!w) return 'nestáhne tě ani pětka s plnou váhou';
-  return 'pětka s váhou <b>'+String(w).replace('.', ',')+'</b>';
+  if(!w) return 'nestáhne tě ani 5 za váhu 1,0';
+  return 'stáhne tě <b>5 za váhu '+w.toFixed(1).replace('.', ',')+'</b>';
 }
 function needHTML(grades){
   let T=0, S=0;
@@ -2248,7 +2248,11 @@ setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
 // Supabase i ikony/fonty se načítají až po tomto skriptu → dořeš po 'load'
 window.addEventListener('load', ()=>{
   renderUpcoming();   // blížící se testy (potřebuje načtený Supabase)
-  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }   // PWA offline
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});   // PWA offline
+    let refreshing=false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{ if(refreshing) return; refreshing=true; location.reload(); });   // nová verze → obnov
+  }
 });
 </script>
 </body>
