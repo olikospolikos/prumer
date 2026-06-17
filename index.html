@@ -990,15 +990,25 @@ function reqText(S, T, A){
   if(k <= 6) return '<b>'+k+'×</b> jednička s plnou váhou';
   return 'jednou prací už to nedáš';
 }
+// o stupeň horší: jak velkou váhu by musela mít pětka, aby tě stáhla na R+1
+function dropText(S, T, R){
+  const A = R + 0.5, denom = 5 - A;        // R ≤ 4 → denom ≥ 0,5
+  if(denom <= 0) return 'už níž to nejde';
+  const Wneed = (A*T - S) / denom;          // pětka musí mít víc než tahle váha
+  const opts = [0.2, 0.4, 0.6, 0.8, 1];
+  const w = opts.find(o => o > Wneed + 1e-9);
+  if(!w) return 'nestáhne tě ani pětka s plnou váhou';
+  return 'pětka s váhou <b>'+String(w).replace('.', ',')+'</b>';
+}
 function needHTML(grades){
   let T=0, S=0;
   grades.forEach(g=>{ T += g.weight; S += g.weight*g.mark; });
   const cur = T>0 ? S/T : null;
   const R = roundedGrade(cur);
   let rows = '';
-  for(let n=1; n<=Math.min(3, R||1); n++){
-    rows += '<div class="need-row"><span class="need-n">Na '+n+'</span> '+reqText(S,T,n+0.5)+'</div>';
-  }
+  if(R > 1) rows += '<div class="need-row"><span class="need-n">Na '+(R-1)+'</span> '+reqText(S, T, (R-1)+0.5)+'</div>';   // o stupeň lepší
+  if(R < 5) rows += '<div class="need-row"><span class="need-n">Na '+(R+1)+'</span> '+dropText(S, T, R)+'</div>';          // o stupeň horší
+  if(!rows) rows = '<div class="need-row">Lepší ani horší známka už není 🎉</div>';
   return '<div class="need-title">Co potřebuješ z příští práce</div>'+rows;
 }
 
