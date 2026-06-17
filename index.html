@@ -10,8 +10,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<script>(function(){try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:((window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
 
   :root {
     --bg: #0f1115;
@@ -671,6 +672,60 @@
   .up-meta{ flex:1; min-width:0; }
   .up-subj{ font-size:14px; font-weight:600; }
   .up-theme{ font-size:12px; color:var(--ink-faint); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* ============================================================
+     NOVÝ DESIGN — světlý/tmavý režim, hero karta, textura
+     ============================================================ */
+
+  /* ---- světlý režim (přepnutí tokenů) ---- */
+  :root[data-theme="light"]{
+    --bg:#f7f5ef;
+    --bg-elev:#ffffff;
+    --bg-elev2:#efece2;
+    --line:#e7e3d8;
+    --ink:#1a1f30;
+    --ink-dim:#6b7280;
+    --ink-faint:#9aa0b0;
+    --accent-soft:rgba(232,184,75,0.16);
+  }
+  :root[data-theme="light"] .subject,
+  :root[data-theme="light"] .calc,
+  :root[data-theme="light"] .up-item,
+  :root[data-theme="light"] .mat-classbar,
+  :root[data-theme="light"] .mat-file,
+  :root[data-theme="light"] .mat-subj,
+  :root[data-theme="light"] .cal-day,
+  :root[data-theme="light"] .mat-notice{ box-shadow:0 1px 2px rgba(26,31,48,0.05); }
+
+  /* ---- přepínač režimu (v hlavičce) ---- */
+  header{ position:relative; }
+  .theme-toggle{
+    position:absolute; top:26px; right:20px;
+    width:42px; height:42px; border-radius:13px; cursor:pointer;
+    background:var(--bg-elev); border:1px solid var(--line); color:var(--ink);
+    font-size:19px; line-height:1; display:grid; place-items:center; z-index:2;
+  }
+  .theme-toggle:active{ background:var(--bg-elev2); }
+
+  /* ---- textura rozházených čísel v hlavičce ---- */
+  .hdr-texture{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .hdr-texture span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:var(--accent); opacity:0.09; }
+
+  /* ---- HERO karta celkového průměru (žlutá v obou režimech) ---- */
+  .overall{
+    display:block; margin:6px 16px 22px; padding:22px 22px 20px;
+    border:none; border-radius:20px; position:relative; overflow:hidden;
+    background:linear-gradient(155deg,#f2c759,#e3a52c);
+    box-shadow:0 14px 30px rgba(227,165,44,0.30);
+  }
+  .overall::after{ content:none; }
+  .hero-texture{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .hero-texture span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:rgba(255,255,255,0.20); }
+  .hero-head{ display:flex; align-items:center; gap:9px; position:relative; }
+  .hero-cap{ width:26px; height:20px; flex-shrink:0; }
+  .hero-lbl{ font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#7a5410; }
+  .overall .num{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:66px; line-height:0.92; letter-spacing:-0.02em; color:#23170a; margin-top:10px; }
+  .overall .sub{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:13px; color:#7a5410; margin-top:8px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -678,6 +733,11 @@
 
 <div id="pageGrades">
 <header>
+  <div class="hdr-texture" aria-hidden="true">
+    <span style="top:6px;left:60%;font-size:30px;transform:rotate(-12deg)">2</span>
+    <span style="bottom:-6px;left:30%;font-size:24px;transform:rotate(9deg)">1</span>
+  </div>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">☀️</button>
   <div class="eyebrow">Studijní průměr</div>
   <h1>Moje známky</h1>
 </header>
@@ -688,11 +748,23 @@
 </div>
 
 <div class="overall">
-  <div>
-    <div class="lbl">Celkový vážený průměr</div>
-    <div class="sub" id="overallSub">žádné známky</div>
+  <div class="hero-texture" aria-hidden="true">
+    <span style="top:-10px;right:16px;font-size:62px;transform:rotate(-14deg)">2</span>
+    <span style="bottom:-20px;right:36%;font-size:46px;transform:rotate(8deg)">1</span>
+    <span style="top:34px;right:44%;font-size:32px;transform:rotate(-6deg)">3</span>
+  </div>
+  <div class="hero-head">
+    <svg class="hero-cap" viewBox="0 0 28 22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M14 2 27 8 14 14 1 8Z" fill="#fff"/>
+      <path d="M6 10.3V15c0 0 3 3 8 3s8-3 8-3v-4.7L14 14 6 10.3Z" fill="#fff"/>
+      <circle cx="14" cy="8" r="1.6" fill="#e3a52c"/>
+      <path d="M25 8.6V15" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+      <circle cx="25" cy="16.4" r="1.5" fill="#fff"/>
+    </svg>
+    <span class="hero-lbl">Celkový vážený průměr</span>
   </div>
   <div class="num" id="overallNum">—</div>
+  <div class="sub" id="overallSub">žádné známky</div>
 </div>
 
 <div id="upcoming"></div>
@@ -963,11 +1035,12 @@ function weightedAvg(grades, extra) {
 function fmt(n) { return n == null ? '—' : n.toFixed(2).replace('.', ','); }
 
 function markColor(m) {
-  if (m <= 1.5) return 'var(--good)';
-  if (m <= 2.5) return '#a9c75e';
-  if (m <= 3.5) return 'var(--accent)';
-  if (m <= 4.5) return 'var(--warn)';
-  return 'var(--bad)';
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
+  const dark = ['#5ec77a','#a9c75e','#e8b84b','#e0894a','#e25c5c'];
+  const lite = ['#1f8b4a','#6f8a1e','#b8860f','#c2641f','#cc3b3b'];   // ztmavené pro kontrast na bílé
+  const pal = light ? lite : dark;
+  const i = m<=1.5 ? 0 : m<=2.5 ? 1 : m<=3.5 ? 2 : m<=4.5 ? 3 : 4;
+  return pal[i];
 }
 
 /* ---- obrácená kalkulačka: co je potřeba z příští práce ---- */
@@ -1012,13 +1085,33 @@ function needHTML(grades){
   return '<div class="need-title">Co potřebuješ z příští práce</div>'+rows;
 }
 
+/* ---- světlý / tmavý režim ---- */
+function initialTheme(){
+  const s = localStorage.getItem('prumer_theme');
+  if(s==='light' || s==='dark') return s;
+  return (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', t==='light' ? '#f7f5ef' : '#0f1115');
+  const btn = document.getElementById('themeToggle');
+  if(btn) btn.textContent = t==='light' ? '🌙' : '☀️';   // ukazuje, kam přepneš
+  render();   // přebarvit známky podle režimu
+}
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') || initialTheme();
+  const next = cur==='light' ? 'dark' : 'light';
+  localStorage.setItem('prumer_theme', next);
+  applyTheme(next);
+}
+
 function render() {
   updateSemUI();
   // overall = average of subject averages that have grades (jen aktuální pololetí)
   const subjAvgs = data.subjects.map(s => weightedAvg(gradesOf(s))).filter(a => a != null);
   const overall = subjAvgs.length ? subjAvgs.reduce((a,b)=>a+b,0)/subjAvgs.length : null;
   document.getElementById('overallNum').textContent = fmt(overall);
-  document.getElementById('overallNum').style.color = overall == null ? 'var(--ink)' : markColor(overall);
   const gc = data.subjects.reduce((a,s)=>a+gradesOf(s).length,0);
   document.getElementById('overallSub').textContent =
     gc ? gc + ' ' + plur(gc,'známka','známky','známek') + ' · ' + subjAvgs.length + ' ' + plur(subjAvgs.length,'předmět','předměty','předmětů') : 'žádné známky';
@@ -1044,8 +1137,10 @@ function renderSubject(s) {
   const head = document.createElement('div');
   head.className = 'subject-head';
   head.onclick = () => { s.open = !s.open; save(); render(); };
+  const pc = avg==null ? null : markColor(avg);
+  const pillStyle = pc ? `color:${pc};background:${pc}1a;border-color:${pc}55` : 'color:var(--ink-faint)';
   head.innerHTML = `
-    <div class="pill" style="color:${avg==null?'var(--ink-faint)':markColor(avg)}">${fmt(avg)}</div>
+    <div class="pill" style="${pillStyle}">${fmt(avg)}</div>
     <div class="subject-meta">
       <div class="subject-name">${esc(s.name)}</div>
       <div class="subject-count">${gs.length ? gs.length+' '+plur(gs.length,'známka','známky','známek') : 'zatím bez známek'}</div>
@@ -2237,7 +2332,7 @@ if(matFileEl) matFileEl.addEventListener('change', function(e){
   e.target.value = '';
 });
 
-render();
+applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
 initMaterials();
 renderSolStatus();
 solAutoSync();   // tichá aktualizace při otevření
