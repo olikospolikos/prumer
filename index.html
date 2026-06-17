@@ -975,17 +975,19 @@ function roundedGrade(cur){
   if(cur==null) return 1;
   if(cur<=1.5) return 1; if(cur<=2.5) return 2; if(cur<=3.5) return 3; if(cur<=4.5) return 4; return 5;
 }
-// A = cílový průměr (≤ A → vyjde na danou známku). Vrátí text požadavku na 1 velkou práci.
+// A = cílový průměr (≤ A → vyjde na danou známku). Spočítá, jakou VÁHU musí mít příští
+// jednička, aby průměr klesl na ≤ A (váhu zaokrouhlí na nejbližší možnou: 0,2–1).
 function reqText(S, T, A){
-  const W = 1;                       // velká váha
-  const Mmax = (A*(T+W) - S) / W;    // nejhorší známka, co ještě udrží průměr ≤ A
-  if(Mmax >= 5) return 'stačí cokoliv za velkou váhu';
-  if(Mmax >= 1) return 'stačí nejhůř <b>'+Math.floor(Mmax+1e-9)+'</b> za velkou váhu';
-  const denom = W*(A-1);
-  if(denom > 0){
-    const k = Math.ceil((S - A*T)/denom - 1e-9);   // kolik jedniček za velkou váhu
-    if(k>0 && k<=6) return 'potřebuješ <b>'+k+'×&nbsp;1</b> za velkou váhu';
+  const deficit = S - A*T;                 // > 0 → průměr je nad cílem
+  if(deficit <= 1e-9) return 'splněno';
+  const Wneed = deficit / (A - 1);         // minimální váha jedničky
+  if(Wneed <= 1.000001){
+    const opts = [0.2, 0.4, 0.6, 0.8, 1];
+    const w = opts.find(o => o >= Wneed - 1e-9) || 1;
+    return 'jednička s váhou <b>'+String(w).replace('.', ',')+'</b>';
   }
+  const k = Math.ceil(Wneed - 1e-9);       // jedna plná jednička nestačí → kolik jich je třeba
+  if(k <= 6) return '<b>'+k+'×</b> jednička s plnou váhou';
   return 'jednou prací už to nedáš';
 }
 function needHTML(grades){
