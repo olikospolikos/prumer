@@ -489,10 +489,10 @@
 
   .mat-gate { margin: 6px 16px; display: flex; flex-direction: column; gap: 14px; }
   .mat-lead { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
-  .code-boxes { display: flex; gap: 7px; }
+  .code-boxes { display: flex; gap: 10px; }
   .code-box {
-    flex: 1; min-width: 0; height: 56px; text-align: center; padding: 0;
-    font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600;
+    flex: 1; min-width: 0; height: 66px; text-align: center; padding: 0;
+    font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600;
     text-transform: uppercase;
   }
   .mat-or {
@@ -1784,19 +1784,19 @@ function renderMatGate(wrap, h1){
       '<div class="mat-welcome-t">Zadej kód třídy</div>' +
       '<div class="mat-welcome-m">Spolužáci sdílí zápisky a materiály na jednom místě.</div>' +
     '</div>' +
-    '<div class="code-boxes">' + [0,1,2,3,4,5].map(i=>'<input class="code-box" maxlength="1" autocapitalize="characters" autocomplete="off" data-i="'+i+'">').join('') + '</div>' +
+    '<div class="code-boxes">' + [0,1,2,3].map(i=>'<input class="code-box" maxlength="1" autocapitalize="characters" autocomplete="off" data-i="'+i+'">').join('') + '</div>' +
     '<button class="btn btn-primary" id="enterBtn" style="width:100%">Připojit se</button>' +
     '<div class="mat-or">nebo</div>' +
     '<button class="btn btn-ghost" id="createBtn" style="width:100%">Vytvořit novou třídu</button>';
   wrap.appendChild(box);
   const inputs = Array.prototype.slice.call(box.querySelectorAll('.code-box'));
   inputs.forEach((inp,i)=>{
-    inp.oninput = ()=>{ inp.value = inp.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,1); if(inp.value && i<5) inputs[i+1].focus(); };
+    inp.oninput = ()=>{ inp.value = inp.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,1); if(inp.value && i<3) inputs[i+1].focus(); };
     inp.onkeydown = (e)=>{ if(e.key==='Backspace' && !inp.value && i>0) inputs[i-1].focus(); };
   });
   box.querySelector('#enterBtn').onclick = ()=>{
     const code = inputs.map(x=>x.value).join('');
-    if(code.length !== 6){ alertDialog('Neúplný kód','Zadej všech šest znaků kódu.'); return; }
+    if(code.length !== 4){ alertDialog('Neúplný kód','Zadej všechny čtyři znaky kódu.'); return; }
     enterClass(code);
   };
   box.querySelector('#createBtn').onclick = createClassFlow;
@@ -1816,7 +1816,7 @@ async function enterClass(code){
 function genClassCode(){
   const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // bez matoucích znaků (0/O, 1/I/L)
   let s = '';
-  for(let i=0;i<6;i++) s += A.charAt(Math.floor(Math.random()*A.length));
+  for(let i=0;i<4;i++) s += A.charAt(Math.floor(Math.random()*A.length));
   return s;
 }
 function createClassFlow(){
