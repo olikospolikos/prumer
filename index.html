@@ -726,6 +726,34 @@
   .hero-lbl{ font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#7a5410; }
   .overall .num{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:66px; line-height:0.92; letter-spacing:-0.02em; color:#23170a; margin-top:10px; }
   .overall .sub{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:13px; color:#7a5410; margin-top:8px; }
+
+  /* ============ Materiály — hi-fi (E/F/G) ============ */
+  /* E) uvítací žlutá karta u kódu třídy */
+  .mat-welcome{
+    margin:6px 16px 16px; padding:26px 22px 22px; border-radius:20px;
+    position:relative; overflow:hidden; text-align:center;
+    background:linear-gradient(155deg,#f2c759,#e3a52c);
+    box-shadow:0 14px 30px rgba(227,165,44,0.28);
+  }
+  .mat-welcome-cap{ position:relative; width:76px; height:52px; color:#fff; }
+  .mat-welcome-t{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:21px; color:#23170a; margin-top:12px; }
+  .mat-welcome-m{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:400; font-size:13.5px; line-height:1.5; color:#7a5410; margin-top:6px; }
+
+  /* F) dlaždice předmětů s barevnou iniciálou */
+  .mat-subj{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-width:0; }
+  .mat-subj-ic{ width:38px; height:38px; border-radius:11px; display:grid; place-items:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:18px; flex-shrink:0; }
+  .mat-subj-ic.add{ color:var(--ink-dim); background:var(--bg-elev2); }
+  .mat-subj-name{ font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:14.5px; color:var(--ink); width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mat-subj-cnt{ font-size:12px; color:var(--ink-faint); }
+  .mat-subj-add{ border-style:dashed; }
+
+  /* G) řádky souborů — barevný typový štítek + prázdný stav */
+  .mat-file-ic{ width:40px; height:40px; border-radius:11px; display:grid; place-items:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:12px; flex-shrink:0; }
+  .mat-chevron{ color:var(--ink-faint); font-size:22px; line-height:1; flex-shrink:0; padding:0 4px; }
+  .mat-empty{ text-align:center; padding:38px 20px; }
+  .mat-empty-cap{ width:64px; height:44px; color:var(--accent); }
+  .mat-empty-t{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; color:var(--ink); margin-top:12px; }
+  .mat-empty-m{ font-size:13.5px; color:var(--ink-faint); margin-top:6px; line-height:1.5; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -1739,9 +1767,18 @@ function renderMatGate(wrap, h1){
   const box = document.createElement('div');
   box.className = 'mat-gate';
   box.innerHTML =
-    '<p class="mat-lead">Zadej čtyřmístný kód třídy a uvidíš její zápisky a testy.</p>' +
+    '<div class="mat-welcome">' +
+      '<div class="hero-texture" aria-hidden="true">' +
+        '<span style="top:-8px;right:18px;font-size:54px;transform:rotate(-12deg)">2</span>' +
+        '<span style="bottom:-14px;left:14px;font-size:40px;transform:rotate(9deg)">1</span>' +
+        '<span style="top:42px;left:42%;font-size:30px;transform:rotate(-5deg)">3</span>' +
+      '</div>' +
+      capSVG('mat-welcome-cap') +
+      '<div class="mat-welcome-t">Zadej kód třídy</div>' +
+      '<div class="mat-welcome-m">Spolužáci sdílí zápisky a materiály na jednom místě.</div>' +
+    '</div>' +
     '<div class="code-boxes">' + [0,1,2,3].map(i=>'<input class="code-box" inputmode="numeric" maxlength="1" data-i="'+i+'">').join('') + '</div>' +
-    '<button class="btn btn-primary" id="enterBtn" style="width:100%">Vstoupit</button>' +
+    '<button class="btn btn-primary" id="enterBtn" style="width:100%">Připojit se</button>' +
     '<div class="mat-or">nebo</div>' +
     '<button class="btn btn-ghost" id="createBtn" style="width:100%">Vytvořit novou třídu</button>';
   wrap.appendChild(box);
@@ -1814,14 +1851,56 @@ function renderMatClass(wrap, h1){
   if(mat.tab === 'kalendar'){ renderMatCalendar(wrap); return; }
 
   const lbl = document.createElement('div');
-  lbl.className = 'section-label'; lbl.style.padding = '4px 6px 12px'; lbl.textContent = 'Předměty';
+  lbl.className = 'section-label'; lbl.style.padding = '4px 6px 12px'; lbl.textContent = 'Vyber předmět';
   wrap.appendChild(lbl);
 
   const grid = document.createElement('div');
   grid.className = 'mat-subjects';
   wrap.appendChild(grid);
   fillMatSubjectGrid(grid);                 // hned vykresli (s tím, co už víme)
-  loadMatSubjects().then(()=> fillMatSubjectGrid(grid));   // pak doplň vlastní předměty z cloudu
+  Promise.all([loadMatSubjects(), loadMatCounts()]).then(()=> fillMatSubjectGrid(grid));   // doplň vlastní předměty + počty
+}
+
+let matCounts = {};
+function capSVG(cls){
+  return '<svg class="'+cls+'" viewBox="0 0 40 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    + '<path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>'
+    + '<path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>'
+    + '<path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>'
+    + '<circle cx="35" cy="22.6" r="2" fill="currentColor"/>'
+    + '</svg>';
+}
+// ve světlém režimu ztmaví sytou barvu pro čitelnost na bílé (viz handoff)
+function themeColor(hex){
+  if(document.documentElement.getAttribute('data-theme') !== 'light') return hex;
+  const map = { '#e8b84b':'#b8860f','#5ec77a':'#1f8b4a','#a9c75e':'#6f8a1e','#e0894a':'#c2641f','#e25c5c':'#cc3b3b','#99a0ae':'#6b7280' };
+  return map[hex] || hex;
+}
+function subjColor(name){
+  const pal = ['#e8b84b','#5ec77a','#a9c75e','#e0894a','#e25c5c','#6f8a1e','#b8860f'];
+  let h = 0; const s = String(name||'');
+  for(let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+  return themeColor(pal[h % pal.length]);
+}
+function fileType(name){
+  const s = String(name||'');
+  const e = s.split('.').pop().toLowerCase();
+  if(s.indexOf('.') < 0) return { label:'SOUB', color:'#99a0ae' };   // bez přípony
+  if(['jpg','jpeg','png','gif','heic','webp','bmp','svg'].indexOf(e)>=0) return { label:'IMG', color:'#5ec77a' };
+  if(e==='pdf') return { label:'PDF', color:'#e8b84b' };
+  if(['doc','docx'].indexOf(e)>=0) return { label:'DOC', color:'#a9c75e' };
+  if(['ppt','pptx'].indexOf(e)>=0) return { label:'PPT', color:'#e0894a' };
+  if(['xls','xlsx','csv'].indexOf(e)>=0) return { label:'XLS', color:'#5ec77a' };
+  if(['txt','md'].indexOf(e)>=0) return { label:'TXT', color:'#99a0ae' };
+  return { label:(e||'?').slice(0,3).toUpperCase(), color:'#99a0ae' };
+}
+async function loadMatCounts(){
+  const c = getSB(); if(!c) return;
+  try {
+    const r = await c.from('materialy').select('subject').eq('code', mat.code);
+    const m = {}; (r.error ? [] : (r.data||[])).forEach(x=>{ if(x.subject) m[x.subject] = (m[x.subject]||0)+1; });
+    matCounts = m;
+  } catch(e){ matCounts = {}; }
 }
 
 function allMatSubjects(){
@@ -1834,13 +1913,21 @@ function fillMatSubjectGrid(grid){
   grid.innerHTML = '';
   allMatSubjects().forEach(name=>{
     const b = document.createElement('button');
-    b.className = 'mat-subj'; b.textContent = name;
+    b.className = 'mat-subj';
+    const col = subjColor(name);
+    const init = esc((name.trim().charAt(0) || '?').toUpperCase());
+    const n = matCounts[name] || 0;
+    const cnt = n ? (n + ' ' + plur(n,'soubor','soubory','souborů')) : 'zatím prázdné';
+    b.innerHTML =
+      '<span class="mat-subj-ic" style="color:'+col+';background:'+col+'22">'+init+'</span>' +
+      '<span class="mat-subj-name">'+esc(name)+'</span>' +
+      '<span class="mat-subj-cnt">'+cnt+'</span>';
     b.onclick = ()=>{ mat.subject = name; mat.category = 'zapisky'; mat.folder = ''; mat.view = 'subject'; renderMaterials(); };
     grid.appendChild(b);
   });
   const add = document.createElement('button');
-  add.className = 'mat-subj'; add.style.borderStyle = 'dashed'; add.style.color = 'var(--ink-dim)';
-  add.textContent = '+ Přidat předmět';
+  add.className = 'mat-subj mat-subj-add';
+  add.innerHTML = '<span class="mat-subj-ic add">+</span><span class="mat-subj-name">Přidat předmět</span>';
   add.onclick = addMatSubject;
   grid.appendChild(add);
 }
@@ -2057,11 +2144,11 @@ function renderMatSubject(wrap, h1){
   acts.className = 'mat-actions';
   const up = document.createElement('button');
   up.className = 'add-grade-btn';
-  up.textContent = '+ Nahrát soubory';
+  up.textContent = '↑ Nahrát';
   up.onclick = ()=> document.getElementById('matFile').click();
   const nf = document.createElement('button');
   nf.className = 'add-grade-btn';
-  nf.textContent = '+ Nová složka';
+  nf.textContent = '+ Složka';
   nf.onclick = createFolder;
   acts.appendChild(up); acts.appendChild(nf);
   wrap.appendChild(acts);
@@ -2145,7 +2232,9 @@ function drawMatItems(){
   const files = sortFiles(matRows.filter(r => (r.folder||'') === cur));
   list.innerHTML = '';
   if(!subfolders.length && !files.length){
-    list.innerHTML = '<div class="empty">'+(cur ? 'Složka je prázdná.' : 'Zatím tu nic není.')+'<br>Nahraj soubory nebo vytvoř složku.</div>';
+    list.innerHTML = '<div class="mat-empty">'+capSVG('mat-empty-cap')+
+      '<div class="mat-empty-t">Tady zatím nic není</div>'+
+      '<div class="mat-empty-m">'+(cur ? 'Tahle složka je prázdná.' : 'Nahraj první zápisky pro třídu.')+'</div></div>';
     return;
   }
   const me = uid();
@@ -2155,10 +2244,10 @@ function drawMatItems(){
     const row = document.createElement('div');
     row.className = 'mat-file mat-folder';
     row.innerHTML =
-      '<div class="mat-file-ic">📁</div>' +
+      '<div class="mat-file-ic" style="color:var(--accent);background:var(--accent-soft);font-size:20px">📁</div>' +
       '<div class="mat-file-meta"><div class="mat-file-name">'+esc(baseName(f.path))+'</div>' +
       '<div class="mat-file-sub">složka</div></div>' +
-      (mine ? '<button class="grade-del mat-del" aria-label="Smazat složku"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' : '');
+      (mine ? '<button class="grade-del mat-del" aria-label="Smazat složku"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' : '<span class="mat-chevron">›</span>');
     const go = ()=>{ mat.folder = f.path; renderMaterials(); };
     row.querySelector('.mat-file-ic').onclick = go;
     row.querySelector('.mat-file-meta').onclick = go;
@@ -2168,10 +2257,12 @@ function drawMatItems(){
 
   files.forEach(r=>{
     const mine = r.owner === me;
+    const ft = fileType(r.name || r.path);
+    const ic = themeColor(ft.color);
     const row = document.createElement('div');
     row.className = 'mat-file';
     row.innerHTML =
-      '<div class="mat-file-ic">'+fileEmoji(r.path)+'</div>' +
+      '<div class="mat-file-ic" style="color:'+ic+';background:'+ic+'22">'+ft.label+'</div>' +
       '<div class="mat-file-meta"><div class="mat-file-name">'+esc(r.name)+'</div>' +
       '<div class="mat-file-sub">'+sizeStr(r.size)+(r.created_at?' · '+dateStr(r.created_at):'')+'</div></div>' +
       '<button class="mat-dl" aria-label="Stáhnout">↓</button>' +
