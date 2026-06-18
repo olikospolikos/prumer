@@ -765,6 +765,20 @@
   .mat-empty-cap{ width:64px; height:44px; color:var(--accent); }
   .mat-empty-t{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; color:var(--ink); margin-top:12px; }
   .mat-empty-m{ font-size:13.5px; color:var(--ink-faint); margin-top:6px; line-height:1.5; }
+  /* ============ profil + přihlášení ============ */
+  #profileBody{ padding:0 16px; }
+  .prof-card{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:22px 20px; text-align:center; box-shadow:var(--shadow-sm); }
+  .prof-avatar{ width:92px; height:92px; border-radius:50%; object-fit:cover; display:block; margin:0 auto; border:1px solid var(--line); }
+  .prof-avatar-ph{ display:grid; place-items:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:38px; color:var(--accent); background:var(--accent-soft); }
+  .prof-name{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; margin-top:14px; }
+  .prof-school{ font-size:14px; color:var(--ink-dim); margin-top:4px; font-weight:600; }
+  .prof-bio{ font-size:14px; color:var(--ink-dim); margin-top:10px; line-height:1.5; }
+  .prof-email{ font-size:12px; color:var(--ink-faint); margin-top:12px; }
+  .prof-auth{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:26px 20px; text-align:center; display:flex; flex-direction:column; gap:12px; box-shadow:var(--shadow-sm); }
+  .prof-cap{ width:70px; height:48px; color:var(--accent); margin:2px auto; }
+  .prof-auth-t{ font-family:'Fraunces',serif; font-weight:600; font-size:21px; }
+  .prof-auth-m{ font-size:13.5px; color:var(--ink-dim); line-height:1.5; }
+  .fields{ display:flex; flex-direction:column; gap:13px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -863,6 +877,15 @@
   </header>
   <div id="matBody"></div>
   <input type="file" id="matFile" multiple style="display:none">
+</div>
+
+<div id="pageProfile" style="display:none">
+  <header>
+    <div class="eyebrow">Tvůj účet</div>
+    <h1 id="profH1">Profil</h1>
+  </header>
+  <div id="profileBody"></div>
+  <input type="file" id="avatarFile" accept="image/*" style="display:none">
 </div>
 
 <!-- grade sheet -->
@@ -1007,6 +1030,10 @@
   <button class="tab" id="tabMaterials" onclick="setPage('materials')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     Materiály
+  </button>
+  <button class="tab" id="tabProfile" onclick="setPage('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+    Profil
   </button>
 </nav>
 
@@ -1703,17 +1730,242 @@ async function runSolImport(){
   }
 }
 
+/* ===================== Účet / profil (Supabase Auth) ===================== */
+let authUser = null;
+let profile = null;
+let profileEditing = false;
+let authStep = 'email';        // 'email' → 'code'
+let authEmailPending = '';
+
+function currentOwner(){ return authUser ? authUser.id : uid(); }
+
+async function initAuth(){
+  const c = getSB(); if(!c) return;
+  try {
+    const { data } = await c.auth.getSession();
+    authUser = (data && data.session) ? data.session.user : null;
+  } catch(e){ authUser = null; }
+  try {
+    c.auth.onAuthStateChange((event, session)=>{
+      authUser = session ? session.user : null;
+      if(authUser) ensureProfile();
+      refreshAuthUI();
+    });
+  } catch(e){}
+  if(authUser) ensureProfile();
+  refreshAuthUI();
+}
+function refreshAuthUI(){
+  const pp = document.getElementById('pageProfile');
+  if(pp && pp.style.display !== 'none') renderProfile();
+  const pm = document.getElementById('pageMaterials');
+  if(pm && pm.style.display !== 'none') renderMaterials();
+}
+async function ensureProfile(){
+  const c = getSB(); if(!c || !authUser) return;
+  try {
+    const r = await c.from('profiles').select('id').eq('id', authUser.id).maybeSingle();
+    if(!r.error && !r.data){
+      await c.from('profiles').insert({ id: authUser.id, name: (authUser.email||'').split('@')[0] });
+    }
+  } catch(e){}
+}
+
+/* ---- přihlášení emailem (kód / OTP) ---- */
+async function authSendCode(email){
+  const c = getSB(); if(!c) return { ok:false, msg:'Není připojení (Supabase).' };
+  try {
+    const { error } = await c.auth.signInWithOtp({ email, options:{ shouldCreateUser:true } });
+    if(error) return { ok:false, msg:error.message };
+    authEmailPending = email;
+    return { ok:true };
+  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
+}
+async function authVerifyCode(email, token){
+  const c = getSB(); if(!c) return { ok:false, msg:'Není připojení (Supabase).' };
+  try {
+    const { data, error } = await c.auth.verifyOtp({ email, token, type:'email' });
+    if(error) return { ok:false, msg:error.message };
+    authUser = (data && data.user) ? data.user : null;
+    await ensureProfile();
+    return { ok:true };
+  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
+}
+async function authLogout(){
+  const c = getSB(); if(c){ try { await c.auth.signOut(); } catch(e){} }
+  authUser = null; profile = null;
+}
+
+/* ---- profil: načtení / uložení / fotka ---- */
+async function loadProfile(){
+  const c = getSB(); if(!c || !authUser){ profile = null; return; }
+  try { const r = await c.from('profiles').select('*').eq('id', authUser.id).maybeSingle(); profile = (r.error ? null : r.data) || null; }
+  catch(e){ profile = null; }
+}
+async function saveProfile(fields){
+  const c = getSB(); if(!c || !authUser) return { ok:false, msg:'Nejsi přihlášený.' };
+  try {
+    const row = Object.assign({ id: authUser.id, updated_at: new Date().toISOString() }, fields);
+    const r = await c.from('profiles').upsert(row).select().maybeSingle();
+    if(r.error) return { ok:false, msg:r.error.message };
+    profile = r.data || Object.assign(profile||{}, fields);
+    return { ok:true };
+  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
+}
+async function uploadAvatar(file){
+  const c = getSB(); if(!c || !authUser) return { ok:false, msg:'Nejsi přihlášený.' };
+  try {
+    const ext = ((file.name||'jpg').split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+    const path = authUser.id + '/' + Date.now() + '.' + ext;
+    const up = await c.storage.from('avatars').upload(path, file, { upsert:true });
+    if(up.error) return { ok:false, msg:up.error.message };
+    const pu = c.storage.from('avatars').getPublicUrl(path);
+    const url = pu && pu.data && pu.data.publicUrl;
+    const s = await saveProfile({ avatar_url: url });
+    if(!s.ok) return s;
+    return { ok:true, url };
+  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
+}
+
+/* ---- vykreslení profilu / přihlášení ---- */
+async function renderProfile(){
+  const wrap = document.getElementById('profileBody');
+  const h1 = document.getElementById('profH1');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  const c = getSB();
+  if(!sbConfigured() || !window.supabase || !c){
+    h1.textContent = 'Profil';
+    wrap.appendChild(matNotice('Profil potřebuje cloud', 'Přihlášení běží přes Supabase. Na živé adrese (GitHub Pages) to poběží.'));
+    return;
+  }
+  if(!authUser){ h1.textContent = 'Přihlášení'; renderLogin(wrap); return; }
+  h1.textContent = 'Profil';
+  if(!profile) await loadProfile();
+  if(profileEditing) renderProfileEdit(wrap); else renderProfileView(wrap);
+}
+function renderLogin(wrap){
+  if(authStep === 'code'){
+    wrap.innerHTML =
+      '<div class="prof-auth">' +
+        '<div class="prof-auth-t">Zadej kód z emailu</div>' +
+        '<div class="prof-auth-m">Poslali jsme přihlašovací kód na <b>'+esc(authEmailPending)+'</b>. Mrkni i do spamu.</div>' +
+        '<input id="authCode" inputmode="numeric" autocomplete="one-time-code" placeholder="kód z emailu" maxlength="8" style="text-align:center;letter-spacing:0.25em;font-size:20px">' +
+        '<button class="btn btn-primary" id="authVerifyBtn">Přihlásit se</button>' +
+        '<button class="btn btn-ghost" id="authBackBtn">Změnit email</button>' +
+      '</div>';
+    wrap.querySelector('#authVerifyBtn').onclick = doVerify;
+    wrap.querySelector('#authBackBtn').onclick = ()=>{ authStep='email'; renderProfile(); };
+    wrap.querySelector('#authCode').onkeydown = (e)=>{ if(e.key==='Enter') doVerify(); };
+    setTimeout(()=>{ const el=document.getElementById('authCode'); if(el) el.focus(); }, 60);
+  } else {
+    wrap.innerHTML =
+      '<div class="prof-auth">' +
+        capSVG('prof-cap') +
+        '<div class="prof-auth-t">Přihlas se emailem</div>' +
+        '<div class="prof-auth-m">Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš. Stačí email — přijde ti kód.</div>' +
+        '<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz">' +
+        '<button class="btn btn-primary" id="authSendBtn">Poslat kód</button>' +
+      '</div>';
+    const saved = localStorage.getItem('prumer_auth_email'); if(saved) wrap.querySelector('#authEmail').value = saved;
+    wrap.querySelector('#authSendBtn').onclick = doSend;
+    wrap.querySelector('#authEmail').onkeydown = (e)=>{ if(e.key==='Enter') doSend(); };
+  }
+}
+async function doSend(){
+  const email = (document.getElementById('authEmail').value||'').trim();
+  if(!email || email.indexOf('@')<1){ alertDialog('Neplatný email','Zadej platnou emailovou adresu.'); return; }
+  const btn = document.getElementById('authSendBtn'); const lab = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Posílám…';
+  const r = await authSendCode(email);
+  btn.disabled = false; btn.textContent = lab;
+  if(!r.ok){ alertDialog('Nepovedlo se', r.msg||'Zkus to znovu.'); return; }
+  localStorage.setItem('prumer_auth_email', email);
+  authStep = 'code'; renderProfile();
+}
+async function doVerify(){
+  const token = (document.getElementById('authCode').value||'').replace(/\s/g,'');
+  if(token.length < 6){ alertDialog('Neúplný kód','Zadej celý kód z emailu.'); return; }
+  const btn = document.getElementById('authVerifyBtn'); const lab = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Přihlašuji…';
+  const r = await authVerifyCode(authEmailPending, token);
+  btn.disabled = false; btn.textContent = lab;
+  if(!r.ok){ alertDialog('Nepovedlo se', r.msg || 'Kód nesedí nebo vypršel.'); return; }
+  authStep = 'email'; profileEditing = false;
+  await loadProfile(); renderProfile();
+}
+function renderProfileView(wrap){
+  const p = profile || {};
+  const init = esc(((p.name || authUser.email || '?').trim().charAt(0) || '?').toUpperCase());
+  const av = p.avatar_url
+    ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
+    : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
+  wrap.innerHTML =
+    '<div class="prof-card">' + av +
+      '<div class="prof-name">'+esc(p.name || (authUser.email||'').split('@')[0])+'</div>' +
+      (p.school ? '<div class="prof-school">'+esc(p.school)+'</div>' : '') +
+      (p.bio ? '<div class="prof-bio">'+esc(p.bio)+'</div>' : '') +
+      '<div class="prof-email">'+esc(authUser.email||'')+'</div>' +
+    '</div>' +
+    '<button class="btn btn-primary" id="profEditBtn" style="width:100%;margin-top:14px">Upravit profil</button>' +
+    '<button class="btn btn-ghost" id="profLogoutBtn" style="width:100%;margin-top:8px">Odhlásit se</button>';
+  wrap.querySelector('#profEditBtn').onclick = ()=>{ profileEditing = true; renderProfile(); };
+  wrap.querySelector('#profLogoutBtn').onclick = ()=>{
+    confirmDialog('Odhlásit se?', 'Budeš se muset zase přihlásit emailem.', 'Odhlásit', async ()=>{
+      await authLogout(); profileEditing = false; renderProfile(); renderMaterials();
+    });
+  };
+}
+function renderProfileEdit(wrap){
+  const p = profile || {};
+  const init = esc(((p.name || '?').trim().charAt(0) || '?').toUpperCase());
+  const av = p.avatar_url
+    ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
+    : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
+  wrap.innerHTML =
+    '<div class="prof-card">' + av +
+      '<button class="btn btn-ghost" id="avatarBtn" style="margin-top:12px">Změnit fotku</button>' +
+    '</div>' +
+    '<div class="fields" style="margin-top:14px">' +
+      '<label class="fld"><span>Jméno</span><input id="pfName" type="text" placeholder="Tvoje jméno"></label>' +
+      '<label class="fld"><span>Kde studuješ</span><input id="pfSchool" type="text" placeholder="např. Gymnázium…"></label>' +
+      '<label class="fld"><span>Bio</span><textarea id="pfBio" rows="3" placeholder="Pár slov o tobě…" style="resize:vertical;line-height:1.4"></textarea></label>' +
+    '</div>' +
+    '<button class="btn btn-primary" id="pfSave" style="width:100%;margin-top:16px">Uložit</button>' +
+    '<button class="btn btn-ghost" id="pfCancel" style="width:100%;margin-top:8px">Zrušit</button>';
+  wrap.querySelector('#pfName').value = p.name || '';
+  wrap.querySelector('#pfSchool').value = p.school || '';
+  wrap.querySelector('#pfBio').value = p.bio || '';
+  wrap.querySelector('#avatarBtn').onclick = ()=> document.getElementById('avatarFile').click();
+  wrap.querySelector('#pfCancel').onclick = ()=>{ profileEditing = false; renderProfile(); };
+  wrap.querySelector('#pfSave').onclick = async ()=>{
+    const btn = wrap.querySelector('#pfSave'); const lab = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Ukládám…';
+    const r = await saveProfile({
+      name: wrap.querySelector('#pfName').value.trim(),
+      school: wrap.querySelector('#pfSchool').value.trim(),
+      bio: wrap.querySelector('#pfBio').value.trim()
+    });
+    btn.disabled = false; btn.textContent = lab;
+    if(!r.ok){ alertDialog('Uložení selhalo', r.msg || 'Zkus to znovu.'); return; }
+    profileEditing = false; renderProfile();
+  };
+}
+
 /* ===================== Materiály ===================== */
 
 /* přepínání stran */
 function setPage(p){
-  const grades = p === 'grades';
-  document.getElementById('pageGrades').style.display = grades ? '' : 'none';
-  document.getElementById('pageMaterials').style.display = grades ? 'none' : '';
+  const grades = p==='grades', materials = p==='materials', profilePg = p==='profile';
+  document.getElementById('pageGrades').style.display    = grades ? '' : 'none';
+  document.getElementById('pageMaterials').style.display = materials ? '' : 'none';
+  document.getElementById('pageProfile').style.display   = profilePg ? '' : 'none';
   document.getElementById('tabGrades').classList.toggle('sel', grades);
-  document.getElementById('tabMaterials').classList.toggle('sel', !grades);
+  document.getElementById('tabMaterials').classList.toggle('sel', materials);
+  document.getElementById('tabProfile').classList.toggle('sel', profilePg);
   window.scrollTo(0,0);
-  if(!grades) renderMaterials();
+  if(materials) renderMaterials();
+  else if(profilePg) renderProfile();
   else renderUpcoming();
 }
 
@@ -1766,6 +2018,16 @@ function renderMaterials(){
   if(!window.supabase){
     h1.textContent = 'Materiály';
     wrap.appendChild(matNotice('Načítám knihovnu…', 'Pokud tahle hláška nezmizí, jsi nejspíš v náhledu, který blokuje externí knihovny. Na živé adrese (GitHub Pages) to poběží.'));
+    return;
+  }
+  if(!authUser){
+    h1.textContent = 'Materiály';
+    wrap.appendChild(matNotice('Nejdřív se přihlas', 'Do třídy se dostaneš a třídu vytvoříš až po přihlášení. Otevři záložku Profil a přihlas se emailem.'));
+    const b = document.createElement('button');
+    b.className = 'btn btn-primary'; b.style.cssText = 'margin:14px 16px 0; width:calc(100% - 32px)';
+    b.textContent = 'Přejít na přihlášení';
+    b.onclick = ()=> setPage('profile');
+    wrap.appendChild(b);
     return;
   }
   if(mat.view === 'gate')    return renderMatGate(wrap, h1);
@@ -1962,7 +2224,7 @@ function addMatSubject(){
     if(!name) return;
     if(allMatSubjects().some(x=>x.toLowerCase()===name.toLowerCase())){ alertDialog('Už existuje','Předmět s tímhle názvem už ve třídě je.'); return; }
     try {
-      const ins = await c.from('predmety').insert({ code:mat.code, name, owner:uid() });
+      const ins = await c.from('predmety').insert({ code:mat.code, name, owner:currentOwner() });
       if(ins.error) throw ins.error;
       await loadMatSubjects();
       renderMaterials();
@@ -2051,7 +2313,7 @@ function drawWeek(){
   const week = document.getElementById('calWeek'); if(!week) return;
   const start = weekStartDate();
   const todayIso = isoLocal(new Date());
-  const me = uid();
+  const me = currentOwner();
   week.innerHTML = '';
   for(let i=0;i<7;i++){
     const d = addDays(start, i);
@@ -2115,7 +2377,7 @@ async function saveTest(){
   if(!date){ alertDialog('Chybí datum','Vyber, kdy se test píše.'); return; }
   const c = getSB(); if(!c) return;
   try {
-    const ins = await c.from('kalendar').insert({ code:mat.code, date, subject, theme, owner:uid() });
+    const ins = await c.from('kalendar').insert({ code:mat.code, date, subject, theme, owner:currentOwner() });
     if(ins.error) throw ins.error;
     closeTestSheet(); loadTests();
   } catch(e){ alertDialog('Uložení selhalo', String((e&&e.message)||e)); }
@@ -2255,7 +2517,7 @@ function drawMatItems(){
       '<div class="mat-empty-m">'+(cur ? 'Tahle složka je prázdná.' : 'Nahraj první zápisky pro třídu.')+'</div></div>';
     return;
   }
-  const me = uid();
+  const me = currentOwner();
 
   subfolders.forEach(f=>{
     const mine = f.owner === me;
@@ -2306,7 +2568,7 @@ function createFolder(){
     const path = mat.folder ? mat.folder+'/'+name : name;
     if(matFolders.some(f => (f.path||'') === path)){ alertDialog('Už existuje','Složka s tímhle názvem tu už je.'); return; }
     try {
-      const ins = await c.from('slozky').insert({ code:mat.code, subject:mat.subject, category:mat.category, path, owner:uid() });
+      const ins = await c.from('slozky').insert({ code:mat.code, subject:mat.subject, category:mat.category, path, owner:currentOwner() });
       if(ins.error) throw ins.error;
       loadMatItems();
     } catch(e){
@@ -2400,7 +2662,7 @@ async function uploadFiles(fileList){
       const path = mat.code+'/'+slug(mat.subject)+'/'+mat.category+'/'+fseg+Date.now()+'_'+i+'_'+safe;
       const upl = await c.storage.from(SB_BUCKET).upload(path, file, { upsert:false });
       if(upl.error) throw upl.error;
-      const base = { code:mat.code, subject:mat.subject, category:mat.category, name:file.name, path:path, size:file.size, owner:uid() };
+      const base = { code:mat.code, subject:mat.subject, category:mat.category, name:file.name, path:path, size:file.size, owner:currentOwner() };
       let ins = await c.from('materialy').insert({ ...base, folder: mat.folder||'' });
       if(ins.error && /folder|column|schema cache/i.test(ins.error.message||'')) ins = await c.from('materialy').insert(base); // sloupec folder ještě není
       if(ins.error) throw ins.error;
@@ -2441,6 +2703,16 @@ if(matFileEl) matFileEl.addEventListener('change', function(e){
   e.target.value = '';
 });
 
+const avatarFileEl = document.getElementById('avatarFile');
+if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
+  const f = e.target.files && e.target.files[0]; e.target.value = '';
+  if(!f) return;
+  if(f.size > 5*1024*1024){ alertDialog('Moc velká','Profilová fotka může mít max 5 MB.'); return; }
+  const r = await uploadAvatar(f);
+  if(!r.ok){ alertDialog('Nahrání selhalo', r.msg || 'Zkus to znovu.'); return; }
+  await loadProfile(); renderProfile();
+});
+
 applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
 initMaterials();
 renderSolStatus();
@@ -2451,6 +2723,7 @@ setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
 
 // Supabase i ikony/fonty se načítají až po tomto skriptu → dořeš po 'load'
 window.addEventListener('load', ()=>{
+  initAuth();          // přihlášení / účet (Supabase Auth)
   renderUpcoming();   // blížící se testy (potřebuje načtený Supabase)
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});   // PWA offline
