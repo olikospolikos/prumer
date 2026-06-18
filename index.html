@@ -489,10 +489,11 @@
 
   .mat-gate { margin: 6px 16px; display: flex; flex-direction: column; gap: 14px; }
   .mat-lead { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
-  .code-boxes { display: flex; gap: 10px; }
+  .code-boxes { display: flex; gap: 7px; }
   .code-box {
-    flex: 1; aspect-ratio: 1; text-align: center; padding: 0;
-    font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600;
+    flex: 1; min-width: 0; height: 56px; text-align: center; padding: 0;
+    font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600;
+    text-transform: uppercase;
   }
   .mat-or {
     text-align: center; font-size: 12px; color: var(--ink-faint);
@@ -1783,19 +1784,19 @@ function renderMatGate(wrap, h1){
       '<div class="mat-welcome-t">Zadej kód třídy</div>' +
       '<div class="mat-welcome-m">Spolužáci sdílí zápisky a materiály na jednom místě.</div>' +
     '</div>' +
-    '<div class="code-boxes">' + [0,1,2,3].map(i=>'<input class="code-box" inputmode="numeric" maxlength="1" data-i="'+i+'">').join('') + '</div>' +
+    '<div class="code-boxes">' + [0,1,2,3,4,5].map(i=>'<input class="code-box" maxlength="1" autocapitalize="characters" autocomplete="off" data-i="'+i+'">').join('') + '</div>' +
     '<button class="btn btn-primary" id="enterBtn" style="width:100%">Připojit se</button>' +
     '<div class="mat-or">nebo</div>' +
     '<button class="btn btn-ghost" id="createBtn" style="width:100%">Vytvořit novou třídu</button>';
   wrap.appendChild(box);
   const inputs = Array.prototype.slice.call(box.querySelectorAll('.code-box'));
   inputs.forEach((inp,i)=>{
-    inp.oninput = ()=>{ inp.value = inp.value.replace(/\D/g,'').slice(0,1); if(inp.value && i<3) inputs[i+1].focus(); };
+    inp.oninput = ()=>{ inp.value = inp.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,1); if(inp.value && i<5) inputs[i+1].focus(); };
     inp.onkeydown = (e)=>{ if(e.key==='Backspace' && !inp.value && i>0) inputs[i-1].focus(); };
   });
   box.querySelector('#enterBtn').onclick = ()=>{
     const code = inputs.map(x=>x.value).join('');
-    if(code.length !== 4){ alertDialog('Neúplný kód','Zadej všechna čtyři čísla.'); return; }
+    if(code.length !== 6){ alertDialog('Neúplný kód','Zadej všech šest znaků kódu.'); return; }
     enterClass(code);
   };
   box.querySelector('#createBtn').onclick = createClassFlow;
@@ -1812,13 +1813,19 @@ async function enterClass(code){
   } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
 }
 
+function genClassCode(){
+  const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // bez matoucích znaků (0/O, 1/I/L)
+  let s = '';
+  for(let i=0;i<6;i++) s += A.charAt(Math.floor(Math.random()*A.length));
+  return s;
+}
 function createClassFlow(){
   promptDialog('Nová třída — jméno', '', async (name)=>{
     const c = getSB(); if(!c) return;
     try {
       let code = null;
       for(let t=0; t<20; t++){
-        const cand = String(Math.floor(1000 + Math.random()*9000));
+        const cand = genClassCode();
         const ex = await c.from('tridy').select('code').eq('code', cand).maybeSingle();
         if(!ex.data){ code = cand; break; }
       }
@@ -2014,7 +2021,8 @@ function renderMatCalendar(wrap){
 
   function updateLabel(){
     const s = mat.weekStart, e = addDays(s,6);
-    label.textContent = s.getDate()+'. '+(s.getMonth()+1)+'. – '+e.getDate()+'. '+(e.getMonth()+1)+'.';
+    const sy = s.getFullYear(), ey = e.getFullYear();
+    label.textContent = s.getDate()+'. '+(s.getMonth()+1)+'.'+(sy!==ey?(' '+sy):'')+' – '+e.getDate()+'. '+(e.getMonth()+1)+'. '+ey;
   }
   prev.onclick = ()=>{ mat.weekStart = addDays(mat.weekStart,-7); updateLabel(); drawWeek(); };
   next.onclick = ()=>{ mat.weekStart = addDays(mat.weekStart, 7); updateLabel(); drawWeek(); };
