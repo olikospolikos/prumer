@@ -523,9 +523,13 @@
   .mat-subj:active { background: var(--bg-elev2); }
 
   .mat-back {
-    margin: 0 16px 14px; background: none; border: none; cursor: pointer;
-    color: var(--ink-dim); font-family: inherit; font-size: 14px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+    margin: 0 16px 14px; padding: 10px 15px 10px 12px; cursor: pointer;
+    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 12px;
+    color: var(--ink); font-family: inherit; font-size: 14px; font-weight: 700;
   }
+  .mat-back:active { background: var(--bg-elev2); }
+  .mat-back-ic { color: var(--accent); font-size: 19px; font-weight: 800; line-height: 1; }
   .mat-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
   .mat-file {
     display: flex; align-items: center; gap: 12px;
@@ -2132,7 +2136,7 @@ function deleteTest(r){
 function renderMatSubject(wrap, h1){
   h1.textContent = mat.subject;
   const back = document.createElement('button');
-  back.className = 'mat-back'; back.textContent = '‹ Předměty';
+  back.className = 'mat-back'; back.innerHTML = '<span class="mat-back-ic">‹</span> Předměty';
   back.onclick = ()=>{ mat.view = 'class'; renderMaterials(); };
   wrap.appendChild(back);
 
