@@ -3,2893 +3,437 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0f1115">
-<title>Estudivo</title>
-<meta name="description" content="Estudivo – studentská aplikace pro přehled známek a výpočet průměru, sdílení materiálů ve třídě, kalendář testů a import známek ze Škola OnLine.">
+<title>Průměr známek – online výpočet váženého průměru zdarma | Estudivo</title>
+<meta name="description" content="Spočítej si průměr známek online. Estudivo počítá vážený průměr z tvých známek a vah, umí „co kdyby“, sdílení materiálů ve třídě, kalendář testů i import ze Škola OnLine. Zdarma a bez reklam.">
+<meta name="keywords" content="průměr známek, výpočet průměru známek, vážený průměr, kalkulačka průměru známek, výpočet váženého průměru, studijní průměr">
 <link rel="canonical" href="https://estudivo.cz/">
-<!-- Open Graph / náhled při sdílení odkazu -->
+<meta name="theme-color" content="#e8b84b">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph / náhled při sdílení -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Estudivo">
-<meta property="og:title" content="Estudivo – známky, průměr a třída na jednom místě">
-<meta property="og:description" content="Přehled známek a průměru, sdílení materiálů ve třídě, kalendář testů a import známek ze Škola OnLine.">
+<meta property="og:title" content="Průměr známek – online výpočet váženého průměru | Estudivo">
+<meta property="og:description" content="Spočítej si vážený průměr známek online. Známky a váhy, „co kdyby“, materiály a kalendář testů pro celou třídu. Zdarma.">
 <meta property="og:url" content="https://estudivo.cz/">
 <meta property="og:image" content="https://estudivo.cz/icon-512.png">
 <meta property="og:locale" content="cs_CZ">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Estudivo – známky, průměr a třída na jednom místě">
-<meta name="twitter:description" content="Přehled známek a průměru, sdílení materiálů ve třídě, kalendář testů a import známek ze Škola OnLine.">
+<meta name="twitter:title" content="Průměr známek – výpočet váženého průměru | Estudivo">
+<meta name="twitter:description" content="Spočítej si vážený průměr známek online. Zdarma, bez reklam, funguje i na mobilu.">
 <meta name="twitter:image" content="https://estudivo.cz/icon-512.png">
-<meta name="apple-mobile-web-app-title" content="Estudivo">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <script>(function(){try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+
+<!-- Strukturovaná data: aplikace + FAQ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Estudivo",
+  "url": "https://estudivo.cz/",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Web, iOS, Android",
+  "inLanguage": "cs",
+  "description": "Online aplikace pro výpočet váženého průměru známek, sdílení materiálů ve třídě a kalendář testů.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CZK" },
+  "featureList": ["Výpočet váženého průměru známek", "Hypotetická známka „co kdyby“", "Dvě pololetí", "Sdílení materiálů ve třídě", "Sdílený kalendář testů", "Import známek ze Škola OnLine", "Funguje offline (PWA)"]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Je Estudivo zdarma?", "acceptedAnswer": { "@type": "Answer", "text": "Ano. Výpočet průměru známek i celá aplikace jsou úplně zdarma a bez reklam." } },
+    { "@type": "Question", "name": "Co je vážený průměr známek?", "acceptedAnswer": { "@type": "Answer", "text": "Vážený průměr je průměr, ve kterém má každá známka svou váhu podle důležitosti – třeba písemka váží víc než aktivita. Spočítá se jako součet (známka × váha) dělený součtem vah." } },
+    { "@type": "Question", "name": "Jak se počítá vážený průměr známek?", "acceptedAnswer": { "@type": "Answer", "text": "Každou známku vynásobíš její váhou, výsledky sečteš a vydělíš součtem všech vah. Estudivo to dělá automaticky – stačí zadat známku a její váhu." } },
+    { "@type": "Question", "name": "Musím se registrovat?", "acceptedAnswer": { "@type": "Answer", "text": "Na počítání průměru ne – otevřeš a hned počítáš. Účet potřebuješ jen pro sdílení materiálů ve třídě a synchronizaci známek mezi zařízeními." } },
+    { "@type": "Question", "name": "Funguje Estudivo na mobilu?", "acceptedAnswer": { "@type": "Answer", "text": "Ano. Je to webová aplikace (PWA) – otevřeš ji v prohlížeči a můžeš si ji přidat na plochu telefonu jako appku. Funguje i offline." } }
+  ]
+}
+</script>
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap');
 
-  :root {
-    --bg: #0f1115;
-    --bg-elev: #181b22;
-    --bg-elev2: #20242e;
-    --line: #2a2f3a;
-    --ink: #f2f4f8;
-    --ink-dim: #99a0ae;
-    --ink-faint: #5c6373;
-    --accent: #e8b84b;
-    --accent-soft: rgba(232,184,75,0.12);
-    --good: #5ec77a;
-    --warn: #e0894a;
-    --bad: #e25c5c;
-    --radius: 16px;
+  :root{
+    --bg:#f7f5ef; --bg-elev:#ffffff; --bg-elev2:#efece2; --line:#e7e3d8;
+    --ink:#1a1f30; --ink-dim:#6b7280; --ink-faint:#9aa0b0;
+    --accent:#e8b84b; --accent-deep:#c8941f; --accent-soft:rgba(232,184,75,0.16);
+    --good:#5ec77a; --radius:18px;
+    --hero-grad:linear-gradient(155deg,#f2c759,#e3a52c);
+    --shadow:0 18px 50px rgba(26,31,48,0.10);
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  html, body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: 'Hanken Grotesk', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    overscroll-behavior: none;
+  :root[data-theme="dark"]{
+    --bg:#0f1115; --bg-elev:#181b22; --bg-elev2:#20242e; --line:#2a2f3a;
+    --ink:#f2f4f8; --ink-dim:#99a0ae; --ink-faint:#5c6373;
+    --accent:#e8b84b; --accent-deep:#e8b84b; --accent-soft:rgba(232,184,75,0.12);
+    --shadow:0 18px 50px rgba(0,0,0,0.45);
   }
 
-  body {
-    max-width: 560px;
-    margin: 0 auto;
-    padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 90px);
-    min-height: 100vh;
-    background:
-      radial-gradient(1200px 500px at 80% -10%, rgba(232,184,75,0.06), transparent 60%),
-      var(--bg);
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Hanken Grotesk',sans-serif; line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    background-image:
+      radial-gradient(620px 320px at 88% -4%, var(--accent-soft), transparent 70%),
+      radial-gradient(520px 300px at 4% 18%, var(--accent-soft), transparent 72%);
+    background-attachment:fixed;
+  }
+  .wrap{ width:100%; max-width:1080px; margin:0 auto; padding:0 22px; }
+  a{ color:inherit; text-decoration:none; }
+  ::selection{ background:var(--accent); color:#1a1407; }
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    backdrop-filter:saturate(160%) blur(14px);
+    background:color-mix(in srgb, var(--bg) 78%, transparent);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{ display:flex; align-items:center; gap:14px; height:64px; }
+  .brand{ display:flex; align-items:center; gap:9px; font-family:'Outfit',sans-serif; font-weight:800; font-size:21px; letter-spacing:-0.02em; }
+  .brand .cap{ width:30px; height:23px; color:var(--accent-deep); }
+  .brand b{ color:var(--ink); }
+  .nav-links{ display:flex; gap:26px; margin-left:auto; font-weight:500; color:var(--ink-dim); font-size:15px; }
+  .nav-links a:hover{ color:var(--ink); }
+  .nav-right{ display:flex; align-items:center; gap:10px; margin-left:24px; }
+  .tgl{ width:40px; height:40px; border-radius:12px; cursor:pointer; font-size:17px;
+        background:var(--bg-elev); border:1px solid var(--line); color:var(--ink);
+        display:grid; place-items:center; transition:.15s; }
+  .tgl:hover{ background:var(--bg-elev2); }
+  @media(max-width:760px){ .nav-links{ display:none; } .nav-right{ margin-left:auto; } }
+
+  /* ---------- BUTTONS ---------- */
+  .btn{ display:inline-flex; align-items:center; gap:8px; font-family:'Outfit',sans-serif; font-weight:700;
+        font-size:15.5px; padding:12px 22px; border-radius:13px; cursor:pointer; border:1px solid transparent; transition:.18s; white-space:nowrap; }
+  .btn-primary{ background:var(--accent); color:#1a1407; box-shadow:0 8px 22px rgba(227,165,44,0.32); }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(227,165,44,0.42); }
+  .btn-ghost{ background:var(--bg-elev); color:var(--ink); border-color:var(--line); }
+  .btn-ghost:hover{ background:var(--bg-elev2); }
+  .btn-lg{ font-size:17px; padding:15px 28px; }
+
+  /* ---------- HERO ---------- */
+  .hero{ display:grid; grid-template-columns:1.05fr 0.95fr; gap:48px; align-items:center; padding:76px 0 56px; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; font-family:'Outfit',sans-serif; font-weight:700;
+            font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent-deep);
+            background:var(--accent-soft); padding:7px 13px; border-radius:100px; }
+  h1{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(38px,6vw,62px); line-height:1.04;
+      letter-spacing:-0.018em; margin:20px 0 0; }
+  h1 .mark{ color:var(--accent-deep); font-style:italic; }
+  .lead{ font-size:18.5px; color:var(--ink-dim); margin:20px 0 0; max-width:30em; }
+  .cta-row{ display:flex; gap:13px; margin-top:30px; flex-wrap:wrap; }
+  .trust{ display:flex; align-items:center; gap:8px; margin-top:22px; color:var(--ink-faint); font-size:14px; }
+  .trust b{ color:var(--ink-dim); font-weight:600; }
+
+  /* hero karta – replika appky */
+  .hero-visual{ position:relative; display:grid; place-items:center; }
+  .avg-card{
+    width:min(340px,100%); border-radius:26px; padding:26px 26px 24px; position:relative; overflow:hidden;
+    background:var(--hero-grad); box-shadow:0 26px 60px rgba(227,165,44,0.36); color:#3a2c08;
+    transform:rotate(-2.5deg);
+  }
+  .avg-card .tex{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .avg-card .tex span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:rgba(255,255,255,0.22); }
+  .avg-head{ display:flex; align-items:center; gap:9px; position:relative; }
+  .avg-head .cap{ width:27px; height:21px; color:#fff; }
+  .avg-lbl{ font-family:'Outfit',sans-serif; font-weight:700; font-size:14px; color:#5a440c; letter-spacing:.01em; }
+  .avg-num{ font-family:'Fraunces',serif; font-weight:600; font-size:84px; line-height:1; margin:14px 0 2px; color:#241a02; position:relative; }
+  .avg-sub{ font-weight:600; font-size:14px; color:#6b5212; position:relative; }
+  .avg-bars{ display:flex; gap:6px; margin-top:18px; position:relative; }
+  .avg-bars i{ flex:1; height:7px; border-radius:6px; background:rgba(255,255,255,0.45); }
+  .avg-bars i:nth-child(-n+5){ background:rgba(36,26,2,0.55); }
+  @media(max-width:860px){
+    .hero{ grid-template-columns:1fr; gap:36px; padding:48px 0 36px; text-align:center; }
+    .eyebrow{ }
+    .lead{ margin-left:auto; margin-right:auto; }
+    .cta-row,.trust{ justify-content:center; }
+    .hero-visual{ order:-1; }
+    .avg-card{ transform:rotate(-1.5deg); }
   }
 
-  /* ---------- header ---------- */
-  header {
-    padding: 28px 22px 18px;
-  }
-  .eyebrow {
-    font-size: 12px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    font-weight: 600;
-  }
-  h1 {
-    font-family: 'Fraunces', serif;
-    font-weight: 600;
-    font-size: 34px;
-    line-height: 1.05;
-    margin-top: 6px;
-    letter-spacing: -0.01em;
-  }
+  /* ---------- SECTIONS ---------- */
+  section{ padding:54px 0; }
+  .sec-head{ max-width:34em; margin-bottom:34px; }
+  .sec-tag{ font-family:'Outfit',sans-serif; font-weight:700; font-size:12.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--accent-deep); }
+  h2{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(28px,4vw,40px); line-height:1.1; letter-spacing:-0.015em; margin:10px 0 0; }
+  .sec-head p{ color:var(--ink-dim); font-size:17px; margin-top:12px; }
 
-  /* ---------- semester toggle ---------- */
-  .sem-toggle {
-    display: flex; gap: 6px;
-    margin: 0 16px 14px;
-    background: var(--bg-elev); border: 1px solid var(--line);
-    border-radius: 13px; padding: 4px;
-  }
-  .sem-btn {
-    flex: 1; padding: 11px; border: none; border-radius: 10px;
-    background: none; color: var(--ink-dim);
-    font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
-  }
-  .sem-btn.sel { background: var(--accent); color: #1a1407; }
+  /* features */
+  .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  @media(max-width:860px){ .grid{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:560px){ .grid{ grid-template-columns:1fr; } }
+  .card{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); transition:.2s; }
+  .card:hover{ transform:translateY(-4px); border-color:color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .ic{ width:46px; height:46px; border-radius:13px; display:grid; place-items:center; background:var(--accent-soft); color:var(--accent-deep); margin-bottom:15px; }
+  .ic svg{ width:24px; height:24px; }
+  .card h3{ font-family:'Outfit',sans-serif; font-weight:700; font-size:18px; }
+  .card p{ color:var(--ink-dim); font-size:15px; margin-top:7px; }
 
-  /* ---------- overall average card ---------- */
-  .overall {
-    margin: 6px 16px 22px;
-    background: linear-gradient(160deg, var(--bg-elev2), var(--bg-elev));
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 22px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-  }
-  .overall::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(300px 120px at 90% 0%, var(--accent-soft), transparent 70%);
-    pointer-events: none;
-  }
-  .overall .lbl {
-    font-size: 13px;
-    color: var(--ink-dim);
-    letter-spacing: 0.04em;
-  }
-  .overall .num {
-    font-family: 'Fraunces', serif;
-    font-size: 56px;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-  .overall .sub {
-    font-size: 12px;
-    color: var(--ink-faint);
-    margin-top: 6px;
-  }
+  /* how it works / formula */
+  .how{ display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; }
+  @media(max-width:860px){ .how{ grid-template-columns:1fr; gap:28px; } }
+  .formula{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:30px; box-shadow:var(--shadow); }
+  .formula .frac{ text-align:center; font-family:'Fraunces',serif; font-size:21px; color:var(--ink); }
+  .formula .frac .top{ padding-bottom:9px; border-bottom:2px solid var(--accent); display:inline-block; margin-bottom:9px; }
+  .formula .note{ color:var(--ink-faint); font-size:13.5px; text-align:center; margin-top:6px; }
+  .ex{ margin-top:22px; padding-top:20px; border-top:1px dashed var(--line); font-size:15px; color:var(--ink-dim); }
+  .ex b{ color:var(--ink); }
+  .ex .res{ font-family:'Outfit',sans-serif; font-weight:800; color:var(--accent-deep); font-size:17px; }
+  .how-list{ list-style:none; display:flex; flex-direction:column; gap:16px; }
+  .how-list li{ display:flex; gap:14px; align-items:flex-start; }
+  .how-list .n{ flex-shrink:0; width:30px; height:30px; border-radius:50%; background:var(--accent); color:#1a1407; font-family:'Outfit',sans-serif; font-weight:800; font-size:14px; display:grid; place-items:center; }
+  .how-list h4{ font-family:'Outfit',sans-serif; font-weight:700; font-size:16px; }
+  .how-list p{ color:var(--ink-dim); font-size:14.5px; }
 
-  /* ---------- calculator ---------- */
-  .calc {
-    margin: 0 16px 22px;
-    background: var(--bg-elev);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .calc-head {
-    display: flex; align-items: center; gap: 14px;
-    padding: 16px 18px; cursor: pointer;
-  }
-  .calc-icon {
-    width: 46px; height: 46px; border-radius: 12px;
-    display: grid; place-items: center;
-    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
-    background: var(--accent-soft); color: var(--accent);
-    border: 1px solid rgba(232,184,75,0.3);
-  }
-  .calc-meta { flex: 1; }
-  .calc-title { font-size: 16px; font-weight: 600; }
-  .calc-sub { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
-  .calc.open .chev { transform: rotate(90deg); }
-  .calc-body { padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 13px; }
-  .calc-toggle {
-    display: flex; gap: 6px;
-    background: var(--bg); border: 1px solid var(--line);
-    border-radius: 11px; padding: 4px;
-  }
-  .calc-mode {
-    flex: 1; padding: 9px; border: none; border-radius: 8px;
-    background: none; color: var(--ink-dim);
-    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .calc-mode.sel { background: var(--accent); color: #1a1407; }
-  .calc-hint { font-size: 12px; color: var(--ink-faint); line-height: 1.4; }
-  .calc-result {
-    background: var(--accent-soft);
-    border: 1px solid rgba(232,184,75,0.3);
-    border-radius: 10px;
-    padding: 13px 15px;
-    font-size: 15px; font-weight: 600;
-    color: var(--ink);
-    text-align: center;
-  }
-  .calc-result.err {
-    background: rgba(226,92,92,0.1);
-    border-color: rgba(226,92,92,0.3);
-    color: var(--bad); font-weight: 500; font-size: 13.5px;
-  }
+  /* FAQ */
+  .faq{ max-width:760px; margin:0 auto; }
+  details{ background:var(--bg-elev); border:1px solid var(--line); border-radius:14px; padding:0 20px; margin-bottom:12px; box-shadow:var(--shadow); }
+  summary{ list-style:none; cursor:pointer; padding:18px 0; font-family:'Outfit',sans-serif; font-weight:700; font-size:16.5px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  summary::-webkit-details-marker{ display:none; }
+  summary .pm{ flex-shrink:0; width:24px; height:24px; border-radius:7px; background:var(--accent-soft); color:var(--accent-deep); display:grid; place-items:center; font-size:18px; transition:.2s; }
+  details[open] summary .pm{ transform:rotate(45deg); }
+  details p{ color:var(--ink-dim); font-size:15.5px; padding:0 0 20px; margin-top:-4px; }
 
-  /* ---------- subject list ---------- */
-  .section-label {
-    padding: 4px 22px 12px;
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    font-weight: 600;
-  }
-  .subjects { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  /* CTA band */
+  .cta-band{ background:var(--hero-grad); border-radius:28px; padding:52px 40px; text-align:center; color:#241a02; position:relative; overflow:hidden; box-shadow:0 24px 60px rgba(227,165,44,0.30); }
+  .cta-band .tex{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .cta-band .tex span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:rgba(255,255,255,0.18); }
+  .cta-band h2{ color:#241a02; position:relative; }
+  .cta-band p{ color:#5a440c; font-size:17px; margin:12px auto 26px; max-width:32em; position:relative; }
+  .cta-band .btn-dark{ background:#241a02; color:#f2c759; position:relative; box-shadow:0 10px 26px rgba(36,26,2,0.30); }
+  .cta-band .btn-dark:hover{ transform:translateY(-2px); }
 
-  .subject {
-    background: var(--bg-elev);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: border-color .2s;
-  }
-  .subject.open { border-color: #38404f; }
+  /* footer */
+  footer{ border-top:1px solid var(--line); padding:40px 0 56px; margin-top:20px; }
+  .foot{ display:flex; flex-wrap:wrap; gap:20px; align-items:center; justify-content:space-between; }
+  .foot-links{ display:flex; gap:24px; color:var(--ink-dim); font-size:15px; font-weight:500; }
+  .foot-links a:hover{ color:var(--ink); }
+  .copy{ color:var(--ink-faint); font-size:13.5px; margin-top:18px; }
 
-  .subject-head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 18px;
-    cursor: pointer;
-  }
-  .pill {
-    min-width: 46px;
-    height: 46px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    font-family: 'Fraunces', serif;
-    font-size: 22px;
-    font-weight: 600;
-    background: var(--bg-elev2);
-    border: 1px solid var(--line);
-  }
-  .subject-meta { flex: 1; min-width: 0; }
-  .subject-name {
-    font-size: 16px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .subject-count { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
-  .chev {
-    color: var(--ink-faint);
-    transition: transform .2s;
-    flex-shrink: 0;
-  }
-  .subject.open .chev { transform: rotate(90deg); }
-
-  /* ---------- grade rows ---------- */
-  .grades { padding: 0 18px 6px; }
-  .grade-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 0;
-    border-top: 1px solid var(--line);
-  }
-  .grade-mark {
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    display: grid; place-items: center;
-    font-weight: 700; font-size: 15px;
-    flex-shrink: 0;
-  }
-  .grade-info { flex: 1; min-width: 0; }
-  .grade-desc { font-size: 14px; font-weight: 500; }
-  .grade-sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; }
-  .grade-del {
-    color: var(--bad);
-    background: rgba(226,92,92,0.1);
-    border: 1px solid rgba(226,92,92,0.25);
-    border-radius: 9px;
-    padding: 8px;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: grid; place-items: center;
-    width: 38px; height: 38px;
-  }
-  .grade-del:active { background: rgba(226,92,92,0.25); }
-
-  /* hypotetická (ruční) známka – vizuálně odlišená od skutečných ze Škola OnLine */
-  .grade-row.hypo .grade-desc { font-style: italic; }
-  .hypo-badge {
-    display: inline-block; margin-left: 6px; vertical-align: middle;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
-    color: var(--accent); background: var(--accent-soft);
-    border: 1px solid rgba(232,184,75,0.35); border-radius: 6px; padding: 1px 6px;
-  }
-
-  .add-grade-btn {
-    width: 100%;
-    background: none;
-    border: 1px dashed var(--line);
-    color: var(--ink-dim);
-    border-radius: 10px;
-    padding: 11px;
-    font-size: 13.5px;
-    font-weight: 600;
-    font-family: inherit;
-    margin: 8px 0 14px;
-    cursor: pointer;
-  }
-  .add-grade-btn:active { background: var(--bg-elev2); }
-
-  /* hypothetical block */
-  .hypo {
-    margin: 0 0 14px;
-    background: var(--accent-soft);
-    border: 1px solid rgba(232,184,75,0.3);
-    border-radius: 12px;
-    padding: 13px 15px;
-  }
-  .hypo-title {
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--accent); font-weight: 700; margin-bottom: 10px;
-  }
-  .hypo-row { display: flex; gap: 8px; align-items: center; }
-  .hypo-row select, .hypo-row input {
-    flex: 1; min-width: 0;
-  }
-  .hypo-result {
-    margin-top: 11px; font-size: 13.5px; color: var(--ink-dim);
-  }
-  .hypo-result b {
-    font-family: 'Fraunces', serif; color: var(--ink); font-size: 18px;
-    font-weight: 600;
-  }
-  .delta-good { color: var(--good); font-weight: 700; }
-  .delta-bad { color: var(--bad); font-weight: 700; }
-
-  /* ---------- inputs ---------- */
-  input, select, textarea {
-    font-family: inherit;
-    font-size: 15px;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    color: var(--ink);
-    border-radius: 10px;
-    padding: 11px 12px;
-    width: 100%;
-    appearance: none;
-  }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-  label.fld { display: block; }
-  label.fld span {
-    display: block; font-size: 12px; color: var(--ink-dim);
-    margin-bottom: 5px; letter-spacing: 0.02em;
-  }
-
-  /* ---------- add subject ---------- */
-  .add-subject {
-    margin: 14px 16px 0;
-  }
-  .add-subject-btn {
-    width: 100%;
-    background: var(--bg-elev);
-    border: 1px solid var(--line);
-    color: var(--ink-dim);
-    border-radius: var(--radius);
-    padding: 15px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-  }
-  .add-subject-btn:active { background: var(--bg-elev2); }
-
-  /* ---------- modal / sheet ---------- */
-  .sheet-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(3px);
-    opacity: 0; pointer-events: none;
-    transition: opacity .25s;
-    z-index: 40;
-  }
-  .sheet-backdrop.show { opacity: 1; pointer-events: auto; }
-  .sheet {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    max-width: 560px; margin: 0 auto;
-    background: var(--bg-elev);
-    border-top-left-radius: 22px; border-top-right-radius: 22px;
-    border-top: 1px solid var(--line);
-    padding: 8px 20px calc(24px + env(safe-area-inset-bottom));
-    transform: translateY(100%);
-    transition: transform .3s cubic-bezier(.32,.72,0,1);
-    z-index: 50;
-  }
-  .sheet.show { transform: translateY(0); }
-  .sheet-grab {
-    width: 38px; height: 4px; border-radius: 2px;
-    background: var(--line); margin: 8px auto 18px;
-  }
-  .sheet h3 {
-    font-family: 'Fraunces', serif; font-weight: 600;
-    font-size: 22px; margin-bottom: 18px;
-  }
-  .sheet .fields { display: flex; flex-direction: column; gap: 13px; }
-  .row2 { display: flex; gap: 10px; }
-  .row2 > * { flex: 1; }
-  .sheet-actions { display: flex; gap: 10px; margin-top: 20px; }
-  .btn {
-    flex: 1; padding: 14px; border-radius: 12px;
-    font-family: inherit; font-size: 15px; font-weight: 700;
-    border: none; cursor: pointer;
-  }
-  .btn-primary { background: var(--accent); color: #1a1407; }
-  .btn-ghost { background: var(--bg-elev2); color: var(--ink-dim); }
-  .btn-danger { background: var(--bad); color: #fff; }
-
-  /* custom dialog */
-  .dlg-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.65);
-    backdrop-filter: blur(3px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 28px;
-    opacity: 0; pointer-events: none;
-    transition: opacity .2s; z-index: 60;
-  }
-  .dlg-backdrop.show { opacity: 1; pointer-events: auto; }
-  .dlg {
-    width: 100%; max-width: 360px;
-    background: var(--bg-elev); border: 1px solid var(--line);
-    border-radius: 18px; padding: 22px 22px 18px;
-    transform: scale(.94); transition: transform .2s;
-  }
-  .dlg-backdrop.show .dlg { transform: scale(1); }
-  .dlg h4 { font-family:'Fraunces',serif; font-size:20px; font-weight:600; }
-  .dlg p { font-size:14px; color:var(--ink-dim); margin-top:8px; line-height:1.45; }
-  .dlg input { margin-top:14px; }
-  .dlg-actions { display:flex; gap:10px; margin-top:20px; }
-
-  .mark-picker { display: flex; gap: 8px; }
-  .mark-opt {
-    flex: 1; aspect-ratio: 1; border-radius: 12px;
-    border: 1px solid var(--line); background: var(--bg);
-    color: var(--ink); font-family: 'Fraunces', serif;
-    font-size: 22px; font-weight: 600; cursor: pointer;
-    display: grid; place-items: center;
-  }
-  .mark-opt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-
-  .weight-picker { display: flex; gap: 7px; flex-wrap: wrap; }
-  .weight-opt {
-    padding: 9px 13px; border-radius: 9px;
-    border: 1px solid var(--line); background: var(--bg);
-    color: var(--ink-dim); font-size: 13px; font-weight: 600;
-    cursor: pointer;
-  }
-  .weight-opt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-
-  .empty {
-    text-align: center; color: var(--ink-faint);
-    font-size: 13.5px; padding: 30px 20px;
-    line-height: 1.5;
-  }
-
-  .subject-actions {
-    display: flex; gap: 8px; margin: 0 0 14px;
-  }
-  .subj-action {
-    flex: 1; padding: 10px; border-radius: 10px;
-    background: var(--bg-elev2); border: 1px solid var(--line);
-    color: var(--ink-dim); font-family: inherit;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .subj-action:active { background: var(--bg); }
-  .subj-action.danger { color: var(--bad); }
-  .subj-action.danger:active { background: rgba(226,92,92,0.1); }
-
-  /* ---------- backup ---------- */
-  .backup { display: flex; gap: 8px; margin: 0 16px; }
-  .backup button { flex: 1; }
-  .backup-note {
-    font-size: 12px; color: var(--ink-faint); line-height: 1.5;
-    margin: 10px 22px 0;
-  }
-
-  /* ---------- tab bar ---------- */
-  .tabbar {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-    max-width: 560px; margin: 0 auto;
-    display: flex; gap: 4px;
-    background: rgba(24,27,34,0.92);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid var(--line);
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  }
-  .tab {
-    flex: 1; border: none; background: none; cursor: pointer;
-    font-family: inherit; font-size: 11.5px; font-weight: 700;
-    color: var(--ink-faint);
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 6px; border-radius: 12px;
-  }
-  .tab svg { width: 22px; height: 22px; }
-  .tab.sel { color: var(--accent); }
-
-  /* ---------- materials ---------- */
-  .mat-notice {
-    margin: 6px 16px; padding: 18px;
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius);
-  }
-  .mat-notice-t { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-  .mat-notice-m { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
-
-  .mat-gate { margin: 6px 16px; display: flex; flex-direction: column; gap: 14px; }
-  .mat-lead { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
-  .code-boxes { display: flex; gap: 10px; }
-  .code-box {
-    flex: 1; min-width: 0; height: 66px; text-align: center; padding: 0;
-    font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600;
-    text-transform: uppercase;
-  }
-  .mat-or {
-    text-align: center; font-size: 12px; color: var(--ink-faint);
-    letter-spacing: 0.1em; text-transform: uppercase;
-  }
-
-  .mat-classbar {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    margin: 6px 16px 18px; padding: 14px 18px;
-    background: linear-gradient(160deg, var(--bg-elev2), var(--bg-elev));
-    border: 1px solid var(--line); border-radius: var(--radius);
-  }
-  .mat-code-lbl {
-    font-size: 11px; color: var(--ink-faint);
-    letter-spacing: 0.08em; text-transform: uppercase;
-  }
-  .mat-code-val {
-    font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; letter-spacing: 0.1em;
-  }
-
-  .mat-subjects { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; }
-  .mat-subj {
-    padding: 16px 14px; border-radius: 14px; cursor: pointer; text-align: left;
-    background: var(--bg-elev); border: 1px solid var(--line);
-    color: var(--ink); font-family: inherit; font-size: 14.5px; font-weight: 600;
-  }
-  .mat-subj:active { background: var(--bg-elev2); }
-
-  .mat-back {
-    display: inline-flex; align-items: center; gap: 7px;
-    margin: 0 16px 14px; padding: 10px 15px 10px 12px; cursor: pointer;
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 12px;
-    color: var(--ink); font-family: inherit; font-size: 14px; font-weight: 700;
-  }
-  .mat-back:active { background: var(--bg-elev2); }
-  .mat-back-ic { color: var(--accent); font-size: 19px; font-weight: 800; line-height: 1; }
-  .mat-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
-  .mat-file {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px;
-    padding: 12px 14px;
-  }
-  .mat-file-ic { font-size: 22px; flex-shrink: 0; }
-  .mat-file-meta { flex: 1; min-width: 0; }
-  .mat-file-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mat-file-sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
-  .mat-dl {
-    width: 38px; height: 38px; flex-shrink: 0; cursor: pointer;
-    border-radius: 9px; border: 1px solid rgba(232,184,75,0.3);
-    background: var(--accent-soft); color: var(--accent);
-    font-size: 18px; font-weight: 700; display: grid; place-items: center;
-  }
-  .mat-del { width: 38px; height: 38px; }
-  .mat-edit {
-    width: 38px; height: 38px; flex-shrink: 0; cursor: pointer;
-    border-radius: 9px; border: 1px solid var(--line);
-    background: var(--bg-elev2); color: var(--ink-dim);
-    display: grid; place-items: center;
-  }
-  .mat-edit:active { background: var(--bg); }
-  .mat-sortbar { display: flex; align-items: center; gap: 10px; margin: 0 16px 12px; }
-  .mat-sortbar span {
-    font-size: 12px; color: var(--ink-faint);
-    letter-spacing: 0.04em; flex-shrink: 0;
-  }
-  .mat-sortbar select { flex: 1; }
-
-  /* drobečková navigace složek */
-  .mat-crumb {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
-    margin: 0 16px 12px; font-size: 13px; color: var(--ink-dim);
-  }
-  .mat-crumb a { color: var(--ink-dim); cursor: pointer; }
-  .mat-crumb a.cur { color: var(--ink); font-weight: 600; }
-  .mat-crumb .sep { color: var(--ink-faint); margin: 0 2px; }
-  .mat-folder .mat-file-ic { color: var(--accent); }
-
-  /* dvě tlačítka vedle sebe (nahrát / nová složka) */
-  .mat-actions { display: flex; gap: 8px; margin: 0 16px 12px; }
-  .mat-actions .add-grade-btn { margin: 0; flex: 1; }
-
-  /* náhled souboru přes celou obrazovku */
-  .preview-backdrop {
-    position: fixed; inset: 0; z-index: 70;
-    background: rgba(10,12,16,0.96); backdrop-filter: blur(4px);
-    display: none; flex-direction: column;
-  }
-  .preview-backdrop.show { display: flex; }
-  .preview-bar {
-    display: flex; align-items: center; gap: 12px;
-    padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
-    border-bottom: 1px solid var(--line);
-  }
-  .preview-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--ink);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .preview-close {
-    width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px; cursor: pointer;
-    background: var(--bg-elev2); border: 1px solid var(--line); color: var(--ink);
-    font-size: 18px; line-height: 1; font-family: inherit;
-  }
-  .preview-body {
-    flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
-    overflow: auto; padding: 12px;
-  }
-  .preview-body img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
-  .preview-body iframe { width: 100%; height: 100%; border: none; background: #fff; border-radius: 8px; }
-  .preview-body .preview-msg { color: var(--ink-dim); font-size: 14px; text-align: center; line-height: 1.6; padding: 30px; }
-  .preview-foot { padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px); border-top: 1px solid var(--line); }
-  .preview-foot .btn { width: 100%; }
-
-  /* ---------- calendar (týdenní pohled) ---------- */
-  .cal-nav { display: flex; align-items: center; gap: 8px; margin: 0 16px 12px; }
-  .cal-arrow {
-    width: 40px; height: 40px; flex-shrink: 0; border-radius: 11px; cursor: pointer;
-    background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink);
-    font-size: 22px; line-height: 1; font-family: inherit;
-  }
-  .cal-arrow:active { background: var(--bg-elev2); }
-  .cal-label {
-    flex: 1; height: 40px; border-radius: 11px; cursor: pointer;
-    background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink);
-    font-family: inherit; font-size: 14px; font-weight: 600;
-  }
-  .cal-week { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
-  .cal-day {
-    display: flex; align-items: stretch; gap: 12px;
-    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 14px;
-    padding: 10px 12px;
-  }
-  .cal-day.today { border-color: var(--accent); }
-  .cal-dhead {
-    width: 42px; flex-shrink: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-  }
-  .cal-wd {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--ink-faint); font-weight: 700;
-  }
-  .cal-dn { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; line-height: 1.1; }
-  .cal-day.today .cal-wd, .cal-day.today .cal-dn { color: var(--accent); }
-  .cal-dbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
-  .cal-empty { color: var(--ink-faint); font-size: 14px; }
-  .cal-chip {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--bg-elev2); border: 1px solid var(--line); border-radius: 10px;
-    padding: 7px 10px;
-  }
-  .cal-chip-meta { flex: 1; min-width: 0; }
-  .cal-chip-subj { font-size: 13.5px; font-weight: 600; }
-  .cal-chip-theme { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
-  .cal-chip-del {
-    width: 26px; height: 26px; flex-shrink: 0; border-radius: 7px; cursor: pointer;
-    background: rgba(226,92,92,0.12); border: 1px solid rgba(226,92,92,0.25); color: var(--bad);
-    font-size: 16px; line-height: 1; font-family: inherit;
-  }
-  .cal-add {
-    width: 32px; flex-shrink: 0; align-self: center; border-radius: 9px; cursor: pointer;
-    background: none; border: 1px dashed var(--line); color: var(--ink-dim);
-    font-size: 18px; line-height: 1; font-family: inherit; padding: 8px 0;
-  }
-  .cal-add:active { background: var(--bg-elev2); }
-
-  /* ---------- obrácená kalkulačka (co potřebuju) ---------- */
-  .need-box{
-    margin:6px 0 12px; background:var(--accent-soft);
-    border:1px solid rgba(232,184,75,0.25); border-radius:12px; padding:12px 14px;
-  }
-  .need-title{ font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:8px; }
-  .need-row{ font-size:13px; color:var(--ink-dim); line-height:1.6; }
-  .need-row .need-n{ display:inline-block; min-width:42px; color:var(--ink); font-weight:700; }
-  .need-row b{ color:var(--ink); font-weight:700; }
-
-  /* ---------- blížící se testy (hlavní strana) ---------- */
-  .up-list{ padding:0 16px; display:flex; flex-direction:column; gap:8px; margin-bottom:22px; }
-  .up-item{ display:flex; align-items:center; gap:12px; background:var(--bg-elev); border:1px solid var(--line); border-radius:14px; padding:11px 14px; }
-  .up-when{
-    flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent);
-    background:var(--accent-soft); border:1px solid rgba(232,184,75,0.3);
-    border-radius:9px; padding:6px 10px; min-width:64px; text-align:center;
-  }
-  .up-meta{ flex:1; min-width:0; }
-  .up-subj{ font-size:14px; font-weight:600; }
-  .up-theme{ font-size:12px; color:var(--ink-faint); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-  /* ============================================================
-     NOVÝ DESIGN — světlý/tmavý režim, hero karta, textura
-     ============================================================ */
-
-  /* ---- světlý režim (přepnutí tokenů) ---- */
-  :root[data-theme="light"]{
-    --bg:#f7f5ef;
-    --bg-elev:#ffffff;
-    --bg-elev2:#efece2;
-    --line:#e7e3d8;
-    --ink:#1a1f30;
-    --ink-dim:#6b7280;
-    --ink-faint:#9aa0b0;
-    --accent-soft:rgba(232,184,75,0.16);
-  }
-  :root[data-theme="light"] .subject,
-  :root[data-theme="light"] .calc,
-  :root[data-theme="light"] .up-item,
-  :root[data-theme="light"] .mat-classbar,
-  :root[data-theme="light"] .mat-file,
-  :root[data-theme="light"] .mat-subj,
-  :root[data-theme="light"] .cal-day,
-  :root[data-theme="light"] .mat-notice{ box-shadow:0 1px 2px rgba(26,31,48,0.05); }
-  /* spodní lišta ve světlém režimu */
-  :root[data-theme="light"] .tabbar{
-    background:rgba(255,255,255,0.92);
-    box-shadow:0 -2px 12px rgba(26,31,48,0.06);
-  }
-  :root[data-theme="light"] .tab.sel{ color:#b8860f; }
-
-  /* ---- přepínač režimu (v hlavičce) ---- */
-  header{ position:relative; }
-  .theme-toggle{
-    position:absolute; top:26px; right:20px;
-    width:42px; height:42px; border-radius:13px; cursor:pointer;
-    background:var(--bg-elev); border:1px solid var(--line); color:var(--ink);
-    font-size:19px; line-height:1; display:grid; place-items:center; z-index:2;
-  }
-  .theme-toggle:active{ background:var(--bg-elev2); }
-
-  /* ---- textura rozházených čísel v hlavičce ---- */
-  .hdr-texture{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
-  .hdr-texture span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:var(--accent); opacity:0.09; }
-
-  /* ---- HERO karta celkového průměru (žlutá v obou režimech) ---- */
-  .overall{
-    display:block; margin:6px 16px 22px; padding:22px 22px 20px;
-    border:none; border-radius:20px; position:relative; overflow:hidden;
-    background:linear-gradient(155deg,#f2c759,#e3a52c);
-    box-shadow:0 14px 30px rgba(227,165,44,0.30);
-  }
-  .overall::after{ content:none; }
-  .hero-texture{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
-  .hero-texture span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:rgba(255,255,255,0.20); }
-  .hero-head{ display:flex; align-items:center; gap:9px; position:relative; }
-  .hero-cap{ width:26px; height:20px; flex-shrink:0; }
-  .hero-lbl{ font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#7a5410; }
-  .overall .num{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:66px; line-height:0.92; letter-spacing:-0.02em; color:#23170a; margin-top:10px; }
-  .overall .sub{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:13px; color:#7a5410; margin-top:8px; }
-
-  /* ============ Materiály — hi-fi (E/F/G) ============ */
-  /* E) uvítací žlutá karta u kódu třídy */
-  .mat-welcome{
-    margin:6px 16px 16px; padding:26px 22px 22px; border-radius:20px;
-    position:relative; overflow:hidden; text-align:center;
-    background:linear-gradient(155deg,#f2c759,#e3a52c);
-    box-shadow:0 14px 30px rgba(227,165,44,0.28);
-  }
-  .mat-welcome-cap{ position:relative; width:76px; height:52px; color:#fff; }
-  .mat-welcome-t{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:21px; color:#23170a; margin-top:12px; }
-  .mat-welcome-m{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:400; font-size:13.5px; line-height:1.5; color:#7a5410; margin-top:6px; }
-
-  /* F) dlaždice předmětů s barevnou iniciálou */
-  .mat-subj{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-width:0; }
-  .mat-subj-ic{ width:38px; height:38px; border-radius:11px; display:grid; place-items:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:18px; flex-shrink:0; }
-  .mat-subj-ic.add{ color:var(--ink-dim); background:var(--bg-elev2); }
-  .mat-subj-name{ font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:14.5px; color:var(--ink); width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mat-subj-cnt{ font-size:12px; color:var(--ink-faint); }
-  .mat-subj-add{ border-style:dashed; }
-
-  /* G) řádky souborů — barevný typový štítek + prázdný stav */
-  .mat-file-ic{ width:40px; height:40px; border-radius:11px; display:grid; place-items:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:12px; flex-shrink:0; }
-  .mat-chevron{ color:var(--ink-faint); font-size:22px; line-height:1; flex-shrink:0; padding:0 4px; }
-  .mat-empty{ text-align:center; padding:38px 20px; }
-  .mat-empty-cap{ width:64px; height:44px; color:var(--accent); }
-  .mat-empty-t{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; color:var(--ink); margin-top:12px; }
-  .mat-empty-m{ font-size:13.5px; color:var(--ink-faint); margin-top:6px; line-height:1.5; }
-  /* ============ profil + přihlášení ============ */
-  #profileBody{ padding:0 16px; }
-  .prof-card{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:22px 20px; text-align:center; box-shadow:var(--shadow-sm); }
-  .prof-avatar{ width:92px; height:92px; border-radius:50%; object-fit:cover; display:block; margin:0 auto; border:1px solid var(--line); }
-  .prof-avatar-ph{ display:grid; place-items:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:38px; color:var(--accent); background:var(--accent-soft); }
-  .prof-name{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; margin-top:14px; }
-  .prof-school{ font-size:14px; color:var(--ink-dim); margin-top:4px; font-weight:600; }
-  .prof-bio{ font-size:14px; color:var(--ink-dim); margin-top:10px; line-height:1.5; }
-  .prof-email{ font-size:12px; color:var(--ink-faint); margin-top:12px; }
-  .prof-auth{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:26px 20px; text-align:center; display:flex; flex-direction:column; gap:12px; box-shadow:var(--shadow-sm); }
-  .prof-cap{ width:70px; height:48px; color:var(--accent); margin:2px auto; }
-  .prof-auth-t{ font-family:'Fraunces',serif; font-weight:600; font-size:21px; }
-  .prof-auth-m{ font-size:13.5px; color:var(--ink-dim); line-height:1.5; }
-  .fields{ display:flex; flex-direction:column; gap:13px; }
-
-  /* ============ členové třídy ============ */
-  .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
-  .mem-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:background .15s; }
-  .mem-row:active{ background:var(--bg-elev2); }
-  .mem-chev{ flex-shrink:0; color:var(--ink-faint); font-size:20px; line-height:1; }
-  .mem-av{ width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--line); }
-  .mem-av-ph{ display:grid; place-items:center; background:var(--accent-soft); color:var(--accent); font-family:'Outfit',sans-serif; font-weight:800; font-size:14px; }
-  .mem-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mem-admin{ flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); border:1px solid rgba(232,184,75,0.35); border-radius:6px; padding:2px 8px; }
+  /* reveal */
+  .rev{ opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .rev.in{ opacity:1; transform:none; }
+  @media(prefers-reduced-motion:reduce){ .rev{ opacity:1; transform:none; transition:none; } html{ scroll-behavior:auto; } }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
 <body>
 
-<div id="pageGrades">
 <header>
-  <div class="hdr-texture" aria-hidden="true">
-    <span style="top:6px;left:60%;font-size:30px;transform:rotate(-12deg)">2</span>
-    <span style="bottom:-6px;left:30%;font-size:24px;transform:rotate(9deg)">1</span>
+  <div class="wrap nav">
+    <a href="/" class="brand" aria-label="Estudivo">
+      <svg class="cap" viewBox="0 0 40 30" aria-hidden="true">
+        <path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>
+        <path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>
+        <path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="35" cy="22.6" r="2" fill="currentColor"/>
+      </svg>
+      <b>Estudivo</b>
+    </a>
+    <nav class="nav-links">
+      <a href="#funkce">Funkce</a>
+      <a href="#jak">Jak to funguje</a>
+      <a href="#faq">Časté dotazy</a>
+    </nav>
+    <div class="nav-right">
+      <button class="tgl" id="themeTgl" aria-label="Přepnout světlý/tmavý režim">🌙</button>
+      <a class="btn btn-primary" href="/app/">Spočítat průměr</a>
+    </div>
   </div>
-  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">☀️</button>
-  <div class="eyebrow">Studijní průměr</div>
-  <h1>Moje známky</h1>
 </header>
 
-<div class="sem-toggle">
-  <button class="sem-btn" id="semBtn1" onclick="setSem(1)">1. pololetí</button>
-  <button class="sem-btn" id="semBtn2" onclick="setSem(2)">2. pololetí</button>
-</div>
+<main>
+<div class="wrap">
 
-<div class="overall">
-  <div class="hero-texture" aria-hidden="true">
-    <span style="top:-10px;right:16px;font-size:62px;transform:rotate(-14deg)">2</span>
-    <span style="bottom:-20px;right:36%;font-size:46px;transform:rotate(8deg)">1</span>
-    <span style="top:34px;right:44%;font-size:32px;transform:rotate(-6deg)">3</span>
-  </div>
-  <div class="hero-head">
-    <svg class="hero-cap" viewBox="0 0 28 22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M14 2 27 8 14 14 1 8Z" fill="#fff"/>
-      <path d="M6 10.3V15c0 0 3 3 8 3s8-3 8-3v-4.7L14 14 6 10.3Z" fill="#fff"/>
-      <circle cx="14" cy="8" r="1.6" fill="#e3a52c"/>
-      <path d="M25 8.6V15" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
-      <circle cx="25" cy="16.4" r="1.5" fill="#fff"/>
-    </svg>
-    <span class="hero-lbl">Celkový vážený průměr</span>
-  </div>
-  <div class="num" id="overallNum">—</div>
-  <div class="sub" id="overallSub">žádné známky</div>
-</div>
-
-<div id="upcoming"></div>
-
-<div class="calc">
-  <div class="calc-head" id="calcHead">
-    <div class="calc-icon">%</div>
-    <div class="calc-meta">
-      <div class="calc-title">Kalkulačka bodů a procent</div>
-      <div class="calc-sub">body ↔ procenta u testu</div>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow rev">🎓 Studijní průměr · zdarma</span>
+      <h1 class="rev">Spočítej si <span class="mark">průměr známek</span> za pár vteřin</h1>
+      <p class="lead rev">Estudivo je studentská aplikace na výpočet <b>váženého průměru známek</b>. Přidáš známky i s váhami, vidíš průměr v reálném čase a vyzkoušíš si „co kdyby“. Materiály a termíny testů sdílíš s celou třídou.</p>
+      <div class="cta-row rev">
+        <a class="btn btn-primary btn-lg" href="/app/">Spočítat průměr známek →</a>
+        <a class="btn btn-ghost btn-lg" href="/app/">Import ze Škola OnLine →</a>
+      </div>
+      <div class="trust rev"><span>✦</span> <b>Zdarma a bez reklam</b> · funguje na mobilu i v počítači · žádná registrace na počítání</div>
     </div>
-    <svg class="chev" id="calcChev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>
-  </div>
-  <div class="calc-body" id="calcBody" style="display:none">
-    <div class="calc-toggle">
-      <button class="calc-mode sel" id="modePct" data-mode="pct">Spočítat procenta</button>
-      <button class="calc-mode" id="modePts" data-mode="pts">Spočítat body</button>
+
+    <div class="hero-visual rev">
+      <div class="avg-card">
+        <div class="tex">
+          <span style="top:-10px;left:8%;font-size:54px;transform:rotate(-8deg)">2</span>
+          <span style="bottom:-16px;right:10%;font-size:60px;transform:rotate(7deg)">1</span>
+          <span style="top:40%;right:30%;font-size:30px;transform:rotate(-4deg)">3</span>
+        </div>
+        <div class="avg-head">
+          <svg class="cap" viewBox="0 0 40 30" aria-hidden="true">
+            <path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>
+            <path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>
+            <path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="35" cy="22.6" r="2" fill="currentColor"/>
+          </svg>
+          <span class="avg-lbl">Celkový vážený průměr</span>
+        </div>
+        <div class="avg-num">1,42</div>
+        <div class="avg-sub">z 24 známek · 7 předmětů</div>
+        <div class="avg-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
     </div>
-    <label class="fld"><span>Maximum bodů</span>
-      <input type="number" inputmode="decimal" id="calcMax" placeholder="např. 40">
-    </label>
-    <label class="fld" id="fldPoints"><span>Získané body</span>
-      <input type="number" inputmode="decimal" id="calcPoints" placeholder="body">
-    </label>
-    <label class="fld" id="fldPercent" style="display:none"><span>Procenta</span>
-      <input type="number" inputmode="decimal" id="calcPercent" placeholder="%">
-    </label>
-    <button class="btn btn-primary" id="calcBtn" style="width:100%">Vypočítat</button>
-    <div class="calc-result" id="calcResult" style="display:none"></div>
-  </div>
-</div>
+  </section>
 
-<div class="section-label">Předměty</div>
-<div class="subjects" id="subjects"></div>
-
-<div class="add-subject">
-  <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
-</div>
-
-<div class="section-label" style="margin-top:28px">Známky ze Škola OnLine</div>
-<div class="backup">
-  <button class="subj-action" onclick="openSolSheet()">Načíst známky online</button>
-</div>
-<div id="solStatus" class="backup-note" style="margin-top:8px"></div>
-
-<div class="section-label" style="margin-top:28px">Zpětná vazba</div>
-<div class="backup">
-  <button class="subj-action" onclick="openFeedbackSheet()">Napsat zpětnou vazbu</button>
-</div>
-<p class="backup-note">Napiš nápad nebo chybu. Zpráva je soukromá — uvidí ji jen autor aplikace, nikde se veřejně nezobrazuje.</p>
-</div><!-- /pageGrades -->
-
-<div id="pageMaterials" style="display:none">
-  <header>
-    <div class="eyebrow">Sdílení ve třídě</div>
-    <h1 id="matH1">Materiály</h1>
-  </header>
-  <div id="matBody"></div>
-  <input type="file" id="matFile" multiple style="display:none">
-</div>
-
-<div id="pageProfile" style="display:none">
-  <header>
-    <div class="eyebrow">Tvůj účet</div>
-    <h1 id="profH1">Profil</h1>
-  </header>
-  <div id="profileBody"></div>
-  <input type="file" id="avatarFile" accept="image/*" style="display:none">
-</div>
-
-<!-- grade sheet -->
-<div class="sheet-backdrop" id="gradeBackdrop" onclick="closeGradeSheet()"></div>
-<div class="sheet" id="gradeSheet">
-  <div class="sheet-grab"></div>
-  <h3 id="gradeSheetTitle">Nová známka</h3>
-  <div class="fields">
-    <div>
-      <label class="fld"><span>Známka</span></label>
-      <div class="mark-picker" id="markPicker"></div>
+  <!-- FUNKCE -->
+  <section id="funkce">
+    <div class="sec-head rev">
+      <span class="sec-tag">Co Estudivo umí</span>
+      <h2>Všechno kolem známek na jednom místě</h2>
+      <p>Od výpočtu průměru přes sdílení materiálů až po kalendář písemek pro celou třídu.</p>
     </div>
-    <div>
-      <label class="fld"><span>Váha</span></label>
-      <div class="weight-picker" id="weightPicker"></div>
+    <div class="grid">
+      <div class="card rev">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-9"/></svg></div>
+        <h3>Vážený průměr</h3>
+        <p>Každá známka má svou váhu (0,2–1, přesně jako ve škole). Estudivo z nich počítá vážený průměr automaticky a v reálném čase.</p>
+      </div>
+      <div class="card rev">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 0 7 4.5v15A2.5 2.5 0 0 0 9.5 22M14.5 2A2.5 2.5 0 0 1 17 4.5v15a2.5 2.5 0 0 1-2.5 2.5M7 7h10M7 12h10M7 17h10"/></svg></div>
+        <h3>„Co kdyby“</h3>
+        <p>Přidej hypotetickou známku a hned vidíš, jak ti zvedne nebo srazí průměr. Bez rizika, jen na zkoušku.</p>
+      </div>
+      <div class="card rev">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7L9.5 4.5A1.7 1.7 0 0 0 8.3 4H5a2 2 0 0 0-2 2z"/></svg></div>
+        <h3>Materiály ve třídě</h3>
+        <p>Nahraj zápisky a testy ke každému předmětu a sdílej je se spolužáky přes čtyřmístný kód třídy.</p>
+      </div>
+      <div class="card rev">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 15h3"/></svg></div>
+        <h3>Kalendář testů</h3>
+        <p>Sdílený týdenní kalendář, kam celá třída zapisuje termíny písemek. Nikdy tě nepřekvapí test, o kterém jsi nevěděl.</p>
+      </div>
+      <div class="card rev">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+        <h3>Import ze Škola OnLine</h3>
+        <p>Známky si natáhneš přímo ze Škola OnLine – i s váhami a po pololetích. Nemusíš nic přepisovat ručně.</p>
+      </div>
+      <div class="card rev">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg></div>
+        <h3>Funguje offline</h3>
+        <p>Přidej si Estudivo na plochu jako appku (PWA). Běží i bez internetu a tvoje data zůstávají u tebe.</p>
+      </div>
     </div>
-    <label class="fld"><span>Popis (nepovinné)</span>
-      <input type="text" id="gradeDesc" placeholder="např. čtvrtletní práce, aktivita…">
-    </label>
-    <label class="fld"><span>Datum</span>
-      <input type="date" id="gradeDate">
-    </label>
-  </div>
-  <p class="backup-note" style="margin:12px 2px 0">Hypotetická známka („co kdyby") se počítá do průměru a je v seznamu odlišená. Synchronizace ze Škola OnLine ji nepřepíše ani nesmaže.</p>
-  <div class="sheet-actions">
-    <button class="btn btn-ghost" onclick="closeGradeSheet()">Zrušit</button>
-    <button class="btn btn-primary" onclick="saveGrade()">Uložit</button>
-  </div>
-</div>
+  </section>
 
-<!-- subject sheet -->
-<div class="sheet-backdrop" id="subjectBackdrop" onclick="closeSubjectSheet()"></div>
-<div class="sheet" id="subjectSheet">
-  <div class="sheet-grab"></div>
-  <h3>Nový předmět</h3>
-  <div class="fields">
-    <label class="fld"><span>Název předmětu</span>
-      <input type="text" id="subjectName" placeholder="např. Dějepis">
-    </label>
-  </div>
-  <div class="sheet-actions">
-    <button class="btn btn-ghost" onclick="closeSubjectSheet()">Zrušit</button>
-    <button class="btn btn-primary" onclick="saveSubject()">Přidat</button>
-  </div>
-</div>
-
-<!-- test calendar sheet -->
-<div class="sheet-backdrop" id="testBackdrop" onclick="closeTestSheet()"></div>
-<div class="sheet" id="testSheet">
-  <div class="sheet-grab"></div>
-  <h3>Nový test</h3>
-  <div class="fields">
-    <label class="fld"><span>Datum</span>
-      <input type="date" id="testDate">
-    </label>
-    <label class="fld"><span>Předmět</span>
-      <select id="testSubject"></select>
-    </label>
-    <label class="fld"><span>Téma</span>
-      <input type="text" id="testTheme" placeholder="např. kvadratické rovnice">
-    </label>
-  </div>
-  <div class="sheet-actions">
-    <button class="btn btn-ghost" onclick="closeTestSheet()">Zrušit</button>
-    <button class="btn btn-primary" onclick="saveTest()">Přidat</button>
-  </div>
-</div>
-
-<!-- skola online sheet -->
-<div class="sheet-backdrop" id="solBackdrop" onclick="closeSolSheet()"></div>
-<div class="sheet" id="solSheet">
-  <div class="sheet-grab"></div>
-  <h3>Načíst ze Škola OnLine</h3>
-  <div class="fields">
-    <label class="fld"><span>Přihlašovací jméno</span>
-      <input type="text" id="solUser" autocomplete="username" placeholder="jméno do Škola OnLine">
-    </label>
-    <label class="fld"><span>Heslo</span>
-      <input type="password" id="solPass" autocomplete="current-password" placeholder="heslo">
-    </label>
-    <label class="fld"><span>Server (většinou neměnit)</span>
-      <input type="text" id="solInstance" value="https://aplikace.skolaonline.cz">
-    </label>
-  </div>
-  <p class="backup-note" style="margin:12px 2px 0">Heslo se použije jen pro stažení a nikam se neukládá. Stažení přepíše současné známky.</p>
-  <div class="sheet-actions">
-    <button class="btn btn-ghost" onclick="closeSolSheet()">Zrušit</button>
-    <button class="btn btn-primary" id="solBtn" onclick="runSolImport()">Stáhnout</button>
-  </div>
-</div>
-
-<!-- feedback sheet -->
-<div class="sheet-backdrop" id="feedbackBackdrop" onclick="closeFeedbackSheet()"></div>
-<div class="sheet" id="feedbackSheet">
-  <div class="sheet-grab"></div>
-  <h3>Zpětná vazba</h3>
-  <div class="fields">
-    <label class="fld"><span>Tvoje zpráva</span>
-      <textarea id="fbMessage" rows="4" placeholder="Nápad, co zlepšit, nebo chyba…" style="resize:vertical;line-height:1.4"></textarea>
-    </label>
-    <label class="fld"><span>Kontakt (nepovinné)</span>
-      <input type="text" id="fbContact" placeholder="e-mail / jméno, kdybys chtěl odpověď">
-    </label>
-  </div>
-  <p class="backup-note" style="margin:12px 2px 0">Zpráva je soukromá — pošle se jen autorovi aplikace a nikde se veřejně nezobrazuje.</p>
-  <div class="sheet-actions">
-    <button class="btn btn-ghost" onclick="closeFeedbackSheet()">Zrušit</button>
-    <button class="btn btn-primary" id="fbBtn" onclick="sendFeedback()">Odeslat</button>
-  </div>
-</div>
-
-<!-- custom confirm/prompt dialog -->
-<div class="dlg-backdrop" id="dlgBackdrop">
-  <div class="dlg">
-    <h4 id="dlgTitle"></h4>
-    <p id="dlgMsg"></p>
-    <input type="text" id="dlgInput" style="display:none">
-    <div class="dlg-actions">
-      <button class="btn btn-ghost" id="dlgCancel">Zrušit</button>
-      <button class="btn btn-primary" id="dlgOk">OK</button>
+  <!-- JAK TO FUNGUJE -->
+  <section id="jak">
+    <div class="sec-head rev">
+      <span class="sec-tag">Výpočet krok za krokem</span>
+      <h2>Jak se počítá vážený průměr známek?</h2>
+      <p>Vážený průměr není obyčejný průměr – každá známka se započítá podle své váhy. Estudivo to počítá za tebe, ale tady je vzoreček, kdyby tě zajímal.</p>
     </div>
-  </div>
-</div>
+    <div class="how">
+      <div class="formula rev">
+        <div class="frac">
+          <div class="top">známka₁ × váha₁ + známka₂ × váha₂ + …</div>
+          <div>váha₁ + váha₂ + …</div>
+        </div>
+        <div class="note">součet (známka × váha) ÷ součet vah</div>
+        <div class="ex">
+          <b>Příklad:</b> jednička s váhou 1, dvojka s váhou 0,5 a trojka s váhou 0,5.<br>
+          (1×1 + 2×0,5 + 3×0,5) ÷ (1 + 0,5 + 0,5) = 3,5 ÷ 2 = <span class="res">1,75</span>
+        </div>
+      </div>
+      <ul class="how-list">
+        <li class="rev"><span class="n">1</span><div><h4>Přidej známky</h4><p>U každého předmětu zadáš známku a její váhu. Můžeš mít dvě pololetí oddělená.</p></div></li>
+        <li class="rev"><span class="n">2</span><div><h4>Vidíš průměr hned</h4><p>Estudivo přepočítá vážený průměr v reálném čase – za předmět i celkově.</p></div></li>
+        <li class="rev"><span class="n">3</span><div><h4>Zkus „co kdyby“</h4><p>Přidej hypotetickou známku a podívej se, jak by ti změnila průměr před písemkou.</p></div></li>
+        <li class="rev"><span class="n">4</span><div><h4>Sdílej se třídou</h4><p>Přihlas se, založ třídu a sdílej materiály i kalendář testů se spolužáky.</p></div></li>
+      </ul>
+    </div>
+  </section>
 
-<!-- náhled souboru -->
-<div class="preview-backdrop" id="previewBackdrop">
-  <div class="preview-bar">
-    <div class="preview-name" id="previewName"></div>
-    <button class="preview-close" id="previewClose" onclick="closePreview()" aria-label="Zavřít">✕</button>
-  </div>
-  <div class="preview-body" id="previewBody"></div>
-  <div class="preview-foot">
-    <button class="btn btn-primary" id="previewOpen">Otevřít / stáhnout</button>
-  </div>
-</div>
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="sec-head rev" style="text-align:center;margin-left:auto;margin-right:auto;">
+      <span class="sec-tag">Časté dotazy</span>
+      <h2>Co se nejčastěji ptáte</h2>
+    </div>
+    <div class="faq">
+      <details class="rev" open><summary>Je Estudivo zdarma?<span class="pm">+</span></summary><p>Ano. Výpočet průměru známek i celá aplikace jsou úplně zdarma a bez reklam.</p></details>
+      <details class="rev"><summary>Co je vážený průměr známek?<span class="pm">+</span></summary><p>Vážený průměr je průměr, ve kterém má každá známka svou váhu podle důležitosti – třeba čtvrtletní písemka váží víc než aktivita. Spočítá se jako součet (známka × váha) dělený součtem všech vah.</p></details>
+      <details class="rev"><summary>Jak se počítá vážený průměr?<span class="pm">+</span></summary><p>Každou známku vynásobíš její váhou, výsledky sečteš a vydělíš součtem vah. Estudivo to dělá automaticky – stačí zadat známku a její váhu a průměr se přepočítá sám.</p></details>
+      <details class="rev"><summary>Musím se registrovat?<span class="pm">+</span></summary><p>Na počítání průměru ne – otevřeš appku a hned počítáš. Účet potřebuješ jen pro sdílení materiálů ve třídě a synchronizaci známek mezi více zařízeními.</p></details>
+      <details class="rev"><summary>Funguje Estudivo na mobilu?<span class="pm">+</span></summary><p>Ano. Je to webová aplikace (PWA) – otevřeš ji v prohlížeči a můžeš si ji přidat na plochu telefonu jako appku. Funguje i offline.</p></details>
+      <details class="rev"><summary>Jsou moje známky v bezpečí?<span class="pm">+</span></summary><p>Známky máš uložené přímo ve svém zařízení. Když se přihlásíš, zálohují se na tvůj účet, takže o ně nepřijdeš. Sdílení ve třídě je dobrovolné a chráněné kódem třídy.</p></details>
+    </div>
+  </section>
 
-<!-- profil člena třídy -->
-<div class="sheet-backdrop" id="memberBackdrop" onclick="closeMemberSheet()"></div>
-<div class="sheet" id="memberSheet">
-  <div class="sheet-grab"></div>
-  <div id="memberBody"></div>
-</div>
+  <!-- CTA -->
+  <section>
+    <div class="cta-band rev">
+      <div class="tex">
+        <span style="top:-14px;left:12%;font-size:70px;transform:rotate(-8deg)">1</span>
+        <span style="bottom:-20px;right:14%;font-size:80px;transform:rotate(8deg)">2</span>
+      </div>
+      <h2>Začni počítat svůj průměr</h2>
+      <p>Přidej první známku nebo si naimportuj známky ze Škola OnLine a za pár vteřin víš, jak na tom jsi.</p>
+      <a class="btn btn-dark btn-lg" href="/app/">Spočítat průměr →</a>
+    </div>
+  </section>
 
-<nav class="tabbar">
-  <button class="tab sel" id="tabGrades" onclick="setPage('grades')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-    Známky
-  </button>
-  <button class="tab" id="tabMaterials" onclick="setPage('materials')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    Materiály
-  </button>
-  <button class="tab" id="tabProfile" onclick="setPage('profile')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-    Profil
-  </button>
-</nav>
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <a href="/" class="brand" aria-label="Estudivo">
+        <svg class="cap" viewBox="0 0 40 30" aria-hidden="true">
+          <path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>
+          <path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>
+          <path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="35" cy="22.6" r="2" fill="currentColor"/>
+        </svg>
+        <b>Estudivo</b>
+      </a>
+      <div class="foot-links">
+        <a href="/app/">Aplikace</a>
+        <a href="#funkce">Funkce</a>
+        <a href="#jak">Jak to funguje</a>
+        <a href="#faq">Časté dotazy</a>
+      </div>
+    </div>
+    <div class="copy">© <span id="yr">2026</span> Estudivo · Studijní průměr, materiály a kalendář testů pro studenty. Vážený průměr známek online, zdarma.</div>
+  </div>
+</footer>
 
 <script>
-const STORE_KEY = 'prumer_data_v1';
-const WEIGHTS = [
-  { v: 1,   l: 'Velká (1)' },
-  { v: 0.8, l: '0,8' },
-  { v: 0.6, l: '0,6' },
-  { v: 0.4, l: '0,4' },
-  { v: 0.2, l: 'Malá (0,2)' },
-];
-const DEFAULT_SUBJECTS = ['Matematika','Český jazyk','Anglický jazyk','Španělština','Dějepis','Zeměpis','Fyzika','Chemie','Biologie','ZSV','TV','EVV'];
-
-/* ===== Supabase (strana Materiály) — vyplň po nastavení, návod níže ===== */
-const SB_URL    = 'https://dnnccafulifvwpjkpjoj.supabase.co';
-const SB_KEY    = 'sb_publishable_hyfVk9DDQgArAQz-MWly8g_l0kqmAFD';
-const SB_BUCKET = 'materialy';
-/* ======================================================================= */
-
-let data = load();
-let editing = { subjectId: null, mark: null, weight: 1 };
-
-function migrate(d) {
-  d.sem = d.sem === 2 ? 2 : 1;
-  if (!Array.isArray(d.subjects)) d.subjects = [];
-  d.subjects.forEach(s => {
-    if (!Array.isArray(s.grades)) s.grades = [];
-    s.grades.forEach(g => { if (g.sem !== 1 && g.sem !== 2) g.sem = 1; });
-  });
-  return d;
-}
-function load() {
-  let d = null;
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) d = JSON.parse(raw);
-  } catch(e) {}
-  if (!d) {
-    d = { subjects: DEFAULT_SUBJECTS.map((n,i) => ({ id: 's'+i+'_'+Date.now(), name: n, grades: [], open: false })) };
-  }
-  return migrate(d);
-}
-function save() {
-  data.updatedAt = Date.now();
-  localStorage.setItem(STORE_KEY, JSON.stringify(data));
-  pushGradesCloud();   // když je uživatel přihlášený, ulož i do cloudu (napříč zařízeními)
-}
-
-function gradesOf(s) { return s.grades.filter(g => g.sem === data.sem); }
-function plur(n, one, few, many) { return n===1 ? one : (n>=2 && n<=4 ? few : many); }
-
-function setSem(n){ data.sem = n; save(); render(); }
-function updateSemUI(){
-  document.getElementById('semBtn1').classList.toggle('sel', data.sem === 1);
-  document.getElementById('semBtn2').classList.toggle('sel', data.sem === 2);
-}
-
-function weightedAvg(grades, extra) {
-  let all = grades.slice();
-  if (extra) all = all.concat([extra]);
-  if (!all.length) return null;
-  let sw = 0, swm = 0;
-  all.forEach(g => { sw += g.weight; swm += g.weight * g.mark; });
-  if (sw === 0) return null;
-  return swm / sw;
-}
-
-function fmt(n) { return n == null ? '—' : n.toFixed(2).replace('.', ','); }
-
-function markColor(m) {
-  const light = document.documentElement.getAttribute('data-theme') === 'light';
-  const dark = ['#5ec77a','#a9c75e','#e8b84b','#e0894a','#e25c5c'];
-  const lite = ['#1f8b4a','#6f8a1e','#b8860f','#c2641f','#cc3b3b'];   // ztmavené pro kontrast na bílé
-  const pal = light ? lite : dark;
-  const i = m<=1.5 ? 0 : m<=2.5 ? 1 : m<=3.5 ? 2 : m<=4.5 ? 3 : 4;
-  return pal[i];
-}
-
-/* ---- obrácená kalkulačka: co je potřeba z příští práce ---- */
-function roundedGrade(cur){
-  if(cur==null) return 1;
-  if(cur<=1.5) return 1; if(cur<=2.5) return 2; if(cur<=3.5) return 3; if(cur<=4.5) return 4; return 5;
-}
-// A = cílový průměr (≤ A → vyjde na danou známku). Spočítá, jakou VÁHU musí mít příští
-// jednička, aby průměr klesl na ≤ A (váhu zaokrouhlí na nejbližší možnou: 0,2–1).
-function reqText(S, T, A){
-  const deficit = S - A*T;                 // > 0 → průměr je nad cílem
-  if(deficit <= 1e-9) return 'splněno';
-  const Wneed = deficit / (A - 1);         // minimální váha jedničky
-  if(Wneed <= 1.000001){
-    const opts = [0.2, 0.4, 0.6, 0.8, 1];
-    const w = opts.find(o => o >= Wneed - 1e-9) || 1;
-    return 'potřebuješ <b>1 za váhu '+w.toFixed(1).replace('.', ',')+'</b>';
-  }
-  const k = Math.ceil(Wneed - 1e-9);       // jedna plná jednička nestačí → kolik jich je třeba
-  if(k <= 6) return 'potřebuješ <b>'+k+'× 1 za váhu 1,0</b>';
-  return 'jednou prací už to nedáš';
-}
-// o stupeň horší: jak velkou váhu by musela mít pětka, aby tě stáhla na R+1
-function dropText(S, T, R){
-  const A = R + 0.5, denom = 5 - A;        // R ≤ 4 → denom ≥ 0,5
-  if(denom <= 0) return 'už níž to nejde';
-  const Wneed = (A*T - S) / denom;          // pětka musí mít víc než tahle váha
-  const opts = [0.2, 0.4, 0.6, 0.8, 1];
-  const w = opts.find(o => o > Wneed + 1e-9);
-  if(!w) return 'nestáhne tě ani 5 za váhu 1,0';
-  return 'stáhne tě <b>5 za váhu '+w.toFixed(1).replace('.', ',')+'</b>';
-}
-function needHTML(grades){
-  let T=0, S=0;
-  grades.forEach(g=>{ T += g.weight; S += g.weight*g.mark; });
-  const cur = T>0 ? S/T : null;
-  const R = roundedGrade(cur);
-  let rows = '';
-  if(R > 1) rows += '<div class="need-row"><span class="need-n">Na '+(R-1)+'</span> '+reqText(S, T, (R-1)+0.5)+'</div>';   // o stupeň lepší
-  if(R < 5) rows += '<div class="need-row"><span class="need-n">Na '+(R+1)+'</span> '+dropText(S, T, R)+'</div>';          // o stupeň horší
-  if(!rows) rows = '<div class="need-row">Lepší ani horší známka už není 🎉</div>';
-  return '<div class="need-title">Co potřebuješ z příští práce</div>'+rows;
-}
-
-/* ---- světlý / tmavý režim ---- */
-function initialTheme(){
-  const s = localStorage.getItem('prumer_theme');
-  if(s==='light' || s==='dark') return s;
-  return 'light';   // výchozí pro nové uživatele = světlý režim
-}
-function applyTheme(t){
-  document.documentElement.setAttribute('data-theme', t);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', t==='light' ? '#f7f5ef' : '#0f1115');
-  const btn = document.getElementById('themeToggle');
-  if(btn) btn.textContent = t==='light' ? '🌙' : '☀️';   // ukazuje, kam přepneš
-  render();   // přebarvit známky podle režimu
-}
-function toggleTheme(){
-  const cur = document.documentElement.getAttribute('data-theme') || initialTheme();
-  const next = cur==='light' ? 'dark' : 'light';
-  localStorage.setItem('prumer_theme', next);
-  applyTheme(next);
-}
-
-function render() {
-  updateSemUI();
-  // overall = average of subject averages that have grades (jen aktuální pololetí)
-  const subjAvgs = data.subjects.map(s => weightedAvg(gradesOf(s))).filter(a => a != null);
-  const overall = subjAvgs.length ? subjAvgs.reduce((a,b)=>a+b,0)/subjAvgs.length : null;
-  document.getElementById('overallNum').textContent = fmt(overall);
-  const gc = data.subjects.reduce((a,s)=>a+gradesOf(s).length,0);
-  document.getElementById('overallSub').textContent =
-    gc ? gc + ' ' + plur(gc,'známka','známky','známek') + ' · ' + subjAvgs.length + ' ' + plur(subjAvgs.length,'předmět','předměty','předmětů') : 'žádné známky';
-
-  const wrap = document.getElementById('subjects');
-  wrap.innerHTML = '';
-  const sorted = data.subjects.slice().sort((a,b)=>{
-    const aa = weightedAvg(gradesOf(a)), bb = weightedAvg(gradesOf(b));
-    if (aa == null && bb == null) return 0;
-    if (aa == null) return 1;
-    if (bb == null) return -1;
-    return aa - bb;
-  });
-  sorted.forEach(s => wrap.appendChild(renderSubject(s)));
-}
-
-function renderSubject(s) {
-  const gs = gradesOf(s);
-  const avg = weightedAvg(gs);
-  const el = document.createElement('div');
-  el.className = 'subject' + (s.open ? ' open' : '');
-
-  const head = document.createElement('div');
-  head.className = 'subject-head';
-  head.onclick = () => { s.open = !s.open; save(); render(); };
-  const pc = avg==null ? null : markColor(avg);
-  const pillStyle = pc ? `color:${pc};background:${pc}1a;border-color:${pc}55` : 'color:var(--ink-faint)';
-  head.innerHTML = `
-    <div class="pill" style="${pillStyle}">${fmt(avg)}</div>
-    <div class="subject-meta">
-      <div class="subject-name">${esc(s.name)}</div>
-      <div class="subject-count">${gs.length ? gs.length+' '+plur(gs.length,'známka','známky','známek') : 'zatím bez známek'}</div>
-    </div>
-    <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>
-  `;
-  el.appendChild(head);
-
-  if (s.open) {
-    const body = document.createElement('div');
-    body.className = 'grades';
-
-    gs.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).forEach(g => {
-      const row = document.createElement('div');
-      row.className = 'grade-row' + (g.hypo ? ' hypo' : '');
-      const markStyle = g.hypo
-        ? `color:${markColor(g.mark)};background:transparent;border:1px dashed ${markColor(g.mark)}`
-        : `background:${markColor(g.mark)}22;color:${markColor(g.mark)}`;
-      row.innerHTML = `
-        <div class="grade-mark" style="${markStyle}">${g.mark}</div>
-        <div class="grade-info">
-          <div class="grade-desc">${g.desc ? esc(g.desc) : 'Známka'}${g.hypo ? '<span class="hypo-badge">hypotetická</span>' : ''}</div>
-          <div class="grade-sub">váha ${String(g.weight).replace('.',',')}${g.date ? ' · '+fmtDate(g.date) : ''}</div>
-        </div>
-        <button class="grade-del" aria-label="Smazat známku">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
-        </button>
-      `;
-      row.querySelector('.grade-del').onclick = () => { delGrade(s.id, g.id); };
-      body.appendChild(row);
+  // přepínač režimu (sdílí localStorage s aplikací)
+  (function(){
+    var btn=document.getElementById('themeTgl');
+    function paint(){ btn.textContent = document.documentElement.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; }
+    paint();
+    btn.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',cur);
+      try{ localStorage.setItem('prumer_theme',cur); }catch(e){}
+      paint();
     });
-
-    if(gs.length){
-      const need = document.createElement('div');
-      need.className = 'need-box';
-      need.innerHTML = needHTML(gs);
-      body.appendChild(need);
-    }
-
-    const addBtn = document.createElement('button');
-    addBtn.className = 'add-grade-btn';
-    addBtn.textContent = '+ Přidat hypotetickou známku';
-    addBtn.onclick = () => openGradeSheet(s.id);
-    body.appendChild(addBtn);
-
-    const actions = document.createElement('div');
-    actions.className = 'subject-actions';
-    const renameBtn = document.createElement('button');
-    renameBtn.className = 'subj-action';
-    renameBtn.textContent = 'Přejmenovat';
-    renameBtn.onclick = () => renameSubject(s.id);
-    const delBtn = document.createElement('button');
-    delBtn.className = 'subj-action danger';
-    delBtn.textContent = 'Smazat předmět';
-    delBtn.onclick = () => delSubject(s.id);
-    actions.appendChild(renameBtn);
-    actions.appendChild(delBtn);
-    body.appendChild(actions);
-
-    el.appendChild(body);
-  }
-  return el;
-}
-
-function esc(t){ return (t||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function fmtDate(d){ const p=d.split('-'); return p.length===3 ? p[2]+'.'+p[1]+'.' : d; }
-
-/* ---- grade sheet ---- */
-function openGradeSheet(subjectId) {
-  editing = { subjectId, mark: 1, weight: 1 };
-  document.getElementById('gradeSheetTitle').textContent = 'Hypotetická známka · ' + data.sem + '. pololetí';
-  document.getElementById('gradeDesc').value = '';
-  document.getElementById('gradeDate').value = new Date().toISOString().slice(0,10);
-  buildMarkPicker();
-  buildWeightPicker();
-  showSheet('grade');
-}
-function buildMarkPicker(){
-  const p = document.getElementById('markPicker');
-  p.innerHTML='';
-  [1,2,3,4,5].forEach(m=>{
-    const b=document.createElement('button');
-    b.className='mark-opt'+(editing.mark===m?' sel':'');
-    b.textContent=m;
-    b.onclick=()=>{ editing.mark=m; buildMarkPicker(); };
-    p.appendChild(b);
-  });
-}
-function buildWeightPicker(){
-  const p=document.getElementById('weightPicker');
-  p.innerHTML='';
-  WEIGHTS.forEach(w=>{
-    const b=document.createElement('button');
-    b.className='weight-opt'+(editing.weight===w.v?' sel':'');
-    b.textContent=w.l;
-    b.onclick=()=>{ editing.weight=w.v; buildWeightPicker(); };
-    p.appendChild(b);
-  });
-}
-function saveGrade(){
-  const s=data.subjects.find(x=>x.id===editing.subjectId);
-  if(!s) return;
-  s.grades.push({
-    id:'g'+Date.now(),
-    mark:editing.mark,
-    weight:editing.weight,
-    desc:document.getElementById('gradeDesc').value.trim(),
-    date:document.getElementById('gradeDate').value,
-    sem:data.sem,
-    hypo:true            // ruční známka = hypotetická: počítá se do průměru, ale sync ji nepřepíše
-  });
-  s.open=true;
-  save(); render(); closeGradeSheet();
-}
-function delGrade(subjectId,gradeId){
-  const s=data.subjects.find(x=>x.id===subjectId);
-  if(!s) return;
-  confirmDialog('Smazat známku?', 'Tuto akci nelze vrátit.', 'Smazat', () => {
-    s.grades=s.grades.filter(g=>g.id!==gradeId);
-    save(); render();
-  });
-}
-
-function renameSubject(subjectId){
-  const s=data.subjects.find(x=>x.id===subjectId);
-  if(!s) return;
-  promptDialog('Přejmenovat předmět', s.name, (t) => {
-    s.name=t; save(); render();
-  });
-}
-
-function delSubject(subjectId){
-  const s=data.subjects.find(x=>x.id===subjectId);
-  if(!s) return;
-  const msg = s.grades.length
-    ? 'Smaže se předmět včetně '+s.grades.length+' '+plur(s.grades.length,'známky','známek','známek')+' (obě pololetí).'
-    : 'Předmět zatím nemá žádné známky.';
-  confirmDialog('Smazat „'+s.name+'"?', msg, 'Smazat', () => {
-    data.subjects=data.subjects.filter(x=>x.id!==subjectId);
-    save(); render();
-  });
-}
-
-/* ---- subject sheet ---- */
-function openSubjectSheet(){ document.getElementById('subjectName').value=''; showSheet('subject'); }
-function saveSubject(){
-  const n=document.getElementById('subjectName').value.trim();
-  if(!n) return;
-  data.subjects.push({ id:'s'+Date.now(), name:n, grades:[], open:true });
-  save(); render(); closeSubjectSheet();
-}
-
-/* ---- sheet helpers ---- */
-function showSheet(which){
-  const b=document.getElementById(which+'Backdrop');
-  const s=document.getElementById(which+'Sheet');
-  b.classList.add('show'); s.classList.add('show');
-}
-function closeGradeSheet(){ hideSheet('grade'); }
-function closeSubjectSheet(){ hideSheet('subject'); }
-function hideSheet(which){
-  document.getElementById(which+'Backdrop').classList.remove('show');
-  document.getElementById(which+'Sheet').classList.remove('show');
-}
-
-/* ---- custom dialog (confirm/prompt) — funguje i v náhledu ---- */
-function confirmDialog(title, msg, okLabel, onOk){
-  showDialog(title, msg, false, okLabel, onOk);
-}
-function promptDialog(title, value, onOk){
-  showDialog(title, '', true, 'Uložit', onOk, value);
-}
-function alertDialog(title, msg){
-  showDialog(title, msg, false, 'OK', ()=>{}, null, { primary:true, hideCancel:true });
-}
-function showDialog(title, msg, isInput, okLabel, onOk, value, opts){
-  opts = opts || {};
-  const bd=document.getElementById('dlgBackdrop');
-  document.getElementById('dlgTitle').textContent=title;
-  const m=document.getElementById('dlgMsg');
-  m.textContent=msg; m.style.display=msg?'block':'none';
-  const inp=document.getElementById('dlgInput');
-  inp.style.display=isInput?'block':'none';
-  if(isInput){ inp.value=value||''; }
-  const ok=document.getElementById('dlgOk');
-  const cancel=document.getElementById('dlgCancel');
-  ok.textContent=okLabel||'OK';
-  ok.className='btn '+((opts.primary||isInput)?'btn-primary':'btn-danger');
-  cancel.style.display=opts.hideCancel?'none':'';
-  bd.classList.add('show');
-  if(isInput) setTimeout(()=>{ inp.focus(); inp.select(); },50);
-  const close=()=>{ bd.classList.remove('show'); ok.onclick=null; cancel.onclick=null; bd.onclick=null; cancel.style.display=''; };
-  ok.onclick=()=>{
-    if(isInput){ const t=inp.value.trim(); if(!t){ return; } close(); onOk(t); }
-    else { close(); onOk(); }
-  };
-  cancel.onclick=close;
-  bd.onclick=(e)=>{ if(e.target===bd) close(); };
-}
-
-/* ---- kalkulačka bodů a procent ---- */
-(function(){
-  const head=document.getElementById('calcHead');
-  const body=document.getElementById('calcBody');
-  const calc=document.querySelector('.calc');
-  head.onclick=()=>{
-    const open=body.style.display!=='none';
-    body.style.display=open?'none':'flex';
-    calc.classList.toggle('open',!open);
-  };
-  const max=document.getElementById('calcMax');
-  const pts=document.getElementById('calcPoints');
-  const pct=document.getElementById('calcPercent');
-  const fldPts=document.getElementById('fldPoints');
-  const fldPct=document.getElementById('fldPercent');
-  const modePct=document.getElementById('modePct');
-  const modePts=document.getElementById('modePts');
-  const btn=document.getElementById('calcBtn');
-  const res=document.getElementById('calcResult');
-  const num=el=>{ const v=parseFloat((el.value||'').replace(',','.')); return isNaN(v)?null:v; };
-  const f=n=>n.toFixed(2).replace(/\.?0+$/,'').replace('.',',');
-  let mode='pct'; // pct = spočítat procenta (zadávám body); pts = spočítat body (zadávám procenta)
-
-  function setMode(m){
-    mode=m;
-    modePct.classList.toggle('sel',m==='pct');
-    modePts.classList.toggle('sel',m==='pts');
-    fldPts.style.display=m==='pct'?'block':'none';
-    fldPct.style.display=m==='pts'?'block':'none';
-    res.style.display='none';
-  }
-  modePct.onclick=()=>setMode('pct');
-  modePts.onclick=()=>setMode('pts');
-
-  function show(txt,err){
-    res.style.display='block';
-    res.className='calc-result'+(err?' err':'');
-    res.textContent=txt;
-  }
-  btn.onclick=()=>{
-    const m=num(max);
-    if(m==null||m<=0){ show('Zadej platné maximum bodů.',true); return; }
-    if(mode==='pct'){
-      const p=num(pts);
-      if(p==null){ show('Zadej získané body.',true); return; }
-      show(p+' z '+m+' bodů = '+f(p/m*100)+' %');
-    } else {
-      const pc=num(pct);
-      if(pc==null){ show('Zadej procenta.',true); return; }
-      show(f(pc)+' % z '+m+' bodů = '+f(m*pc/100)+' bodů');
-    }
-  };
-})();
-
-/* ===================== Škola OnLine ===================== */
-function openSolSheet(){
-  document.getElementById('solUser').value = localStorage.getItem('prumer_sol_user') || '';
-  document.getElementById('solPass').value = '';
-  showSheet('sol');
-}
-function closeSolSheet(){ hideSheet('sol'); }
-
-/* ===================== Zpětná vazba (soukromá) ===================== */
-function openFeedbackSheet(){
-  document.getElementById('fbMessage').value = '';
-  document.getElementById('fbContact').value = '';
-  showSheet('feedback');
-}
-function closeFeedbackSheet(){ hideSheet('feedback'); }
-async function sendFeedback(){
-  const msg = document.getElementById('fbMessage').value.trim();
-  const contact = document.getElementById('fbContact').value.trim();
-  if(!msg){ alertDialog('Prázdná zpráva','Napiš prosím nejdřív zprávu.'); return; }
-  const c = getSB();
-  if(!c){ alertDialog('Není připojení','Odeslání potřebuje cloud (Supabase).'); return; }
-  const btn = document.getElementById('fbBtn'); const label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Odesílám…';
-  try {
-    const meta = 'uid=' + uid() + (mat.code ? (' třída=' + mat.code) : '') + ' · ' + (navigator.userAgent || '').slice(0,120);
-    const ins = await c.from('feedback').insert({ message: msg, contact: contact || null, meta });
-    if(ins.error) throw ins.error;
-    closeFeedbackSheet();
-    alertDialog('Děkuju!', 'Zpráva byla odeslaná. Díky za zpětnou vazbu!');
-  } catch(e){
-    const m = String((e&&e.message)||e);
-    if(/feedback|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Není nastaveno','V Supabase chybí tabulka „feedback" — spusť SQL z návodu v chatu.');
-    else alertDialog('Nepovedlo se', m);
-  } finally { btn.disabled = false; btn.textContent = label; }
-}
-
-/* Škola OnLine je centrálně hostovaná – API běží na aplikace.skolaonline.cz.
-   CORS je otevřený (origin *), takže se dá volat přímo z prohlížeče bez serveru.
-   Známky: /solapi/api/v1/students/{personID}/marks/list
-     - SigningFilter=all  → vrátí VŠECHNY známky (bez něj jen nepodepsané/nové!)
-     - Pagination.PageSize/PageNumber → stránkování
-     - semesterId určuje pololetí; ID 1. pol = schoolYearId+1, 2. pol = schoolYearId+2 */
-const SOL_API = 'https://aplikace.skolaonline.cz';
-
-function solApiBase(instance){
-  let s = String(instance||'').trim().replace(/\/+$/,'');
-  if(/aplikace\.skolaonline\.cz/i.test(s)) return s.replace(/^http:/,'https:');
-  return SOL_API;
-}
-function solBumpId(id, by){
-  const m = String(id||'').match(/^([^\d]*)(\d+)$/);
-  return m ? m[1] + (parseInt(m[2],10)+by) : null;   // C29933 + 1 → C29934
-}
-function solCurrentSem(){
-  const m = new Date().getMonth()+1;
-  return (m>=9 || m===1) ? 1 : 2;                     // 1. pol: září–leden, 2. pol: únor–srpen
-}
-function solParseMark(txt){
-  const t = String(txt||'').trim();
-  const d = t.match(/[1-5]/);
-  if(!d) return null;                 // slovní hodnocení, „N", „Sl", „–" apod. přeskoč
-  let v = parseInt(d[0],10);
-  if(t.indexOf('-')>=0) v += 0.5;     // např. „1-" bereme jako 1,5
-  else if(t.indexOf('+')>=0) v -= 0.5;
-  return Math.max(1, Math.min(5, v));
-}
-
-// stáhne jedno pololetí (se stránkováním a SigningFilter=all)
-async function solFetchSemester(base, auth, pid, semId){
-  let marks = [], subjects = [], page = 1;
-  for(;;){
-    let url = base + '/solapi/api/v1/students/' + encodeURIComponent(pid) + '/marks/list'
-            + '?SigningFilter=all&Pagination.PageNumber=' + page + '&Pagination.PageSize=200';
-    if(semId) url += '&semesterId=' + encodeURIComponent(semId);
-    const r = await fetch(url, { headers: auth });
-    if(!r.ok) return { ok:false, marks:[], subjects:[] };
-    const j = await r.json().catch(()=>null);
-    if(!j || !Array.isArray(j.marks)) return { ok:false, marks:[], subjects:[] };
-    marks = marks.concat(j.marks);
-    if(Array.isArray(j.subjects) && j.subjects.length) subjects = j.subjects;
-    if(j.marks.length < 200) break;
-    if(++page > 20) break;            // pojistka proti nekonečné smyčce
-  }
-  return { ok:true, marks, subjects };
-}
-
-// poskládá známky z obou pololetí do struktury aplikace
-function solBuildData(semResults){
-  const subjName = {};
-  semResults.forEach(sr => (sr.subjects||[]).forEach(s => { subjName[s.id] = s.name || s.abbrev || 'Předmět'; }));
-  const byId = {}; const order = [];
-  function ensure(id){
-    if(!byId[id]){ byId[id] = { id:'sol_'+id, name: subjName[id] || 'Předmět', grades: [], open:false }; order.push(id); }
-    return byId[id];
-  }
-  semResults.forEach(sr => {
-    (sr.marks||[]).forEach(mk => {
-      if(mk.isPoints || mk.isPercents) return;        // bodové/procentní hodnocení není klasická 1–5
-      const val = solParseMark(mk.markText);
-      if(val==null) return;
-      ensure(mk.subjectId).grades.push({
-        id: 'g'+(mk.id || (Date.now()+'_'+Math.random().toString(36).slice(2,6))),
-        mark: val,
-        weight: (typeof mk.weight==='number' && mk.weight>0) ? mk.weight : 1,
-        desc: mk.theme || '',
-        date: String(mk.markDate||'').slice(0,10),
-        sem: sr.sem                                    // pololetí podle toho, ze kterého dotazu známka je
-      });
-    });
-  });
-  const subjects = order.map(id=>byId[id]).filter(s=>s.grades.length);  // jen předměty se známkami
-  return { sem: solCurrentSem(), subjects };
-}
-
-// získání tokenu heslem
-async function solTokenPassword(base, user, pass){
-  const r = await fetch(base + '/solapi/api/connect/token', {
-    method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type:'password', username:user, password:pass, client_id:'test_client', scope:'offline_access sol_api' })
-  });
-  const j = await r.json().catch(()=>null);
-  return { ok: !!(r.ok && j && j.access_token), status:r.status, j };
-}
-// získání tokenu obnovovacím (refresh) tokenem – bez hesla
-async function solTokenRefresh(base, refresh){
-  const r = await fetch(base + '/solapi/api/connect/token', {
-    method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type:'refresh_token', refresh_token:refresh, client_id:'test_client' })
-  });
-  const j = await r.json().catch(()=>null);
-  return { ok: !!(r.ok && j && j.access_token), status:r.status, j };
-}
-// stáhne účet + obě pololetí a poskládá strukturu aplikace
-async function solDownloadData(base, auth){
-  const ur = await fetch(base + '/solapi/api/v1/user', { headers: auth });
-  const uj = await ur.json().catch(()=>null);
-  if(!ur.ok || !uj || !uj.personID) return null;
-  const pid = uj.personID;
-  const sem1Id = solBumpId(uj.schoolYearId, 1);   // 1. pololetí
-  const sem2Id = solBumpId(uj.schoolYearId, 2);   // 2. pololetí
-  const results = [];
-  if(sem1Id){ const r = await solFetchSemester(base, auth, pid, sem1Id); if(r.ok) results.push({ sem:1, marks:r.marks, subjects:r.subjects }); }
-  if(sem2Id){ const r = await solFetchSemester(base, auth, pid, sem2Id); if(r.ok) results.push({ sem:2, marks:r.marks, subjects:r.subjects }); }
-  if(!results.length){   // pojistka: kdyby odvození ID nesedělo, aspoň aktivní pololetí
-    const r = await solFetchSemester(base, auth, pid, null);
-    if(r.ok && r.marks.length) results.push({ sem: solCurrentSem(), marks:r.marks, subjects:r.subjects });
-  }
-  return { uj, out: solBuildData(results) };
-}
-// přenese hypotetické (ruční) známky ze současných dat do nově stažených, ať je sync nesmaže.
-// Páruje předměty podle názvu; pokud předmět ve stažených datech není, vytvoří ho.
-function solAttachHypo(out){
-  const byName = {};
-  (data.subjects||[]).forEach(s=>{
-    (s.grades||[]).forEach(g=>{ if(g.hypo){ (byName[s.name] = byName[s.name] || []).push(g); } });
-  });
-  Object.keys(byName).forEach(name=>{
-    let s = out.subjects.find(x=>x.name===name);
-    if(!s){ s = { id:'hyp_'+name.replace(/\W+/g,'_'), name, grades:[], open:false }; out.subjects.push(s); }
-    s.grades = s.grades.concat(byName[name]);
-  });
-  return out;
-}
-
-// zapíše stažená data do aplikace (zachová rozbalené předměty a hypotetické známky; keepSem = neměnit vybrané pololetí)
-function solApplyData(out, keepSem){
-  solAttachHypo(out);
-  const openIds = new Set((data.subjects||[]).filter(s=>s.open).map(s=>s.id));
-  out.subjects.forEach(s=>{ if(openIds.has(s.id)) s.open = true; });
-  if(keepSem) out.sem = (data && data.sem===2) ? 2 : 1;
-  data = migrate(out);
-  save();
-  localStorage.setItem('prumer_sol_lastsync', new Date().toISOString());
-  render(); renderSolStatus();
-}
-
-// stav pod tlačítkem (auto zapnuto / čas poslední synchronizace / odhlásit)
-function renderSolStatus(msg){
-  const el = document.getElementById('solStatus');
-  if(!el) return;
-  if(msg){ el.textContent = msg; return; }
-  const auto = localStorage.getItem('prumer_sol_auto')==='1';
-  if(!auto){ el.textContent = 'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.'; return; }
-  const last = localStorage.getItem('prumer_sol_lastsync');
-  let t = '';
-  if(last){ const d = new Date(last); t = ' · naposledy '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
-  el.innerHTML = '✓ Aktualizuje se samo'+t+' · <a href="#" onclick="solLogout();return false" style="color:var(--ink-dim)">odhlásit</a>';
-}
-function solLogout(){
-  confirmDialog('Vypnout automatickou aktualizaci?', 'Smaže se uložené přihlášení. Známky v aplikaci zůstanou, ale dál se nebudou aktualizovat samy.', 'Vypnout', ()=>{
-    localStorage.removeItem('prumer_sol_refresh');
-    localStorage.setItem('prumer_sol_auto','0');
-    renderSolStatus();
-  });
-}
-
-// tichá automatická synchronizace přes refresh token (běží při otevření/návratu appky)
-let solSyncing = false;
-async function solAutoSync(force){
-  if(solSyncing) return;
-  if(localStorage.getItem('prumer_sol_auto')!=='1') return;
-  const refresh = localStorage.getItem('prumer_sol_refresh');
-  if(!refresh) return;
-  const last = localStorage.getItem('prumer_sol_lastsync');
-  if(!force && last && (Date.now() - new Date(last).getTime()) < 2*60*1000) return;  // ne častěji než 1× za 2 min
-  solSyncing = true; renderSolStatus('Aktualizuji známky…');
-  try {
-    const base = SOL_API;
-    const tk = await solTokenRefresh(base, refresh);
-    if(!tk.ok){
-      // refresh token vypršel → vypni auto, ať to neotravuje; uživatel se časem přihlásí znovu
-      if(tk.status===400 || (tk.j && tk.j.error)){ localStorage.removeItem('prumer_sol_refresh'); localStorage.setItem('prumer_sol_auto','0'); }
-      renderSolStatus(); return;
-    }
-    if(tk.j.refresh_token) localStorage.setItem('prumer_sol_refresh', tk.j.refresh_token);  // rotace
-    const auth = { 'Authorization':'Bearer '+tk.j.access_token };
-    const dl = await solDownloadData(base, auth);
-    if(dl && dl.out.subjects.length) solApplyData(dl.out, true);
-    else renderSolStatus();
-  } catch(e){ renderSolStatus(); }
-  finally { solSyncing = false; }
-}
-
-async function runSolImport(){
-  const user = document.getElementById('solUser').value.trim();
-  const pass = document.getElementById('solPass').value;
-  const base = solApiBase(document.getElementById('solInstance').value);
-  if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
-
-  const btn = document.getElementById('solBtn');
-  const label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Přihlašuji…';
-  try {
-    const tk = await solTokenPassword(base, user, pass);
-    if(!tk.ok){
-      let msg = (tk.j && tk.j.error==='invalid_credentials') ? 'Špatné přihlašovací jméno nebo heslo.'
-              : (tk.j && tk.j.error_description ? tk.j.error_description : ('Přihlášení selhalo ('+tk.status+').'));
-      alertDialog('Nepovedlo se', msg);
-      return;
-    }
-    btn.textContent = 'Stahuji…';
-    const auth = { 'Authorization': 'Bearer ' + tk.j.access_token };
-    const dl = await solDownloadData(base, auth);
-    if(!dl){ alertDialog('Nepovedlo se','Nepodařilo se načíst účet nebo známky.'); return; }
-
-    const subjN = dl.out.subjects.length;
-    const gradeN = dl.out.subjects.reduce((a,s)=>a+s.grades.length,0);
-    document.getElementById('solPass').value = '';
-    localStorage.setItem('prumer_sol_user', user);
-    closeSolSheet();
-    if(!gradeN){
-      alertDialog('Žádné známky','Pro '+(dl.uj.fullName||'tebe')+' se nepodařilo načíst žádné číselné známky.');
-      return;
-    }
-    confirmDialog('Načíst známky?',
-      'Pro '+(dl.uj.fullName||'tebe')+' se stáhlo '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+' (obě pololetí). Současné známky se přepíšou a od teď se budou aktualizovat samy.',
-      'Načíst', ()=>{
-        if(tk.j.refresh_token){ localStorage.setItem('prumer_sol_refresh', tk.j.refresh_token); localStorage.setItem('prumer_sol_auto','1'); }
-        dl.out.sem = solCurrentSem();
-        solApplyData(dl.out, false);
-        alertDialog('Hotovo', 'Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
-      });
-  } catch(e){
-    alertDialog('Chyba spojení', String((e&&e.message)||e) + '\n(Zkus to na živé adrese, ne v náhledu — náhled může blokovat cizí spojení.)');
-  } finally {
-    btn.disabled = false; btn.textContent = label;
-  }
-}
-
-/* ===================== Účet / profil (Supabase Auth) ===================== */
-let authUser = null;
-let profile = null;
-let profileEditing = false;
-let authStep = 'email';        // 'email' → 'code'
-let authEmailPending = '';
-
-function currentOwner(){ return authUser ? authUser.id : uid(); }
-
-async function initAuth(){
-  const c = getSB(); if(!c) return;
-  try {
-    const { data } = await c.auth.getSession();
-    authUser = (data && data.session) ? data.session.user : null;
-  } catch(e){ authUser = null; }
-  try {
-    c.auth.onAuthStateChange((event, session)=>{
-      authUser = session ? session.user : null;
-      if(authUser){ ensureProfile(); pullGradesCloud(); restoreUserClass(); }
-      refreshAuthUI();
-    });
-  } catch(e){}
-  if(authUser){ ensureProfile(); await pullGradesCloud(); await restoreUserClass(); }
-  refreshAuthUI();
-}
-function refreshAuthUI(){
-  const pp = document.getElementById('pageProfile');
-  if(pp && pp.style.display !== 'none') renderProfile();
-  const pm = document.getElementById('pageMaterials');
-  if(pm && pm.style.display !== 'none') renderMaterials();
-}
-async function ensureProfile(){
-  const c = getSB(); if(!c || !authUser) return;
-  try {
-    const r = await c.from('profiles').select('id').eq('id', authUser.id).maybeSingle();
-    if(!r.error && !r.data){
-      await c.from('profiles').insert({ id: authUser.id, name: (authUser.email||'').split('@')[0] });
-    }
-  } catch(e){}
-}
-
-// po přihlášení dohledá třídu podle účtu (z členství v cloudu) → funguje i na jiném zařízení
-async function restoreUserClass(){
-  if(mat.code) return;                       // už nějakou třídu máme lokálně
-  const c = getSB(); if(!c || !authUser) return;
-  try {
-    const r = await c.from('clenove').select('code, joined_at').eq('user_id', authUser.id).order('joined_at', { ascending:false }).limit(1);
-    const row = (!r.error && r.data && r.data[0]) ? r.data[0] : null;
-    if(!row) return;
-    const tr = await c.from('tridy').select('*').eq('code', row.code).maybeSingle();
-    if(tr.error || !tr.data) return;
-    mat.code = row.code; mat.name = tr.data.name; mat.owner = tr.data.owner || null; mat.view = 'class'; mat.tab = 'soubory';
-    matSaveClass();
-    const pm = document.getElementById('pageMaterials');
-    if(pm && pm.style.display !== 'none') renderMaterials();
-  } catch(e){}
-}
-
-/* ---- synchronizace známek přes účet (napříč zařízeními) ---- */
-let gradesPushTimer = null;
-async function pushGradesNow(){
-  const c = getSB(); if(!c || !authUser) return;
-  clearTimeout(gradesPushTimer);
-  try { await c.from('znamky_data').upsert({ user_id: authUser.id, data: data, updated_at: new Date().toISOString() }); } catch(e){}
-}
-function pushGradesCloud(){
-  if(!authUser) return;
-  clearTimeout(gradesPushTimer);
-  gradesPushTimer = setTimeout(pushGradesNow, 1500);   // krátké zdržení, ať se neukládá při každém ťuknutí
-}
-async function pullGradesCloud(){
-  const c = getSB(); if(!c || !authUser) return;
-  try {
-    const r = await c.from('znamky_data').select('data, updated_at').eq('user_id', authUser.id).maybeSingle();
-    const cloud = (!r.error && r.data) ? r.data : null;
-    const localTs = (data && data.updatedAt) ? data.updatedAt : 0;
-    const cloudTs = (cloud && cloud.data && cloud.data.updatedAt) ? cloud.data.updatedAt
-                  : (cloud && cloud.updated_at ? Date.parse(cloud.updated_at) : 0);
-    if(cloud && cloud.data && cloudTs >= localTs){
-      data = migrate(cloud.data);                       // cloud je novější → použij ho
-      localStorage.setItem(STORE_KEY, JSON.stringify(data));
-      render();
-    } else {
-      pushGradesCloud();                                // lokální novější / cloud prázdný → nahraj nahoru
-    }
-  } catch(e){}
-}
-
-/* ---- přihlášení emailem (kód / OTP) ---- */
-async function authSendCode(email){
-  const c = getSB(); if(!c) return { ok:false, msg:'Není připojení (Supabase).' };
-  try {
-    const { error } = await c.auth.signInWithOtp({ email, options:{ shouldCreateUser:true } });
-    if(error) return { ok:false, msg:error.message };
-    authEmailPending = email;
-    return { ok:true };
-  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
-}
-async function authVerifyCode(email, token){
-  const c = getSB(); if(!c) return { ok:false, msg:'Není připojení (Supabase).' };
-  try {
-    const { data, error } = await c.auth.verifyOtp({ email, token, type:'email' });
-    if(error) return { ok:false, msg:error.message };
-    authUser = (data && data.user) ? data.user : null;
-    await ensureProfile();
-    await pullGradesCloud();
-    await restoreUserClass();
-    return { ok:true };
-  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
-}
-async function authLogout(){
-  await pushGradesNow();                       // nejdřív dolož poslední změny známek do účtu
-  const c = getSB(); if(c){ try { await c.auth.signOut(); } catch(e){} }
-  authUser = null; profile = null;
-  mat.code = null; mat.name = null; mat.owner = null; mat.view = 'gate'; matSaveClass();   // ať se třída neukáže dalšímu účtu na stejném zařízení
-  localStorage.removeItem(STORE_KEY); data = load(); render();   // známky zpět na prázdné (zůstávají v účtu, vrátí se po přihlášení)
-}
-
-/* ---- profil: načtení / uložení / fotka ---- */
-async function loadProfile(){
-  const c = getSB(); if(!c || !authUser){ profile = null; return; }
-  try { const r = await c.from('profiles').select('*').eq('id', authUser.id).maybeSingle(); profile = (r.error ? null : r.data) || null; }
-  catch(e){ profile = null; }
-}
-async function saveProfile(fields){
-  const c = getSB(); if(!c || !authUser) return { ok:false, msg:'Nejsi přihlášený.' };
-  try {
-    const row = Object.assign({ id: authUser.id, updated_at: new Date().toISOString() }, fields);
-    const r = await c.from('profiles').upsert(row).select().maybeSingle();
-    if(r.error) return { ok:false, msg:r.error.message };
-    profile = r.data || Object.assign(profile||{}, fields);
-    return { ok:true };
-  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
-}
-async function uploadAvatar(file){
-  const c = getSB(); if(!c || !authUser) return { ok:false, msg:'Nejsi přihlášený.' };
-  try {
-    const ext = ((file.name||'jpg').split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
-    const path = authUser.id + '/' + Date.now() + '.' + ext;
-    const up = await c.storage.from('avatars').upload(path, file, { upsert:true });
-    if(up.error) return { ok:false, msg:up.error.message };
-    const pu = c.storage.from('avatars').getPublicUrl(path);
-    const url = pu && pu.data && pu.data.publicUrl;
-    const s = await saveProfile({ avatar_url: url });
-    if(!s.ok) return s;
-    return { ok:true, url };
-  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
-}
-
-/* ---- vykreslení profilu / přihlášení ---- */
-async function renderProfile(){
-  const wrap = document.getElementById('profileBody');
-  const h1 = document.getElementById('profH1');
-  if(!wrap) return;
-  wrap.innerHTML = '';
-  const c = getSB();
-  if(!sbConfigured() || !window.supabase || !c){
-    h1.textContent = 'Profil';
-    wrap.appendChild(matNotice('Profil potřebuje cloud', 'Přihlášení běží přes Supabase. Na živé adrese (GitHub Pages) to poběží.'));
-    return;
-  }
-  if(!authUser){ h1.textContent = 'Přihlášení'; renderLogin(wrap); return; }
-  h1.textContent = 'Profil';
-  if(!profile) await loadProfile();
-  if(profileEditing) renderProfileEdit(wrap); else renderProfileView(wrap);
-}
-function renderLogin(wrap){
-  if(authStep === 'code'){
-    wrap.innerHTML =
-      '<div class="prof-auth">' +
-        '<div class="prof-auth-t">Zadej kód z emailu</div>' +
-        '<div class="prof-auth-m">Poslali jsme přihlašovací kód na <b>'+esc(authEmailPending)+'</b>. Mrkni i do spamu.</div>' +
-        '<input id="authCode" inputmode="numeric" autocomplete="one-time-code" placeholder="kód z emailu" maxlength="8" style="text-align:center;letter-spacing:0.25em;font-size:20px">' +
-        '<button class="btn btn-primary" id="authVerifyBtn">Přihlásit se</button>' +
-        '<button class="btn btn-ghost" id="authBackBtn">Změnit email</button>' +
-      '</div>';
-    wrap.querySelector('#authVerifyBtn').onclick = doVerify;
-    wrap.querySelector('#authBackBtn').onclick = ()=>{ authStep='email'; renderProfile(); };
-    wrap.querySelector('#authCode').onkeydown = (e)=>{ if(e.key==='Enter') doVerify(); };
-    setTimeout(()=>{ const el=document.getElementById('authCode'); if(el) el.focus(); }, 60);
-  } else {
-    wrap.innerHTML =
-      '<div class="prof-auth">' +
-        capSVG('prof-cap') +
-        '<div class="prof-auth-t">Přihlas se emailem</div>' +
-        '<div class="prof-auth-m">Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš. Stačí email — přijde ti kód.</div>' +
-        '<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz">' +
-        '<button class="btn btn-primary" id="authSendBtn">Poslat kód</button>' +
-      '</div>';
-    const saved = localStorage.getItem('prumer_auth_email'); if(saved) wrap.querySelector('#authEmail').value = saved;
-    wrap.querySelector('#authSendBtn').onclick = doSend;
-    wrap.querySelector('#authEmail').onkeydown = (e)=>{ if(e.key==='Enter') doSend(); };
-  }
-}
-async function doSend(){
-  const email = (document.getElementById('authEmail').value||'').trim();
-  if(!email || email.indexOf('@')<1){ alertDialog('Neplatný email','Zadej platnou emailovou adresu.'); return; }
-  const btn = document.getElementById('authSendBtn'); const lab = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Posílám…';
-  const r = await authSendCode(email);
-  btn.disabled = false; btn.textContent = lab;
-  if(!r.ok){ alertDialog('Nepovedlo se', r.msg||'Zkus to znovu.'); return; }
-  localStorage.setItem('prumer_auth_email', email);
-  authStep = 'code'; renderProfile();
-}
-async function doVerify(){
-  const token = (document.getElementById('authCode').value||'').replace(/\s/g,'');
-  if(token.length < 6){ alertDialog('Neúplný kód','Zadej celý kód z emailu.'); return; }
-  const btn = document.getElementById('authVerifyBtn'); const lab = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Přihlašuji…';
-  const r = await authVerifyCode(authEmailPending, token);
-  btn.disabled = false; btn.textContent = lab;
-  if(!r.ok){ alertDialog('Nepovedlo se', r.msg || 'Kód nesedí nebo vypršel.'); return; }
-  authStep = 'email'; profileEditing = false;
-  await loadProfile(); renderProfile();
-}
-function renderProfileView(wrap){
-  const p = profile || {};
-  const init = esc(((p.name || authUser.email || '?').trim().charAt(0) || '?').toUpperCase());
-  const av = p.avatar_url
-    ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
-    : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
-  wrap.innerHTML =
-    '<div class="prof-card">' + av +
-      '<div class="prof-name">'+esc(p.name || (authUser.email||'').split('@')[0])+'</div>' +
-      (p.school ? '<div class="prof-school">'+esc(p.school)+'</div>' : '') +
-      (p.bio ? '<div class="prof-bio">'+esc(p.bio)+'</div>' : '') +
-      '<div class="prof-email">'+esc(authUser.email||'')+'</div>' +
-    '</div>' +
-    '<button class="btn btn-primary" id="profEditBtn" style="width:100%;margin-top:14px">Upravit profil</button>' +
-    '<button class="btn btn-ghost" id="profLogoutBtn" style="width:100%;margin-top:8px">Odhlásit se</button>';
-  wrap.querySelector('#profEditBtn').onclick = ()=>{ profileEditing = true; renderProfile(); };
-  wrap.querySelector('#profLogoutBtn').onclick = ()=>{
-    confirmDialog('Odhlásit se?', 'Tvoje známky i třída zůstanou uložené v účtu a vrátí se po přihlášení.', 'Odhlásit', async ()=>{
-      await authLogout(); profileEditing = false; renderProfile(); renderMaterials();
-    });
-  };
-}
-function renderProfileEdit(wrap){
-  const p = profile || {};
-  const init = esc(((p.name || '?').trim().charAt(0) || '?').toUpperCase());
-  const av = p.avatar_url
-    ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
-    : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
-  wrap.innerHTML =
-    '<div class="prof-card">' + av +
-      '<button class="btn btn-ghost" id="avatarBtn" style="margin-top:12px">Změnit fotku</button>' +
-    '</div>' +
-    '<div class="fields" style="margin-top:14px">' +
-      '<label class="fld"><span>Jméno</span><input id="pfName" type="text" placeholder="Tvoje jméno"></label>' +
-      '<label class="fld"><span>Kde studuješ</span><input id="pfSchool" type="text" placeholder="např. Gymnázium…"></label>' +
-      '<label class="fld"><span>Bio</span><textarea id="pfBio" rows="3" placeholder="Pár slov o tobě…" style="resize:vertical;line-height:1.4"></textarea></label>' +
-    '</div>' +
-    '<button class="btn btn-primary" id="pfSave" style="width:100%;margin-top:16px">Uložit</button>' +
-    '<button class="btn btn-ghost" id="pfCancel" style="width:100%;margin-top:8px">Zrušit</button>';
-  wrap.querySelector('#pfName').value = p.name || '';
-  wrap.querySelector('#pfSchool').value = p.school || '';
-  wrap.querySelector('#pfBio').value = p.bio || '';
-  wrap.querySelector('#avatarBtn').onclick = ()=> document.getElementById('avatarFile').click();
-  wrap.querySelector('#pfCancel').onclick = ()=>{ profileEditing = false; renderProfile(); };
-  wrap.querySelector('#pfSave').onclick = async ()=>{
-    const btn = wrap.querySelector('#pfSave'); const lab = btn.textContent;
-    btn.disabled = true; btn.textContent = 'Ukládám…';
-    const r = await saveProfile({
-      name: wrap.querySelector('#pfName').value.trim(),
-      school: wrap.querySelector('#pfSchool').value.trim(),
-      bio: wrap.querySelector('#pfBio').value.trim()
-    });
-    btn.disabled = false; btn.textContent = lab;
-    if(!r.ok){ alertDialog('Uložení selhalo', r.msg || 'Zkus to znovu.'); return; }
-    profileEditing = false; renderProfile();
-  };
-}
-
-/* ===================== Materiály ===================== */
-
-/* přepínání stran */
-function setPage(p){
-  const grades = p==='grades', materials = p==='materials', profilePg = p==='profile';
-  document.getElementById('pageGrades').style.display    = grades ? '' : 'none';
-  document.getElementById('pageMaterials').style.display = materials ? '' : 'none';
-  document.getElementById('pageProfile').style.display   = profilePg ? '' : 'none';
-  document.getElementById('tabGrades').classList.toggle('sel', grades);
-  document.getElementById('tabMaterials').classList.toggle('sel', materials);
-  document.getElementById('tabProfile').classList.toggle('sel', profilePg);
-  window.scrollTo(0,0);
-  if(materials) renderMaterials();
-  else if(profilePg) renderProfile();
-  else renderUpcoming();
-}
-
-let sb = null;
-function getSB(){
-  if(!sb && SB_URL && SB_KEY && window.supabase){
-    try { sb = window.supabase.createClient(SB_URL, SB_KEY); } catch(e){}
-  }
-  return sb;
-}
-function sbConfigured(){ return !!(SB_URL && SB_KEY); }
-
-function uid(){
-  let u = localStorage.getItem('prumer_uid');
-  if(!u){ u = 'u'+Date.now()+Math.random().toString(36).slice(2,8); localStorage.setItem('prumer_uid', u); }
-  return u;
-}
-
-const MAT_CATS = [ { id:'zapisky', label:'Zápisky' }, { id:'testy', label:'Testy' } ];
-let mat = { view:'gate', code:null, name:null, subject:null, category:'zapisky', folder:'', tab:'soubory', sort: localStorage.getItem('prumer_mat_sort') || 'date' };
-let calRows = [];
-let matRows = [];
-let matFolders = [];
-let matSubjects = [];   // vlastní předměty třídy (přidané uživateli), sdílené přes Supabase
-
-function matSaveClass(){
-  if(mat.code) localStorage.setItem('prumer_mat_class', JSON.stringify({ code:mat.code, name:mat.name, owner:mat.owner||null }));
-  else localStorage.removeItem('prumer_mat_class');
-}
-function initMaterials(){
-  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.owner=c.owner||null; mat.view='class'; } } catch(e){}
-}
-
-function matNotice(title, msg){
-  const d = document.createElement('div');
-  d.className = 'mat-notice';
-  d.innerHTML = '<div class="mat-notice-t">'+esc(title)+'</div><div class="mat-notice-m">'+esc(msg)+'</div>';
-  return d;
-}
-
-function renderMaterials(){
-  const wrap = document.getElementById('matBody');
-  const h1 = document.getElementById('matH1');
-  wrap.innerHTML = '';
-  if(!sbConfigured()){
-    h1.textContent = 'Materiály';
-    wrap.appendChild(matNotice('Materiály ještě nejsou nastavené', 'Sdílení souborů potřebuje cloud (Supabase). V kódu nahoře stačí vyplnit SB_URL a SB_KEY podle návodu. Strana se sama zapne, jakmile je doplníš.'));
-    return;
-  }
-  if(!window.supabase){
-    h1.textContent = 'Materiály';
-    wrap.appendChild(matNotice('Načítám knihovnu…', 'Pokud tahle hláška nezmizí, jsi nejspíš v náhledu, který blokuje externí knihovny. Na živé adrese (GitHub Pages) to poběží.'));
-    return;
-  }
-  if(!authUser){
-    h1.textContent = 'Materiály';
-    wrap.appendChild(matNotice('Nejdřív se přihlas', 'Do třídy se dostaneš a třídu vytvoříš až po přihlášení. Otevři záložku Profil a přihlas se emailem.'));
-    const b = document.createElement('button');
-    b.className = 'btn btn-primary'; b.style.cssText = 'margin:14px 16px 0; width:calc(100% - 32px)';
-    b.textContent = 'Přejít na přihlášení';
-    b.onclick = ()=> setPage('profile');
-    wrap.appendChild(b);
-    return;
-  }
-  if(mat.view === 'gate')    return renderMatGate(wrap, h1);
-  if(mat.view === 'class')   return renderMatClass(wrap, h1);
-  if(mat.view === 'subject') return renderMatSubject(wrap, h1);
-}
-
-function renderMatGate(wrap, h1){
-  h1.textContent = 'Kód třídy';
-  const box = document.createElement('div');
-  box.className = 'mat-gate';
-  box.innerHTML =
-    '<div class="mat-welcome">' +
-      '<div class="hero-texture" aria-hidden="true">' +
-        '<span style="top:-8px;right:18px;font-size:54px;transform:rotate(-12deg)">2</span>' +
-        '<span style="bottom:-14px;left:14px;font-size:40px;transform:rotate(9deg)">1</span>' +
-        '<span style="top:42px;left:42%;font-size:30px;transform:rotate(-5deg)">3</span>' +
-      '</div>' +
-      capSVG('mat-welcome-cap') +
-      '<div class="mat-welcome-t">Zadej kód třídy</div>' +
-      '<div class="mat-welcome-m">Spolužáci sdílí zápisky a materiály na jednom místě.</div>' +
-    '</div>' +
-    '<div class="code-boxes">' + [0,1,2,3].map(i=>'<input class="code-box" maxlength="1" autocapitalize="characters" autocomplete="off" data-i="'+i+'">').join('') + '</div>' +
-    '<button class="btn btn-primary" id="enterBtn" style="width:100%">Připojit se</button>' +
-    '<div class="mat-or">nebo</div>' +
-    '<button class="btn btn-ghost" id="createBtn" style="width:100%">Vytvořit novou třídu</button>';
-  wrap.appendChild(box);
-  const inputs = Array.prototype.slice.call(box.querySelectorAll('.code-box'));
-  inputs.forEach((inp,i)=>{
-    inp.oninput = ()=>{ inp.value = inp.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,1); if(inp.value && i<3) inputs[i+1].focus(); };
-    inp.onkeydown = (e)=>{ if(e.key==='Backspace' && !inp.value && i>0) inputs[i-1].focus(); };
-  });
-  box.querySelector('#enterBtn').onclick = ()=>{
-    const code = inputs.map(x=>x.value).join('');
-    if(code.length !== 4){ alertDialog('Neúplný kód','Zadej všechny čtyři znaky kódu.'); return; }
-    enterClass(code);
-  };
-  box.querySelector('#createBtn').onclick = createClassFlow;
-}
-
-async function enterClass(code){
-  const c = getSB(); if(!c) return;
-  try {
-    const r = await c.from('tridy').select('*').eq('code', code).maybeSingle();
-    if(r.error) throw r.error;
-    if(!r.data){ alertDialog('Třída nenalezena','Pod kódem '+code+' žádná třída není. Zkontroluj číslo, nebo vytvoř novou třídu.'); return; }
-    mat.code = code; mat.name = r.data.name; mat.owner = r.data.owner || null; mat.view = 'class'; mat.tab = 'soubory';
-    matSaveClass(); joinClass(); renderMaterials();
-  } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
-}
-
-function genClassCode(){
-  const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // bez matoucích znaků (0/O, 1/I/L)
-  let s = '';
-  for(let i=0;i<4;i++) s += A.charAt(Math.floor(Math.random()*A.length));
-  return s;
-}
-function createClassFlow(){
-  promptDialog('Nová třída — jméno', '', async (name)=>{
-    const c = getSB(); if(!c) return;
-    try {
-      let code = null;
-      for(let t=0; t<20; t++){
-        const cand = genClassCode();
-        const ex = await c.from('tridy').select('code').eq('code', cand).maybeSingle();
-        if(!ex.data){ code = cand; break; }
-      }
-      if(!code){ alertDialog('Nepovedlo se','Zkus to prosím ještě jednou.'); return; }
-      const ins = await c.from('tridy').insert({ code, name, owner: currentOwner() });
-      if(ins.error) throw ins.error;
-      mat.code = code; mat.name = name; mat.owner = currentOwner(); mat.view = 'class'; mat.tab = 'soubory';
-      matSaveClass(); joinClass(); renderMaterials();
-      alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. Pošli ho spolužákům, ať se připojí. Jsi její admin.');
-    } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
-  });
-}
-
-function renderMatClass(wrap, h1){
-  h1.textContent = mat.name || 'Třída';
-  const bar = document.createElement('div');
-  bar.className = 'mat-classbar';
-  bar.innerHTML = '<div><div class="mat-code-lbl">kód třídy</div><div class="mat-code-val">'+esc(mat.code)+'</div></div>';
-  const out = document.createElement('button');
-  out.className = 'subj-action'; out.style.flex = '0 0 auto'; out.textContent = 'Odhlásit';
-  out.onclick = ()=>{ mat.view='gate'; mat.code=null; mat.name=null; matSaveClass(); renderMaterials(); };
-  bar.appendChild(out);
-  wrap.appendChild(bar);
-
-  const tog = document.createElement('div');
-  tog.className = 'calc-toggle'; tog.style.margin = '0 16px 16px';
-  [['soubory','Materiály'],['kalendar','Kalendář']].forEach(t=>{
-    const b = document.createElement('button');
-    b.className = 'calc-mode' + (mat.tab===t[0] ? ' sel' : '');
-    b.textContent = t[1];
-    b.onclick = ()=>{ mat.tab = t[0]; renderMaterials(); };
-    tog.appendChild(b);
-  });
-  wrap.appendChild(tog);
-
-  if(mat.tab === 'kalendar'){ renderMatCalendar(wrap); return; }
-
-  const memBox = document.createElement('div'); memBox.id = 'memBox';
-  wrap.appendChild(memBox);
-  renderMembers(memBox);
-
-  const lbl = document.createElement('div');
-  lbl.className = 'section-label'; lbl.style.padding = '4px 16px 12px'; lbl.textContent = 'Vyber předmět';
-  wrap.appendChild(lbl);
-
-  const grid = document.createElement('div');
-  grid.className = 'mat-subjects';
-  wrap.appendChild(grid);
-  fillMatSubjectGrid(grid);                 // hned vykresli (s tím, co už víme)
-  Promise.all([loadMatSubjects(), loadMatCounts()]).then(()=> fillMatSubjectGrid(grid));   // doplň vlastní předměty + počty
-}
-
-/* ---- členové třídy + admin (tvůrce) ---- */
-function isClassAdmin(){ return !!(authUser && mat.owner && authUser.id === mat.owner); }
-function canManage(row){ return !!((row && row.owner === currentOwner()) || isClassAdmin()); }
-async function joinClass(){
-  const c = getSB(); if(!c || !authUser || !mat.code) return;
-  try { await c.from('clenove').insert({ code: mat.code, user_id: authUser.id }); } catch(e){}   // duplicitu ignoruj
-}
-async function ensureClassOwner(){
-  if(mat.owner || !mat.code) return;
-  const c = getSB(); if(!c) return;
-  try { const r = await c.from('tridy').select('owner').eq('code', mat.code).maybeSingle();
-    if(!r.error && r.data){ mat.owner = r.data.owner || null; matSaveClass(); } } catch(e){}
-}
-async function loadMembers(){
-  const c = getSB(); if(!c || !mat.code) return [];
-  try {
-    const r = await c.from('clenove').select('user_id').eq('code', mat.code);
-    const ids = (r.error ? [] : (r.data||[])).map(x=>x.user_id);
-    if(!ids.length) return [];
-    const pr = await c.from('profiles').select('id,name,avatar_url').in('id', ids);
-    const byId = {}; (pr.error ? [] : (pr.data||[])).forEach(p=>{ byId[p.id]=p; });
-    return ids.map(id => byId[id] || { id, name:null, avatar_url:null });
-  } catch(e){ return []; }
-}
-async function renderMembers(box){
-  if(!box) return;
-  await ensureClassOwner();
-  await joinClass();
-  const members = await loadMembers();
-  if(!members.length){ box.innerHTML=''; return; }
-  members.sort((a,b)=> (a.id===mat.owner?0:1) - (b.id===mat.owner?0:1));   // admin první
-  let html = '<div class="section-label" style="padding:4px 16px 10px">Ve třídě ('+members.length+')</div><div class="mem-list">';
-  members.forEach(m=>{
-    const nm = esc(m.name || 'Beze jména');
-    const init = esc(((m.name||'?').trim().charAt(0)||'?').toUpperCase());
-    const av = m.avatar_url ? '<img class="mem-av" src="'+esc(m.avatar_url)+'" alt="">'
-                            : '<div class="mem-av mem-av-ph">'+init+'</div>';
-    const admin = (m.id === mat.owner) ? '<span class="mem-admin">admin</span>' : '';
-    html += '<div class="mem-row" onclick="openMemberProfile(\''+m.id+'\')">'+av+'<span class="mem-name">'+nm+'</span>'+admin+'<span class="mem-chev">›</span></div>';
-  });
-  html += '</div>';
-  box.innerHTML = html;
-}
-
-async function openMemberProfile(id){
-  const c = getSB(); if(!c) return;
-  const body = document.getElementById('memberBody'); if(!body) return;
-  body.innerHTML = '<div class="empty">Načítám…</div>';
-  showSheet('member');
-  try {
-    const r = await c.from('profiles').select('*').eq('id', id).maybeSingle();
-    const p = (r.error ? null : r.data) || {};
-    const isAdm = (id === mat.owner);
-    const init = esc(((p.name||'?').trim().charAt(0)||'?').toUpperCase());
-    const av = p.avatar_url ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
-                            : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
-    body.innerHTML =
-      '<div style="text-align:center;padding:4px 4px 8px">' + av +
-        '<div class="prof-name">'+esc(p.name || 'Beze jména')+(isAdm ? ' <span class="mem-admin">admin</span>' : '')+'</div>' +
-        (p.school ? '<div class="prof-school">'+esc(p.school)+'</div>' : '') +
-        (p.bio ? '<div class="prof-bio">'+esc(p.bio)+'</div>' : '') +
-        ((!p.school && !p.bio) ? '<div class="prof-bio" style="color:var(--ink-faint)">Profil zatím nevyplněný.</div>' : '') +
-      '</div>';
-  } catch(e){ body.innerHTML = '<div class="empty">Profil se nepodařilo načíst.</div>'; }
-}
-function closeMemberSheet(){ hideSheet('member'); }
-
-let matCounts = {};
-function capSVG(cls){
-  return '<svg class="'+cls+'" viewBox="0 0 40 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-    + '<path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>'
-    + '<path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>'
-    + '<path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>'
-    + '<circle cx="35" cy="22.6" r="2" fill="currentColor"/>'
-    + '</svg>';
-}
-// ve světlém režimu ztmaví sytou barvu pro čitelnost na bílé (viz handoff)
-function themeColor(hex){
-  if(document.documentElement.getAttribute('data-theme') !== 'light') return hex;
-  const map = { '#e8b84b':'#b8860f','#5ec77a':'#1f8b4a','#a9c75e':'#6f8a1e','#e0894a':'#c2641f','#e25c5c':'#cc3b3b','#99a0ae':'#6b7280' };
-  return map[hex] || hex;
-}
-function subjColor(name){
-  const pal = ['#e8b84b','#5ec77a','#a9c75e','#e0894a','#e25c5c','#6f8a1e','#b8860f'];
-  let h = 0; const s = String(name||'');
-  for(let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
-  return themeColor(pal[h % pal.length]);
-}
-function fileType(name){
-  const s = String(name||'');
-  const e = s.split('.').pop().toLowerCase();
-  if(s.indexOf('.') < 0) return { label:'SOUB', color:'#99a0ae' };   // bez přípony
-  if(['jpg','jpeg','png','gif','heic','webp','bmp','svg'].indexOf(e)>=0) return { label:'IMG', color:'#5ec77a' };
-  if(e==='pdf') return { label:'PDF', color:'#e8b84b' };
-  if(['doc','docx'].indexOf(e)>=0) return { label:'DOC', color:'#a9c75e' };
-  if(['ppt','pptx'].indexOf(e)>=0) return { label:'PPT', color:'#e0894a' };
-  if(['xls','xlsx','csv'].indexOf(e)>=0) return { label:'XLS', color:'#5ec77a' };
-  if(['txt','md'].indexOf(e)>=0) return { label:'TXT', color:'#99a0ae' };
-  return { label:(e||'?').slice(0,3).toUpperCase(), color:'#99a0ae' };
-}
-async function loadMatCounts(){
-  const c = getSB(); if(!c) return;
-  try {
-    const r = await c.from('materialy').select('subject').eq('code', mat.code);
-    const m = {}; (r.error ? [] : (r.data||[])).forEach(x=>{ if(x.subject) m[x.subject] = (m[x.subject]||0)+1; });
-    matCounts = m;
-  } catch(e){ matCounts = {}; }
-}
-
-function allMatSubjects(){
-  const names = DEFAULT_SUBJECTS.slice();
-  matSubjects.forEach(n=>{ if(n && !names.some(x=>x.toLowerCase()===n.toLowerCase())) names.push(n); });
-  return names;
-}
-function fillMatSubjectGrid(grid){
-  if(!grid) return;
-  grid.innerHTML = '';
-  allMatSubjects().forEach(name=>{
-    const b = document.createElement('button');
-    b.className = 'mat-subj';
-    const col = subjColor(name);
-    const init = esc((name.trim().charAt(0) || '?').toUpperCase());
-    const n = matCounts[name] || 0;
-    const cnt = n ? (n + ' ' + plur(n,'soubor','soubory','souborů')) : 'zatím prázdné';
-    b.innerHTML =
-      '<span class="mat-subj-ic" style="color:'+col+';background:'+col+'22">'+init+'</span>' +
-      '<span class="mat-subj-name">'+esc(name)+'</span>' +
-      '<span class="mat-subj-cnt">'+cnt+'</span>';
-    b.onclick = ()=>{ mat.subject = name; mat.category = 'zapisky'; mat.folder = ''; mat.view = 'subject'; renderMaterials(); };
-    grid.appendChild(b);
-  });
-  const add = document.createElement('button');
-  add.className = 'mat-subj mat-subj-add';
-  add.innerHTML = '<span class="mat-subj-ic add">+</span><span class="mat-subj-name">Přidat předmět</span>';
-  add.onclick = addMatSubject;
-  grid.appendChild(add);
-}
-async function loadMatSubjects(){
-  const c = getSB(); if(!c) return;
-  try {
-    const r = await c.from('predmety').select('*').eq('code', mat.code);
-    matSubjects = (r.error ? [] : (r.data||[])).map(x=>x.name).filter(Boolean);
-  } catch(e){ matSubjects = []; }   // tabulka predmety nemusí ještě existovat
-}
-function addMatSubject(){
-  const c = getSB(); if(!c){ alertDialog('Není připojení','Materiály potřebují cloud (Supabase).'); return; }
-  promptDialog('Nový předmět', '', async (name)=>{
-    name = (name||'').trim();
-    if(!name) return;
-    if(allMatSubjects().some(x=>x.toLowerCase()===name.toLowerCase())){ alertDialog('Už existuje','Předmět s tímhle názvem už ve třídě je.'); return; }
-    try {
-      const ins = await c.from('predmety').insert({ code:mat.code, name, owner:currentOwner() });
-      if(ins.error) throw ins.error;
-      await loadMatSubjects();
-      renderMaterials();
-    } catch(e){
-      const m = String((e&&e.message)||e);
-      if(/predmety|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Předměty nejsou nastavené','V Supabase je potřeba spustit SQL pro tabulku „predmety" (viz návod v chatu).');
-      else alertDialog('Nepovedlo se', m);
-    }
-  });
-}
-
-/* ---- kalendar testu ---- */
-const CZ_WD = ['Po','Út','St','Čt','Pá','So','Ne'];
-function mondayOf(d){ const x=new Date(d); x.setHours(0,0,0,0); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); return x; }
-function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function weekStartDate(){ if(!mat.weekStart) mat.weekStart = mondayOf(new Date()); return mat.weekStart; }
-
-/* ---- blížící se testy na hlavní straně ---- */
-function parseLocalDate(iso){ const p=String(iso||'').split('-'); return new Date(+p[0], (+p[1]||1)-1, +p[2]||1); }
-function daysUntil(d){ const t=new Date(); t.setHours(0,0,0,0); return Math.round((d - t)/86400000); }
-async function renderUpcoming(){
-  const box = document.getElementById('upcoming');
-  if(!box) return;
-  const c = getSB();
-  if(!c || !mat.code){ box.innerHTML=''; return; }   // bez třídy / cloudu nic
-  try {
-    const today = isoLocal(new Date());
-    const r = await c.from('kalendar').select('*').eq('code', mat.code).gte('date', today).order('date',{ascending:true}).limit(6);
-    if(r.error) throw r.error;
-    const rows = r.data || [];
-    if(!rows.length){ box.innerHTML=''; return; }
-    let html = '<div class="section-label" style="margin-top:6px">Blížící se testy</div><div class="up-list">';
-    rows.forEach(t=>{
-      const days = daysUntil(parseLocalDate(t.date));
-      const when = days<=0 ? 'dnes' : days===1 ? 'zítra' : ('za '+days+' '+plur(days,'den','dny','dní'));
-      html += '<div class="up-item"><div class="up-when">'+when+'</div>'
-            + '<div class="up-meta"><div class="up-subj">'+esc(t.subject||'')+'</div>'
-            + (t.theme ? '<div class="up-theme">'+esc(t.theme)+'</div>' : '')
-            + '</div></div>';
-    });
-    html += '</div>';
-    box.innerHTML = html;
-  } catch(e){ box.innerHTML=''; }
-}
-
-function renderMatCalendar(wrap){
-  weekStartDate();
-  const nav = document.createElement('div');
-  nav.className = 'cal-nav';
-  const prev = document.createElement('button'); prev.className='cal-arrow'; prev.textContent='‹'; prev.setAttribute('aria-label','Předchozí týden');
-  const label = document.createElement('button'); label.className='cal-label';
-  const next = document.createElement('button'); next.className='cal-arrow'; next.textContent='›'; next.setAttribute('aria-label','Další týden');
-  nav.appendChild(prev); nav.appendChild(label); nav.appendChild(next);
-  wrap.appendChild(nav);
-
-  const week = document.createElement('div'); week.id='calWeek'; week.className='cal-week';
-  week.innerHTML = '<div class="empty">Načítám…</div>';
-  wrap.appendChild(week);
-
-  function updateLabel(){
-    const s = mat.weekStart, e = addDays(s,6);
-    const sy = s.getFullYear(), ey = e.getFullYear();
-    label.textContent = s.getDate()+'. '+(s.getMonth()+1)+'.'+(sy!==ey?(' '+sy):'')+' – '+e.getDate()+'. '+(e.getMonth()+1)+'. '+ey;
-  }
-  prev.onclick = ()=>{ mat.weekStart = addDays(mat.weekStart,-7); updateLabel(); drawWeek(); };
-  next.onclick = ()=>{ mat.weekStart = addDays(mat.weekStart, 7); updateLabel(); drawWeek(); };
-  label.onclick = ()=>{ mat.weekStart = mondayOf(new Date()); updateLabel(); drawWeek(); };
-  updateLabel();
-
-  loadTests();
-}
-
-async function loadTests(){
-  const c = getSB(); if(!c) return;
-  const week = document.getElementById('calWeek'); if(!week) return;
-  try {
-    const r = await c.from('kalendar').select('*').eq('code', mat.code);
-    if(r.error) throw r.error;
-    calRows = r.data || [];
-    drawWeek();
-  } catch(e){ week.innerHTML=''; week.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
-}
-
-function drawWeek(){
-  const week = document.getElementById('calWeek'); if(!week) return;
-  const start = weekStartDate();
-  const todayIso = isoLocal(new Date());
-  const me = currentOwner();
-  week.innerHTML = '';
-  for(let i=0;i<7;i++){
-    const d = addDays(start, i);
-    const iso = isoLocal(d);
-    const dayTests = calRows.filter(r=>r.date===iso).sort((a,b)=>(a.subject||'').localeCompare(b.subject||'','cs'));
-
-    const row = document.createElement('div');
-    row.className = 'cal-day' + (iso===todayIso ? ' today' : '');
-
-    const head = document.createElement('div');
-    head.className = 'cal-dhead';
-    head.innerHTML = '<div class="cal-wd">'+CZ_WD[i]+'</div><div class="cal-dn">'+d.getDate()+'</div>';
-    row.appendChild(head);
-
-    const body = document.createElement('div');
-    body.className = 'cal-dbody';
-    if(dayTests.length){
-      dayTests.forEach(r=>{
-        const chip = document.createElement('div');
-        chip.className = 'cal-chip';
-        chip.innerHTML = '<div class="cal-chip-meta"><div class="cal-chip-subj">'+esc(r.subject||'')+'</div>'+(r.theme?'<div class="cal-chip-theme">'+esc(r.theme)+'</div>':'')+'</div>';
-        if(canManage(r)){
-          const del = document.createElement('button');
-          del.className = 'cal-chip-del'; del.textContent = '×'; del.setAttribute('aria-label','Smazat');
-          del.onclick = (e)=>{ e.stopPropagation(); deleteTest(r); };
-          chip.appendChild(del);
-        }
-        body.appendChild(chip);
-      });
-    } else {
-      const empty = document.createElement('div');
-      empty.className = 'cal-empty';
-      empty.textContent = '—';
-      body.appendChild(empty);
-    }
-    row.appendChild(body);
-
-    const add = document.createElement('button');
-    add.className = 'cal-add'; add.textContent = '+'; add.setAttribute('aria-label','Přidat test v tento den');
-    add.onclick = ()=> openTestSheet(iso);
-    row.appendChild(add);
-
-    week.appendChild(row);
-  }
-}
-
-async function openTestSheet(prefill){
-  document.getElementById('testDate').value = (typeof prefill === 'string' && prefill) ? prefill : isoLocal(new Date());
-  const sel = document.getElementById('testSubject');
-  if(!matSubjects.length){ try { await loadMatSubjects(); } catch(e){} }   // ať jsou vlastní předměty i tady
-  sel.innerHTML = allMatSubjects().map(s=>'<option>'+esc(s)+'</option>').join('');
-  document.getElementById('testTheme').value = '';
-  showSheet('test');
-}
-function closeTestSheet(){ hideSheet('test'); }
-
-async function saveTest(){
-  const date = document.getElementById('testDate').value;
-  const subject = document.getElementById('testSubject').value;
-  const theme = document.getElementById('testTheme').value.trim();
-  if(!date){ alertDialog('Chybí datum','Vyber, kdy se test píše.'); return; }
-  const c = getSB(); if(!c) return;
-  try {
-    const ins = await c.from('kalendar').insert({ code:mat.code, date, subject, theme, owner:currentOwner() });
-    if(ins.error) throw ins.error;
-    closeTestSheet(); loadTests();
-  } catch(e){ alertDialog('Uložení selhalo', String((e&&e.message)||e)); }
-}
-
-function deleteTest(r){
-  if(!canManage(r)){ alertDialog('Nelze smazat','Smazat test může jen jeho autor nebo admin třídy.'); return; }
-  confirmDialog('Smazat test?', (r.subject||'') + (r.theme ? ' · '+r.theme : ''), 'Smazat', async ()=>{
-    const c = getSB(); if(!c) return;
-    try {
-      const del = await c.from('kalendar').delete().eq('id', r.id);
-      if(del.error) throw del.error;
-      loadTests();
-    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
-  });
-}
-
-function renderMatSubject(wrap, h1){
-  h1.textContent = mat.subject;
-  const back = document.createElement('button');
-  back.className = 'mat-back'; back.innerHTML = '<span class="mat-back-ic">‹</span> Předměty';
-  back.onclick = ()=>{ mat.view = 'class'; renderMaterials(); };
-  wrap.appendChild(back);
-
-  const tog = document.createElement('div');
-  tog.className = 'calc-toggle'; tog.style.margin = '0 16px 14px';
-  MAT_CATS.forEach(cat=>{
-    const b = document.createElement('button');
-    b.className = 'calc-mode' + (mat.category===cat.id ? ' sel' : '');
-    b.textContent = cat.label;
-    b.onclick = ()=>{ mat.category = cat.id; mat.folder = ''; renderMaterials(); };
-    tog.appendChild(b);
-  });
-  wrap.appendChild(tog);
-
-  // drobečková navigace složek
-  const crumb = document.createElement('div');
-  crumb.className = 'mat-crumb';
-  crumb.appendChild(buildCrumb());
-  wrap.appendChild(crumb);
-
-  // akce: nahrát soubory + nová složka
-  const acts = document.createElement('div');
-  acts.className = 'mat-actions';
-  const up = document.createElement('button');
-  up.className = 'add-grade-btn';
-  up.textContent = '↑ Nahrát';
-  up.onclick = ()=> document.getElementById('matFile').click();
-  const nf = document.createElement('button');
-  nf.className = 'add-grade-btn';
-  nf.textContent = '+ Složka';
-  nf.onclick = createFolder;
-  acts.appendChild(up); acts.appendChild(nf);
-  wrap.appendChild(acts);
-
-  const sortbar = document.createElement('div');
-  sortbar.className = 'mat-sortbar';
-  sortbar.innerHTML = '<span>Řadit</span>';
-  const sel = document.createElement('select');
-  [['date','Podle data přidání'],['name','Podle abecedy'],['size','Podle velikosti']].forEach(o=>{
-    const op = document.createElement('option');
-    op.value = o[0]; op.textContent = o[1];
-    if(mat.sort === o[0]) op.selected = true;
-    sel.appendChild(op);
-  });
-  sel.onchange = ()=>{ mat.sort = sel.value; localStorage.setItem('prumer_mat_sort', mat.sort); drawMatItems(); };
-  sortbar.appendChild(sel);
-  wrap.appendChild(sortbar);
-
-  const list = document.createElement('div');
-  list.id = 'matList'; list.className = 'mat-list';
-  list.innerHTML = '<div class="empty">Načítám…</div>';
-  wrap.appendChild(list);
-  loadMatItems();
-}
-
-/* ---- složky: pomocné ---- */
-function parentOf(path){ const i = String(path||'').lastIndexOf('/'); return i<0 ? '' : path.slice(0,i); }
-function baseName(path){ const i = String(path||'').lastIndexOf('/'); return i<0 ? String(path||'') : path.slice(i+1); }
-function matFolderParts(){ return mat.folder ? mat.folder.split('/') : []; }
-function buildCrumb(){
-  const frag = document.createDocumentFragment();
-  const parts = matFolderParts();
-  const root = document.createElement('a');
-  root.textContent = '🏠 Hlavní'; root.className = parts.length ? '' : 'cur';
-  root.onclick = ()=>{ mat.folder=''; renderMaterials(); };
-  frag.appendChild(root);
-  let acc = '';
-  parts.forEach((p,i)=>{
-    const sep = document.createElement('span'); sep.className='sep'; sep.textContent='›'; frag.appendChild(sep);
-    acc = acc ? acc+'/'+p : p;
-    const target = acc;
-    const a = document.createElement('a');
-    a.textContent = p; a.className = (i===parts.length-1) ? 'cur' : '';
-    a.onclick = ()=>{ mat.folder = target; renderMaterials(); };
-    frag.appendChild(a);
-  });
-  return frag;
-}
-
-async function loadMatItems(){
-  const c = getSB(); if(!c) return;
-  const list = document.getElementById('matList'); if(!list) return;
-  try {
-    const r = await c.from('materialy').select('*')
-      .eq('code', mat.code).eq('subject', mat.subject).eq('category', mat.category);
-    if(r.error) throw r.error;
-    matRows = r.data || [];
-    try {
-      const fr = await c.from('slozky').select('*')
-        .eq('code', mat.code).eq('subject', mat.subject).eq('category', mat.category);
-      matFolders = (fr.error ? [] : (fr.data || []));   // tabulka slozky nemusí ještě existovat
-    } catch(e){ matFolders = []; }
-    drawMatItems();
-  } catch(e){ list.innerHTML=''; list.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
-}
-
-function sortFiles(rows){
-  const r = rows.slice();
-  if(mat.sort === 'name') r.sort((a,b)=> (a.name||'').localeCompare(b.name||'', 'cs', { sensitivity:'base', numeric:true }));
-  else if(mat.sort === 'size') r.sort((a,b)=> (b.size||0) - (a.size||0));
-  else r.sort((a,b)=> (b.created_at||'').localeCompare(a.created_at||''));
-  return r;
-}
-
-function drawMatItems(){
-  const list = document.getElementById('matList'); if(!list) return;
-  const cur = mat.folder || '';
-  const subfolders = matFolders
-    .filter(f => parentOf(f.path||'') === cur)
-    .sort((a,b)=> baseName(a.path).localeCompare(baseName(b.path), 'cs', { numeric:true }));
-  const files = sortFiles(matRows.filter(r => (r.folder||'') === cur));
-  list.innerHTML = '';
-  if(!subfolders.length && !files.length){
-    list.innerHTML = '<div class="mat-empty">'+capSVG('mat-empty-cap')+
-      '<div class="mat-empty-t">Tady zatím nic není</div>'+
-      '<div class="mat-empty-m">'+(cur ? 'Tahle složka je prázdná.' : 'Nahraj první zápisky pro třídu.')+'</div></div>';
-    return;
-  }
-  const me = currentOwner();
-
-  subfolders.forEach(f=>{
-    const mine = canManage(f);
-    const row = document.createElement('div');
-    row.className = 'mat-file mat-folder';
-    row.innerHTML =
-      '<div class="mat-file-ic" style="color:var(--accent);background:var(--accent-soft);font-size:20px">📁</div>' +
-      '<div class="mat-file-meta"><div class="mat-file-name">'+esc(baseName(f.path))+'</div>' +
-      '<div class="mat-file-sub">složka</div></div>' +
-      (mine ? '<button class="grade-del mat-del" aria-label="Smazat složku"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' : '<span class="mat-chevron">›</span>');
-    const go = ()=>{ mat.folder = f.path; renderMaterials(); };
-    row.querySelector('.mat-file-ic').onclick = go;
-    row.querySelector('.mat-file-meta').onclick = go;
-    const del = row.querySelector('.mat-del'); if(del) del.onclick = ()=> deleteFolder(f);
-    list.appendChild(row);
-  });
-
-  files.forEach(r=>{
-    const mine = canManage(r);
-    const ft = fileType(r.name || r.path);
-    const ic = themeColor(ft.color);
-    const row = document.createElement('div');
-    row.className = 'mat-file';
-    row.innerHTML =
-      '<div class="mat-file-ic" style="color:'+ic+';background:'+ic+'22">'+ft.label+'</div>' +
-      '<div class="mat-file-meta"><div class="mat-file-name">'+esc(r.name)+'</div>' +
-      '<div class="mat-file-sub">'+sizeStr(r.size)+(r.created_at?' · '+dateStr(r.created_at):'')+'</div></div>' +
-      '<button class="mat-dl" aria-label="Stáhnout">↓</button>' +
-      (mine ? '<button class="mat-edit" aria-label="Přejmenovat"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>' : '') +
-      (mine ? '<button class="grade-del mat-del" aria-label="Smazat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' : '');
-    const prev = ()=> openPreview(r);
-    row.querySelector('.mat-file-ic').onclick = prev;
-    row.querySelector('.mat-file-meta').onclick = prev;
-    row.querySelector('.mat-dl').onclick = ()=> downloadFile(r);
-    const ed = row.querySelector('.mat-edit');
-    if(ed) ed.onclick = ()=> renameFile(r);
-    const del = row.querySelector('.mat-del');
-    if(del) del.onclick = ()=> deleteFile(r);
-    list.appendChild(row);
-  });
-}
-
-function createFolder(){
-  const c = getSB(); if(!c){ alertDialog('Není připojení','Materiály potřebují cloud (Supabase).'); return; }
-  promptDialog('Nová složka', '', async (name)=>{
-    name = (name||'').trim().replace(/\//g,'');
-    if(!name) return;
-    const path = mat.folder ? mat.folder+'/'+name : name;
-    if(matFolders.some(f => (f.path||'') === path)){ alertDialog('Už existuje','Složka s tímhle názvem tu už je.'); return; }
-    try {
-      const ins = await c.from('slozky').insert({ code:mat.code, subject:mat.subject, category:mat.category, path, owner:currentOwner() });
-      if(ins.error) throw ins.error;
-      loadMatItems();
-    } catch(e){
-      const m = String((e&&e.message)||e);
-      if(/slozky|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Složky nejsou nastavené','V Supabase je potřeba spustit SQL pro tabulku „slozky" (viz návod v chatu).');
-      else alertDialog('Nepovedlo se', m);
-    }
-  });
-}
-
-function deleteFolder(f){
-  if(!canManage(f)){ alertDialog('Nelze smazat','Smazat složku může jen její autor nebo admin třídy.'); return; }
-  const path = f.path;
-  const hasFiles = matRows.some(r => (r.folder||'') === path || (r.folder||'').indexOf(path+'/') === 0);
-  const hasSub = matFolders.some(x => (x.path||'').indexOf(path+'/') === 0);
-  if(hasFiles || hasSub){ alertDialog('Složka není prázdná','Nejdřív z ní smaž soubory a podsložky.'); return; }
-  confirmDialog('Smazat složku?', baseName(path), 'Smazat', async ()=>{
-    const c = getSB(); if(!c) return;
-    try {
-      const del = await c.from('slozky').delete().eq('id', f.id);
-      if(del.error) throw del.error;
-      loadMatItems();
-    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
-  });
-}
-
-/* ---- náhled souboru ---- */
-function openPreview(r){
-  const c = getSB(); if(!c) return;
-  let url = '';
-  try { const pu = c.storage.from(SB_BUCKET).getPublicUrl(r.path); url = pu && pu.data && pu.data.publicUrl; } catch(e){}
-  const ext = (r.name || r.path || '').split('.').pop().toLowerCase();
-  document.getElementById('previewName').textContent = r.name || '';
-  const body = document.getElementById('previewBody');
-  body.innerHTML = '';
-  if(['jpg','jpeg','png','gif','webp','bmp','svg'].indexOf(ext) >= 0){
-    const img = document.createElement('img'); img.src = url; img.alt = r.name || ''; body.appendChild(img);
-  } else if(['pdf','txt','csv','md'].indexOf(ext) >= 0){
-    const fr = document.createElement('iframe'); fr.src = url; body.appendChild(fr);
-  } else {
-    const msg = document.createElement('div'); msg.className = 'preview-msg';
-    msg.innerHTML = 'Náhled tohoto typu souboru ('+esc(ext||'?')+') nejde v aplikaci zobrazit.<br>Otevři ho tlačítkem dole.';
-    body.appendChild(msg);
-  }
-  document.getElementById('previewOpen').onclick = ()=>{ if(url) window.open(url, '_blank'); };
-  document.getElementById('previewBackdrop').classList.add('show');
-}
-function closePreview(){
-  document.getElementById('previewBackdrop').classList.remove('show');
-  document.getElementById('previewBody').innerHTML = '';   // uvolní iframe/obrázek
-}
-
-function renameFile(r){
-  if(!canManage(r)){ alertDialog('Nelze přejmenovat','Přejmenovat soubor může jen jeho autor nebo admin třídy.'); return; }
-  promptDialog('Přejmenovat soubor', r.name, async (newName)=>{
-    const c = getSB(); if(!c) return;
-    try {
-      const upd = await c.from('materialy').update({ name:newName }).eq('id', r.id).select();
-      if(upd.error) throw upd.error;
-      if(!upd.data || !upd.data.length){ alertDialog('Přejmenování se neuložilo','Chybí pravidlo pro úpravu. V Supabase spusť SQL na povolení update (viz zpráva v chatu).'); return; }
-      loadMatItems();
-    } catch(e){ alertDialog('Přejmenování selhalo', String((e&&e.message)||e)); }
-  });
-}
-
-function fileEmoji(n){
-  const e = (n||'').split('.').pop().toLowerCase();
-  if(['jpg','jpeg','png','gif','heic','webp'].indexOf(e) >= 0) return '🖼';
-  if(e === 'pdf') return '📄';
-  if(['doc','docx'].indexOf(e) >= 0) return '📝';
-  return '📎';
-}
-function sizeStr(b){ if(b==null) return ''; if(b<1024) return b+' B'; if(b<1048576) return Math.round(b/1024)+' kB'; return (b/1048576).toFixed(1)+' MB'; }
-function dateStr(iso){ try { const d=new Date(iso); return d.getDate()+'.'+(d.getMonth()+1)+'.'; } catch(e){ return ''; } }
-function slug(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_'); }
-
-async function uploadFiles(fileList){
-  const c = getSB(); if(!c) return;
-  const arr = Array.from(fileList || []);
-  const big = arr.filter(f => f.size > 50*1024*1024);
-  const okFiles = arr.filter(f => f.size <= 50*1024*1024);
-  if(!okFiles.length){ if(big.length) alertDialog('Soubor je moc velký','Nahrávej prosím soubory do 50 MB.'); return; }
-  const list = document.getElementById('matList');
-  let failed = 0;
-  for(let i=0;i<okFiles.length;i++){
-    const file = okFiles[i];
-    if(list) list.innerHTML = '<div class="empty">Nahrávám '+(i+1)+'/'+okFiles.length+'…</div>';
-    try {
-      const safe = (file.name||'soubor').replace(/[^\w.\-]+/g,'_');
-      const fseg = mat.folder ? slug(mat.folder)+'/' : '';
-      const path = mat.code+'/'+slug(mat.subject)+'/'+mat.category+'/'+fseg+Date.now()+'_'+i+'_'+safe;
-      const upl = await c.storage.from(SB_BUCKET).upload(path, file, { upsert:false });
-      if(upl.error) throw upl.error;
-      const base = { code:mat.code, subject:mat.subject, category:mat.category, name:file.name, path:path, size:file.size, owner:currentOwner() };
-      let ins = await c.from('materialy').insert({ ...base, folder: mat.folder||'' });
-      if(ins.error && /folder|column|schema cache/i.test(ins.error.message||'')) ins = await c.from('materialy').insert(base); // sloupec folder ještě není
-      if(ins.error) throw ins.error;
-    } catch(e){ failed++; }
-  }
-  loadMatItems();
-  if(big.length) alertDialog('Některé soubory přeskočeny', big.length + ' nad 50 MB se nenahrálo.');
-  else if(failed) alertDialog('Část se nenahrála', failed + ' z ' + okFiles.length + ' se nepodařilo nahrát.');
-}
-
-async function downloadFile(r){
-  const c = getSB(); if(!c) return;
-  try {
-    const pu = c.storage.from(SB_BUCKET).getPublicUrl(r.path);
-    const url = pu && pu.data && pu.data.publicUrl;
-    if(url) window.open(url, '_blank');
-    else alertDialog('Nelze otevřít','Odkaz se nepodařilo získat.');
-  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
-}
-
-function deleteFile(r){
-  if(!canManage(r)){ alertDialog('Nelze smazat','Smazat soubor může jen jeho autor nebo admin třídy.'); return; }
-  confirmDialog('Smazat soubor?', r.name, 'Smazat', async ()=>{
-    const c = getSB(); if(!c) return;
-    try {
-      await c.storage.from(SB_BUCKET).remove([r.path]);
-      const del = await c.from('materialy').delete().eq('id', r.id);
-      if(del.error) throw del.error;
-      loadMatItems();
-    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
-  });
-}
-
-const matFileEl = document.getElementById('matFile');
-if(matFileEl) matFileEl.addEventListener('change', function(e){
-  const fs = e.target.files;
-  if(fs && fs.length) uploadFiles(fs);
-  e.target.value = '';
-});
-
-const avatarFileEl = document.getElementById('avatarFile');
-if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
-  const f = e.target.files && e.target.files[0]; e.target.value = '';
-  if(!f) return;
-  if(f.size > 5*1024*1024){ alertDialog('Moc velká','Profilová fotka může mít max 5 MB.'); return; }
-  const r = await uploadAvatar(f);
-  if(!r.ok){ alertDialog('Nahrání selhalo', r.msg || 'Zkus to znovu.'); return; }
-  await loadProfile(); renderProfile();
-});
-
-applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
-initMaterials();
-renderSolStatus();
-solAutoSync();   // tichá aktualizace při otevření
-// znovu po návratu do popředí a periodicky, dokud je appka otevřená (jen iniciuje, throttle uvnitř)
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ solAutoSync(); renderUpcoming(); } });
-setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
-
-// Supabase i ikony/fonty se načítají až po tomto skriptu → dořeš po 'load'
-window.addEventListener('load', ()=>{
-  initAuth();          // přihlášení / účet (Supabase Auth)
-  renderUpcoming();   // blížící se testy (potřebuje načtený Supabase)
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(()=>{});   // PWA offline
-    let refreshing=false;
-    navigator.serviceWorker.addEventListener('controllerchange', ()=>{ if(refreshing) return; refreshing=true; location.reload(); });   // nová verze → obnov
-  }
-});
+  })();
+  // odhalování při scrollu
+  (function(){
+    var els=[].slice.call(document.querySelectorAll('.rev'));
+    if(!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in');}); return; }
+    var io=new IntersectionObserver(function(en){
+      en.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    },{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+    els.forEach(function(e,i){ e.style.transitionDelay=(Math.min(i,6)*60)+'ms'; io.observe(e); });
+  })();
+  try{ document.getElementById('yr').textContent=new Date().getFullYear(); }catch(e){}
 </script>
 </body>
 </html>
