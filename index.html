@@ -1095,7 +1095,11 @@ function load() {
   }
   return migrate(d);
 }
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+function save() {
+  data.updatedAt = Date.now();
+  localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  pushGradesCloud();   // když je uživatel přihlášený, ulož i do cloudu (napříč zařízeními)
+}
 
 function gradesOf(s) { return s.grades.filter(g => g.sem === data.sem); }
 function plur(n, one, few, many) { return n===1 ? one : (n>=2 && n<=4 ? few : many); }
@@ -1766,11 +1770,11 @@ async function initAuth(){
   try {
     c.auth.onAuthStateChange((event, session)=>{
       authUser = session ? session.user : null;
-      if(authUser){ ensureProfile(); restoreUserClass(); }
+      if(authUser){ ensureProfile(); pullGradesCloud(); restoreUserClass(); }
       refreshAuthUI();
     });
   } catch(e){}
-  if(authUser){ ensureProfile(); await restoreUserClass(); }
+  if(authUser){ ensureProfile(); await pullGradesCloud(); await restoreUserClass(); }
   refreshAuthUI();
 }
 function refreshAuthUI(){
@@ -1806,6 +1810,36 @@ async function restoreUserClass(){
   } catch(e){}
 }
 
+/* ---- synchronizace známek přes účet (napříč zařízeními) ---- */
+let gradesPushTimer = null;
+async function pushGradesNow(){
+  const c = getSB(); if(!c || !authUser) return;
+  clearTimeout(gradesPushTimer);
+  try { await c.from('znamky_data').upsert({ user_id: authUser.id, data: data, updated_at: new Date().toISOString() }); } catch(e){}
+}
+function pushGradesCloud(){
+  if(!authUser) return;
+  clearTimeout(gradesPushTimer);
+  gradesPushTimer = setTimeout(pushGradesNow, 1500);   // krátké zdržení, ať se neukládá při každém ťuknutí
+}
+async function pullGradesCloud(){
+  const c = getSB(); if(!c || !authUser) return;
+  try {
+    const r = await c.from('znamky_data').select('data, updated_at').eq('user_id', authUser.id).maybeSingle();
+    const cloud = (!r.error && r.data) ? r.data : null;
+    const localTs = (data && data.updatedAt) ? data.updatedAt : 0;
+    const cloudTs = (cloud && cloud.data && cloud.data.updatedAt) ? cloud.data.updatedAt
+                  : (cloud && cloud.updated_at ? Date.parse(cloud.updated_at) : 0);
+    if(cloud && cloud.data && cloudTs >= localTs){
+      data = migrate(cloud.data);                       // cloud je novější → použij ho
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      render();
+    } else {
+      pushGradesCloud();                                // lokální novější / cloud prázdný → nahraj nahoru
+    }
+  } catch(e){}
+}
+
 /* ---- přihlášení emailem (kód / OTP) ---- */
 async function authSendCode(email){
   const c = getSB(); if(!c) return { ok:false, msg:'Není připojení (Supabase).' };
@@ -1823,14 +1857,17 @@ async function authVerifyCode(email, token){
     if(error) return { ok:false, msg:error.message };
     authUser = (data && data.user) ? data.user : null;
     await ensureProfile();
+    await pullGradesCloud();
     await restoreUserClass();
     return { ok:true };
   } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
 }
 async function authLogout(){
+  await pushGradesNow();                       // nejdřív dolož poslední změny známek do účtu
   const c = getSB(); if(c){ try { await c.auth.signOut(); } catch(e){} }
   authUser = null; profile = null;
   mat.code = null; mat.name = null; mat.owner = null; mat.view = 'gate'; matSaveClass();   // ať se třída neukáže dalšímu účtu na stejném zařízení
+  localStorage.removeItem(STORE_KEY); data = load(); render();   // známky zpět na prázdné (zůstávají v účtu, vrátí se po přihlášení)
 }
 
 /* ---- profil: načtení / uložení / fotka ---- */
@@ -1948,7 +1985,7 @@ function renderProfileView(wrap){
     '<button class="btn btn-ghost" id="profLogoutBtn" style="width:100%;margin-top:8px">Odhlásit se</button>';
   wrap.querySelector('#profEditBtn').onclick = ()=>{ profileEditing = true; renderProfile(); };
   wrap.querySelector('#profLogoutBtn').onclick = ()=>{
-    confirmDialog('Odhlásit se?', 'Budeš se muset zase přihlásit emailem.', 'Odhlásit', async ()=>{
+    confirmDialog('Odhlásit se?', 'Tvoje známky i třída zůstanou uložené v účtu a vrátí se po přihlášení.', 'Odhlásit', async ()=>{
       await authLogout(); profileEditing = false; renderProfile(); renderMaterials();
     });
   };
