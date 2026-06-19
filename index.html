@@ -1766,11 +1766,11 @@ async function initAuth(){
   try {
     c.auth.onAuthStateChange((event, session)=>{
       authUser = session ? session.user : null;
-      if(authUser) ensureProfile();
+      if(authUser){ ensureProfile(); restoreUserClass(); }
       refreshAuthUI();
     });
   } catch(e){}
-  if(authUser) ensureProfile();
+  if(authUser){ ensureProfile(); await restoreUserClass(); }
   refreshAuthUI();
 }
 function refreshAuthUI(){
@@ -1786,6 +1786,23 @@ async function ensureProfile(){
     if(!r.error && !r.data){
       await c.from('profiles').insert({ id: authUser.id, name: (authUser.email||'').split('@')[0] });
     }
+  } catch(e){}
+}
+
+// po přihlášení dohledá třídu podle účtu (z členství v cloudu) → funguje i na jiném zařízení
+async function restoreUserClass(){
+  if(mat.code) return;                       // už nějakou třídu máme lokálně
+  const c = getSB(); if(!c || !authUser) return;
+  try {
+    const r = await c.from('clenove').select('code, joined_at').eq('user_id', authUser.id).order('joined_at', { ascending:false }).limit(1);
+    const row = (!r.error && r.data && r.data[0]) ? r.data[0] : null;
+    if(!row) return;
+    const tr = await c.from('tridy').select('*').eq('code', row.code).maybeSingle();
+    if(tr.error || !tr.data) return;
+    mat.code = row.code; mat.name = tr.data.name; mat.owner = tr.data.owner || null; mat.view = 'class'; mat.tab = 'soubory';
+    matSaveClass();
+    const pm = document.getElementById('pageMaterials');
+    if(pm && pm.style.display !== 'none') renderMaterials();
   } catch(e){}
 }
 
@@ -1806,12 +1823,14 @@ async function authVerifyCode(email, token){
     if(error) return { ok:false, msg:error.message };
     authUser = (data && data.user) ? data.user : null;
     await ensureProfile();
+    await restoreUserClass();
     return { ok:true };
   } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
 }
 async function authLogout(){
   const c = getSB(); if(c){ try { await c.auth.signOut(); } catch(e){} }
   authUser = null; profile = null;
+  mat.code = null; mat.name = null; mat.owner = null; mat.view = 'gate'; matSaveClass();   // ať se třída neukáže dalšímu účtu na stejném zařízení
 }
 
 /* ---- profil: načtení / uložení / fotka ---- */
