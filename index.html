@@ -217,6 +217,18 @@
   .foot-links a:hover{ color:var(--ink); }
   .copy{ color:var(--ink-faint); font-size:13.5px; margin-top:18px; }
 
+  /* zpětná vazba */
+  .fb{ max-width:600px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .fb textarea, .fb input{ width:100%; font-family:inherit; font-size:16px; color:var(--ink);
+    background:var(--bg-elev); border:1px solid var(--line); border-radius:14px; padding:14px 16px; box-shadow:var(--shadow); }
+  .fb textarea{ resize:vertical; line-height:1.5; min-height:108px; }
+  .fb textarea:focus, .fb input:focus{ outline:none; border-color:var(--accent); }
+  .fb textarea::placeholder, .fb input::placeholder{ color:var(--ink-faint); }
+  .fb .btn-lg{ align-self:center; }
+  .fb-status{ text-align:center; font-size:15px; font-weight:600; margin-top:4px; }
+  .fb-status.ok{ color:var(--good); }
+  .fb-status.err{ color:#e25c5c; }
+
   /* reveal */
   .rev{ opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
   .rev.in{ opacity:1; transform:none; }
@@ -385,6 +397,21 @@
     </div>
   </section>
 
+  <!-- ZPĚTNÁ VAZBA -->
+  <section id="feedback">
+    <div class="sec-head rev" style="text-align:center;margin-left:auto;margin-right:auto;">
+      <span class="sec-tag">Máš nápad nebo našel chybu?</span>
+      <h2>Napiš nám zpětnou vazbu</h2>
+      <p>Každý nápad i nahlášená chyba pomáhá Estudivo zlepšit. Zpráva je soukromá – uvidí ji jen autor.</p>
+    </div>
+    <form class="fb rev" id="fbForm">
+      <textarea id="fbMessage" rows="4" required placeholder="Nápad, co zlepšit, nebo chyba…"></textarea>
+      <input type="text" id="fbContact" placeholder="E-mail nebo jméno – nepovinné, kdybys chtěl odpověď">
+      <button class="btn btn-primary btn-lg" type="submit" id="fbBtn">Odeslat zpětnou vazbu</button>
+      <p class="fb-status" id="fbStatus" hidden></p>
+    </form>
+  </section>
+
 </div>
 </main>
 
@@ -405,6 +432,7 @@
         <a href="#funkce">Funkce</a>
         <a href="#jak">Jak to funguje</a>
         <a href="#faq">Časté dotazy</a>
+        <a href="#feedback">Zpětná vazba</a>
       </div>
     </div>
     <div class="copy">© <span id="yr">2026</span> Estudivo · Studijní průměr, materiály a kalendář testů pro studenty. Vážený průměr známek online, zdarma.</div>
@@ -432,6 +460,30 @@
       en.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
     },{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
     els.forEach(function(e,i){ e.style.transitionDelay=(Math.min(i,6)*60)+'ms'; io.observe(e); });
+  })();
+  // zpětná vazba → Supabase tabulka feedback (stejná jako v aplikaci)
+  (function(){
+    var form=document.getElementById('fbForm'); if(!form) return;
+    var SB_URL='https://dnnccafulifvwpjkpjoj.supabase.co';
+    var SB_KEY='sb_publishable_hyfVk9DDQgArAQz-MWly8g_l0kqmAFD';
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      var msg=document.getElementById('fbMessage').value.trim();
+      var contact=document.getElementById('fbContact').value.trim();
+      var st=document.getElementById('fbStatus'); var btn=document.getElementById('fbBtn');
+      if(!msg) return;
+      var lbl=btn.textContent; btn.disabled=true; btn.textContent='Odesílám…'; st.hidden=true;
+      fetch(SB_URL+'/rest/v1/feedback',{
+        method:'POST',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({message:msg,contact:contact||null,meta:'web landing · '+(navigator.userAgent||'').slice(0,120)})
+      }).then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        form.reset(); st.className='fb-status ok'; st.textContent='Díky! Zpráva byla odeslaná. 🎉'; st.hidden=false;
+      }).catch(function(){
+        st.className='fb-status err'; st.textContent='Odeslání se teď nepovedlo, zkus to prosím znovu.'; st.hidden=false;
+      }).finally(function(){ btn.disabled=false; btn.textContent=lbl; });
+    });
   })();
   try{ document.getElementById('yr').textContent=new Date().getFullYear(); }catch(e){}
 </script>
