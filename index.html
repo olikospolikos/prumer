@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0f1115">
-<title>Průměr</title>
+<title>Estudivo</title>
+<meta name="apple-mobile-web-app-title" content="Estudivo">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -779,6 +780,14 @@
   .prof-auth-t{ font-family:'Fraunces',serif; font-weight:600; font-size:21px; }
   .prof-auth-m{ font-size:13.5px; color:var(--ink-dim); line-height:1.5; }
   .fields{ display:flex; flex-direction:column; gap:13px; }
+
+  /* ============ členové třídy ============ */
+  .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
+  .mem-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:var(--shadow-sm); }
+  .mem-av{ width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--line); }
+  .mem-av-ph{ display:grid; place-items:center; background:var(--accent-soft); color:var(--accent); font-family:'Outfit',sans-serif; font-weight:800; font-size:14px; }
+  .mem-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mem-admin{ flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); border:1px solid rgba(232,184,75,0.35); border-radius:6px; padding:2px 8px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -1992,11 +2001,11 @@ let matFolders = [];
 let matSubjects = [];   // vlastní předměty třídy (přidané uživateli), sdílené přes Supabase
 
 function matSaveClass(){
-  if(mat.code) localStorage.setItem('prumer_mat_class', JSON.stringify({ code:mat.code, name:mat.name }));
+  if(mat.code) localStorage.setItem('prumer_mat_class', JSON.stringify({ code:mat.code, name:mat.name, owner:mat.owner||null }));
   else localStorage.removeItem('prumer_mat_class');
 }
 function initMaterials(){
-  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.view='class'; } } catch(e){}
+  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.owner=c.owner||null; mat.view='class'; } } catch(e){}
 }
 
 function matNotice(title, msg){
@@ -2074,8 +2083,8 @@ async function enterClass(code){
     const r = await c.from('tridy').select('*').eq('code', code).maybeSingle();
     if(r.error) throw r.error;
     if(!r.data){ alertDialog('Třída nenalezena','Pod kódem '+code+' žádná třída není. Zkontroluj číslo, nebo vytvoř novou třídu.'); return; }
-    mat.code = code; mat.name = r.data.name; mat.view = 'class'; mat.tab = 'soubory';
-    matSaveClass(); renderMaterials();
+    mat.code = code; mat.name = r.data.name; mat.owner = r.data.owner || null; mat.view = 'class'; mat.tab = 'soubory';
+    matSaveClass(); joinClass(); renderMaterials();
   } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
 }
 
@@ -2096,11 +2105,11 @@ function createClassFlow(){
         if(!ex.data){ code = cand; break; }
       }
       if(!code){ alertDialog('Nepovedlo se','Zkus to prosím ještě jednou.'); return; }
-      const ins = await c.from('tridy').insert({ code, name });
+      const ins = await c.from('tridy').insert({ code, name, owner: currentOwner() });
       if(ins.error) throw ins.error;
-      mat.code = code; mat.name = name; mat.view = 'class'; mat.tab = 'soubory';
-      matSaveClass(); renderMaterials();
-      alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. Pošli ho spolužákům, ať se připojí.');
+      mat.code = code; mat.name = name; mat.owner = currentOwner(); mat.view = 'class'; mat.tab = 'soubory';
+      matSaveClass(); joinClass(); renderMaterials();
+      alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. Pošli ho spolužákům, ať se připojí. Jsi její admin.');
     } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
   });
 }
@@ -2129,6 +2138,10 @@ function renderMatClass(wrap, h1){
 
   if(mat.tab === 'kalendar'){ renderMatCalendar(wrap); return; }
 
+  const memBox = document.createElement('div'); memBox.id = 'memBox';
+  wrap.appendChild(memBox);
+  renderMembers(memBox);
+
   const lbl = document.createElement('div');
   lbl.className = 'section-label'; lbl.style.padding = '4px 6px 12px'; lbl.textContent = 'Vyber předmět';
   wrap.appendChild(lbl);
@@ -2138,6 +2151,50 @@ function renderMatClass(wrap, h1){
   wrap.appendChild(grid);
   fillMatSubjectGrid(grid);                 // hned vykresli (s tím, co už víme)
   Promise.all([loadMatSubjects(), loadMatCounts()]).then(()=> fillMatSubjectGrid(grid));   // doplň vlastní předměty + počty
+}
+
+/* ---- členové třídy + admin (tvůrce) ---- */
+function isClassAdmin(){ return !!(authUser && mat.owner && authUser.id === mat.owner); }
+function canManage(row){ return !!((row && row.owner === currentOwner()) || isClassAdmin()); }
+async function joinClass(){
+  const c = getSB(); if(!c || !authUser || !mat.code) return;
+  try { await c.from('clenove').insert({ code: mat.code, user_id: authUser.id }); } catch(e){}   // duplicitu ignoruj
+}
+async function ensureClassOwner(){
+  if(mat.owner || !mat.code) return;
+  const c = getSB(); if(!c) return;
+  try { const r = await c.from('tridy').select('owner').eq('code', mat.code).maybeSingle();
+    if(!r.error && r.data){ mat.owner = r.data.owner || null; matSaveClass(); } } catch(e){}
+}
+async function loadMembers(){
+  const c = getSB(); if(!c || !mat.code) return [];
+  try {
+    const r = await c.from('clenove').select('user_id').eq('code', mat.code);
+    const ids = (r.error ? [] : (r.data||[])).map(x=>x.user_id);
+    if(!ids.length) return [];
+    const pr = await c.from('profiles').select('id,name,avatar_url').in('id', ids);
+    const byId = {}; (pr.error ? [] : (pr.data||[])).forEach(p=>{ byId[p.id]=p; });
+    return ids.map(id => byId[id] || { id, name:null, avatar_url:null });
+  } catch(e){ return []; }
+}
+async function renderMembers(box){
+  if(!box) return;
+  await ensureClassOwner();
+  await joinClass();
+  const members = await loadMembers();
+  if(!members.length){ box.innerHTML=''; return; }
+  members.sort((a,b)=> (a.id===mat.owner?0:1) - (b.id===mat.owner?0:1));   // admin první
+  let html = '<div class="section-label" style="padding:4px 6px 10px">Ve třídě ('+members.length+')</div><div class="mem-list">';
+  members.forEach(m=>{
+    const nm = esc(m.name || 'Beze jména');
+    const init = esc(((m.name||'?').trim().charAt(0)||'?').toUpperCase());
+    const av = m.avatar_url ? '<img class="mem-av" src="'+esc(m.avatar_url)+'" alt="">'
+                            : '<div class="mem-av mem-av-ph">'+init+'</div>';
+    const admin = (m.id === mat.owner) ? '<span class="mem-admin">admin</span>' : '';
+    html += '<div class="mem-row">'+av+'<span class="mem-name">'+nm+'</span>'+admin+'</div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
 }
 
 let matCounts = {};
@@ -2335,7 +2392,7 @@ function drawWeek(){
         const chip = document.createElement('div');
         chip.className = 'cal-chip';
         chip.innerHTML = '<div class="cal-chip-meta"><div class="cal-chip-subj">'+esc(r.subject||'')+'</div>'+(r.theme?'<div class="cal-chip-theme">'+esc(r.theme)+'</div>':'')+'</div>';
-        if(r.owner === me){
+        if(canManage(r)){
           const del = document.createElement('button');
           del.className = 'cal-chip-del'; del.textContent = '×'; del.setAttribute('aria-label','Smazat');
           del.onclick = (e)=>{ e.stopPropagation(); deleteTest(r); };
@@ -2384,7 +2441,7 @@ async function saveTest(){
 }
 
 function deleteTest(r){
-  if(r.owner !== uid()){ alertDialog('Nelze smazat','Smazat test může jen ten, kdo ho přidal.'); return; }
+  if(!canManage(r)){ alertDialog('Nelze smazat','Smazat test může jen jeho autor nebo admin třídy.'); return; }
   confirmDialog('Smazat test?', (r.subject||'') + (r.theme ? ' · '+r.theme : ''), 'Smazat', async ()=>{
     const c = getSB(); if(!c) return;
     try {
@@ -2520,7 +2577,7 @@ function drawMatItems(){
   const me = currentOwner();
 
   subfolders.forEach(f=>{
-    const mine = f.owner === me;
+    const mine = canManage(f);
     const row = document.createElement('div');
     row.className = 'mat-file mat-folder';
     row.innerHTML =
@@ -2536,7 +2593,7 @@ function drawMatItems(){
   });
 
   files.forEach(r=>{
-    const mine = r.owner === me;
+    const mine = canManage(r);
     const ft = fileType(r.name || r.path);
     const ic = themeColor(ft.color);
     const row = document.createElement('div');
@@ -2580,7 +2637,7 @@ function createFolder(){
 }
 
 function deleteFolder(f){
-  if(f.owner !== uid()){ alertDialog('Nelze smazat','Smazat složku může jen ten, kdo ji vytvořil.'); return; }
+  if(!canManage(f)){ alertDialog('Nelze smazat','Smazat složku může jen její autor nebo admin třídy.'); return; }
   const path = f.path;
   const hasFiles = matRows.some(r => (r.folder||'') === path || (r.folder||'').indexOf(path+'/') === 0);
   const hasSub = matFolders.some(x => (x.path||'').indexOf(path+'/') === 0);
@@ -2622,7 +2679,7 @@ function closePreview(){
 }
 
 function renameFile(r){
-  if(r.owner !== uid()){ alertDialog('Nelze přejmenovat','Přejmenovat soubor může jen ten, kdo ho nahrál.'); return; }
+  if(!canManage(r)){ alertDialog('Nelze přejmenovat','Přejmenovat soubor může jen jeho autor nebo admin třídy.'); return; }
   promptDialog('Přejmenovat soubor', r.name, async (newName)=>{
     const c = getSB(); if(!c) return;
     try {
@@ -2684,7 +2741,7 @@ async function downloadFile(r){
 }
 
 function deleteFile(r){
-  if(r.owner !== uid()){ alertDialog('Nelze smazat','Smazat soubor může jen ten, kdo ho nahrál.'); return; }
+  if(!canManage(r)){ alertDialog('Nelze smazat','Smazat soubor může jen jeho autor nebo admin třídy.'); return; }
   confirmDialog('Smazat soubor?', r.name, 'Smazat', async ()=>{
     const c = getSB(); if(!c) return;
     try {
