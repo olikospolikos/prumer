@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Estudivo">
+  <rect width="64" height="64" rx="14" fill="#e8b84b"/>
+  <path d="M32 17 57 27 32 37 7 27Z" fill="#fff"/>
+  <path d="M16 31.5V40c0 0 6 5.5 16 5.5s16-5.5 16-5.5v-8.5L32 38.5 16 31.5Z" fill="#fff"/>
+  <path d="M53 27V42" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="53" cy="44.6" r="3" fill="#fff"/>
+  <circle cx="32" cy="27" r="2.3" fill="#e3a52c"/>
+</svg>
