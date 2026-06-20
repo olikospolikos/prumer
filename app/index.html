@@ -825,6 +825,11 @@
 
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
+  /* veřejné třídy na bráně */
+  .pub-list{ display:flex; flex-direction:column; gap:8px; }
+  .pub-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:10px 12px; box-shadow:var(--shadow-sm); }
+  .pub-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pub-join{ flex:0 0 auto; }
   .mem-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:background .15s; }
   .mem-row:active{ background:var(--bg-elev2); }
   .mem-chev{ flex-shrink:0; color:var(--ink-faint); font-size:20px; line-height:1; }
@@ -1010,6 +1015,37 @@
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeTestSheet()">Zrušit</button>
     <button class="btn btn-primary" onclick="saveTest()">Přidat</button>
+  </div>
+</div>
+
+<!-- vytvoření třídy -->
+<div class="sheet-backdrop" id="createBackdrop" onclick="closeCreateSheet()"></div>
+<div class="sheet" id="createSheet">
+  <div class="sheet-grab"></div>
+  <h3>Nová třída</h3>
+  <div class="fields">
+    <label class="fld"><span>Jméno třídy</span>
+      <input type="text" id="ncName" placeholder="např. 3.A">
+    </label>
+    <div>
+      <label class="fld"><span>Typ třídy</span></label>
+      <div class="calc-toggle" id="ncType">
+        <button class="calc-mode sel" data-v="code">Na kód</button>
+        <button class="calc-mode" data-v="public">Veřejná</button>
+      </div>
+    </div>
+    <div>
+      <label class="fld"><span>Kdo může přidávat</span></label>
+      <div class="calc-toggle" id="ncAdd">
+        <button class="calc-mode sel" data-v="all">Všichni členové</button>
+        <button class="calc-mode" data-v="admins">Jen admini</button>
+      </div>
+    </div>
+  </div>
+  <p class="backup-note" style="margin:12px 2px 0">Veřejná třída se ukáže v seznamu a může se připojit kdokoli. „Jen admini" = ostatní jen prohlíží, nemůžou nahrávat.</p>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeCreateSheet()">Zrušit</button>
+    <button class="btn btn-primary" onclick="submitCreateClass()">Vytvořit</button>
   </div>
 </div>
 
@@ -1851,8 +1887,9 @@ async function restoreUserClass(){
     if(!row) return;
     const tr = await c.from('tridy').select('*').eq('code', row.code).maybeSingle();
     if(tr.error || !tr.data) return;
-    mat.code = row.code; mat.name = tr.data.name; mat.owner = tr.data.owner || null; mat.view = 'class'; mat.tab = 'soubory';
+    mat.code = row.code; mat.name = tr.data.name; mat.owner = tr.data.owner || null; mat.isPublic = !!tr.data.is_public; mat.canAdd = tr.data.members_can_add !== false; mat.view = 'class'; mat.tab = 'soubory';
     matSaveClass();
+    await loadMyClassRole();
     const pm = document.getElementById('pageMaterials');
     if(pm && pm.style.display !== 'none') renderMaterials();
   } catch(e){}
@@ -2133,11 +2170,11 @@ let matFolders = [];
 let matSubjects = [];   // vlastní předměty třídy (přidané uživateli), sdílené přes Supabase
 
 function matSaveClass(){
-  if(mat.code) localStorage.setItem('prumer_mat_class', JSON.stringify({ code:mat.code, name:mat.name, owner:mat.owner||null }));
+  if(mat.code) localStorage.setItem('prumer_mat_class', JSON.stringify({ code:mat.code, name:mat.name, owner:mat.owner||null, canAdd:mat.canAdd!==false, isPublic:!!mat.isPublic }));
   else localStorage.removeItem('prumer_mat_class');
 }
 function initMaterials(){
-  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.owner=c.owner||null; mat.view='class'; } } catch(e){}
+  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.owner=c.owner||null; mat.canAdd=c.canAdd!==false; mat.isPublic=!!c.isPublic; mat.view='class'; } } catch(e){}
 }
 
 function matNotice(title, msg){
@@ -2207,6 +2244,21 @@ function renderMatGate(wrap, h1){
     enterClass(code);
   };
   box.querySelector('#createBtn').onclick = createClassFlow;
+  const pub = document.createElement('div'); pub.id = 'pubClasses'; pub.style.margin = '0 16px';
+  wrap.appendChild(pub);
+  loadPublicClasses(pub);
+}
+function loadPublicClasses(box){
+  const c = getSB(); if(!c) return;
+  c.from('tridy').select('code,name').eq('is_public', true).order('created_at',{ascending:false}).limit(50).then(r=>{
+    const rows = (r && !r.error && r.data) ? r.data : [];
+    if(!rows.length){ box.innerHTML=''; return; }
+    let html = '<div class="section-label" style="padding:20px 4px 10px">Veřejné třídy</div><div class="pub-list">';
+    rows.forEach(t=>{ html += '<div class="pub-row"><span class="pub-name">'+esc(t.name||'Třída')+'</span><button class="subj-action pub-join" data-code="'+esc(t.code)+'">Připojit</button></div>'; });
+    html += '</div>';
+    box.innerHTML = html;
+    box.querySelectorAll('.pub-join').forEach(b=> b.onclick = ()=> enterClass(b.getAttribute('data-code')));
+  }).catch(()=>{ box.innerHTML=''; });
 }
 
 async function enterClass(code){
@@ -2215,8 +2267,8 @@ async function enterClass(code){
     const r = await c.from('tridy').select('*').eq('code', code).maybeSingle();
     if(r.error) throw r.error;
     if(!r.data){ alertDialog('Třída nenalezena','Pod kódem '+code+' žádná třída není. Zkontroluj číslo, nebo vytvoř novou třídu.'); return; }
-    mat.code = code; mat.name = r.data.name; mat.owner = r.data.owner || null; mat.view = 'class'; mat.tab = 'soubory';
-    matSaveClass(); joinClass(); renderMaterials();
+    mat.code = code; mat.name = r.data.name; mat.owner = r.data.owner || null; mat.isPublic = !!r.data.is_public; mat.canAdd = r.data.members_can_add !== false; mat.isAdmin = false; mat.view = 'class'; mat.tab = 'soubory';
+    matSaveClass(); await joinClass(); await loadMyClassRole(); renderMaterials();
   } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
 }
 
@@ -2226,24 +2278,38 @@ function genClassCode(){
   for(let i=0;i<4;i++) s += A.charAt(Math.floor(Math.random()*A.length));
   return s;
 }
-function createClassFlow(){
-  promptDialog('Nová třída — jméno', '', async (name)=>{
-    const c = getSB(); if(!c) return;
-    try {
-      let code = null;
-      for(let t=0; t<20; t++){
-        const cand = genClassCode();
-        const ex = await c.from('tridy').select('code').eq('code', cand).maybeSingle();
-        if(!ex.data){ code = cand; break; }
-      }
-      if(!code){ alertDialog('Nepovedlo se','Zkus to prosím ještě jednou.'); return; }
-      const ins = await c.from('tridy').insert({ code, name, owner: currentOwner() });
-      if(ins.error) throw ins.error;
-      mat.code = code; mat.name = name; mat.owner = currentOwner(); mat.view = 'class'; mat.tab = 'soubory';
-      matSaveClass(); joinClass(); renderMaterials();
-      alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. Pošli ho spolužákům, ať se připojí. Jsi její admin.');
-    } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+function createClassFlow(){ openCreateClassSheet(); }
+function openCreateClassSheet(){
+  document.getElementById('ncName').value = '';
+  ['ncType','ncAdd'].forEach(gid=>{
+    const g = document.getElementById(gid);
+    g.querySelectorAll('.calc-mode').forEach((b,i)=>{ b.classList.toggle('sel', i===0); b.onclick = ()=>{ g.querySelectorAll('.calc-mode').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); }; });
   });
+  showSheet('create');
+  setTimeout(()=>{ const el=document.getElementById('ncName'); if(el) el.focus(); }, 60);
+}
+function closeCreateSheet(){ hideSheet('create'); }
+async function submitCreateClass(){
+  const name = (document.getElementById('ncName').value||'').trim();
+  if(!name){ alertDialog('Chybí jméno','Zadej jméno třídy.'); return; }
+  const isPublic = document.querySelector('#ncType .calc-mode.sel').getAttribute('data-v') === 'public';
+  const canAdd   = document.querySelector('#ncAdd .calc-mode.sel').getAttribute('data-v') === 'all';
+  const c = getSB(); if(!c){ alertDialog('Není připojení','Vytvoření třídy potřebuje cloud (Supabase).'); return; }
+  try {
+    let code = null;
+    for(let t=0; t<20; t++){
+      const cand = genClassCode();
+      const ex = await c.from('tridy').select('code').eq('code', cand).maybeSingle();
+      if(!ex.data){ code = cand; break; }
+    }
+    if(!code){ alertDialog('Nepovedlo se','Zkus to prosím ještě jednou.'); return; }
+    const ins = await c.from('tridy').insert({ code, name, owner: currentOwner(), is_public:isPublic, members_can_add:canAdd });
+    if(ins.error) throw ins.error;
+    mat.code = code; mat.name = name; mat.owner = currentOwner(); mat.isPublic = isPublic; mat.canAdd = canAdd; mat.isAdmin = false; mat.view = 'class'; mat.tab = 'soubory';
+    matSaveClass(); await joinClass(); renderMaterials();
+    closeCreateSheet();
+    alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. '+(isPublic?'Je veřejná — najdou ji i v seznamu.':'Pošli ho spolužákům, ať se připojí.')+' Jsi její admin.');
+  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
 }
 
 function renderMatClass(wrap, h1){
@@ -2286,8 +2352,17 @@ function renderMatClass(wrap, h1){
 }
 
 /* ---- členové třídy + admin (tvůrce) ---- */
-function isClassAdmin(){ return !!(authUser && mat.owner && authUser.id === mat.owner); }
+function isClassAdmin(){ return !!(authUser && ((mat.owner && authUser.id === mat.owner) || mat.isAdmin)); }
 function canManage(row){ return !!((row && row.owner === currentOwner()) || isClassAdmin()); }
+function canContribute(){ return isClassAdmin() || mat.canAdd !== false; }
+async function loadMyClassRole(){
+  mat.isAdmin = false;
+  const c = getSB(); if(!c || !authUser || !mat.code) return;
+  try {
+    const r = await c.from('clenove').select('is_admin').eq('code', mat.code).eq('user_id', authUser.id).maybeSingle();
+    if(!r.error && r.data) mat.isAdmin = !!r.data.is_admin;
+  } catch(e){}
+}
 async function joinClass(){
   const c = getSB(); if(!c || !authUser || !mat.code) return;
   try { await c.from('clenove').insert({ code: mat.code, user_id: authUser.id }); } catch(e){}   // duplicitu ignoruj
@@ -2301,12 +2376,14 @@ async function ensureClassOwner(){
 async function loadMembers(){
   const c = getSB(); if(!c || !mat.code) return [];
   try {
-    const r = await c.from('clenove').select('user_id').eq('code', mat.code);
-    const ids = (r.error ? [] : (r.data||[])).map(x=>x.user_id);
+    const r = await c.from('clenove').select('user_id, is_admin').eq('code', mat.code);
+    const rows = (r.error ? [] : (r.data||[]));
+    const admById = {}; rows.forEach(x=>{ admById[x.user_id] = admById[x.user_id] || !!x.is_admin; });
+    const ids = Object.keys(admById);
     if(!ids.length) return [];
     const pr = await c.from('profiles').select('id,name,avatar_url').in('id', ids);
     const byId = {}; (pr.error ? [] : (pr.data||[])).forEach(p=>{ byId[p.id]=p; });
-    return ids.map(id => byId[id] || { id, name:null, avatar_url:null });
+    return ids.map(id => Object.assign({ id, name:null, avatar_url:null }, byId[id]||{}, { adm: admById[id] || id===mat.owner }));
   } catch(e){ return []; }
 }
 async function renderMembers(box){
@@ -2322,7 +2399,7 @@ async function renderMembers(box){
     const init = esc(((m.name||'?').trim().charAt(0)||'?').toUpperCase());
     const av = m.avatar_url ? '<img class="mem-av" src="'+esc(m.avatar_url)+'" alt="">'
                             : '<div class="mem-av mem-av-ph">'+init+'</div>';
-    const admin = (m.id === mat.owner) ? '<span class="mem-admin">admin</span>' : '';
+    const admin = m.adm ? '<span class="mem-admin">admin</span>' : '';
     html += '<div class="mem-row" onclick="openMemberProfile(\''+m.id+'\')">'+av+'<span class="mem-name">'+nm+'</span>'+admin+'<span class="mem-chev">›</span></div>';
   });
   html += '</div>';
@@ -2337,18 +2414,38 @@ async function openMemberProfile(id){
   try {
     const r = await c.from('profiles').select('*').eq('id', id).maybeSingle();
     const p = (r.error ? null : r.data) || {};
-    const isAdm = (id === mat.owner);
+    let targetAdm = false;
+    try { const cr = await c.from('clenove').select('is_admin').eq('code', mat.code).eq('user_id', id).maybeSingle(); targetAdm = !!(cr.data && cr.data.is_admin); } catch(e){}
+    const memberIsAdmin = (id === mat.owner) || targetAdm;
     const init = esc(((p.name||'?').trim().charAt(0)||'?').toUpperCase());
     const av = p.avatar_url ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
                             : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
     body.innerHTML =
       '<div style="text-align:center;padding:4px 4px 8px">' + av +
-        '<div class="prof-name">'+esc(p.name || 'Beze jména')+(isAdm ? ' <span class="mem-admin">admin</span>' : '')+'</div>' +
+        '<div class="prof-name">'+esc(p.name || 'Beze jména')+(memberIsAdmin ? ' <span class="mem-admin">admin</span>' : '')+'</div>' +
         (p.school ? '<div class="prof-school">'+esc(p.school)+'</div>' : '') +
         (p.bio ? '<div class="prof-bio">'+esc(p.bio)+'</div>' : '') +
         ((!p.school && !p.bio) ? '<div class="prof-bio" style="color:var(--ink-faint)">Profil zatím nevyplněný.</div>' : '') +
       '</div>';
+    if(isClassAdmin() && id !== mat.owner && id !== (authUser && authUser.id)){
+      const btn = document.createElement('button');
+      btn.className = 'btn ' + (targetAdm ? 'btn-ghost' : 'btn-primary');
+      btn.style.cssText = 'width:100%;margin-top:6px';
+      btn.textContent = targetAdm ? 'Odebrat práva admina' : 'Udělat adminem';
+      btn.onclick = ()=> setMemberAdmin(id, !targetAdm);
+      body.appendChild(btn);
+    }
   } catch(e){ body.innerHTML = '<div class="empty">Profil se nepodařilo načíst.</div>'; }
+}
+function setMemberAdmin(id, makeAdmin){
+  confirmDialog(makeAdmin?'Udělat adminem?':'Odebrat admina?', makeAdmin?'Člen bude moct spravovat třídu — mazat a přejmenovat obsah, a v režimu „jen prohlížení" i přidávat.':'Člen přijde o práva admina.', makeAdmin?'Udělat adminem':'Odebrat', async ()=>{
+    const c = getSB(); if(!c) return;
+    try {
+      const up = await c.from('clenove').update({ is_admin: makeAdmin }).eq('code', mat.code).eq('user_id', id);
+      if(up.error) throw up.error;
+      closeMemberSheet(); renderMaterials();
+    } catch(e){ alertDialog('Nepovedlo se', String((e&&e.message)||e)); }
+  });
 }
 function closeMemberSheet(){ hideSheet('member'); }
 
@@ -2416,11 +2513,13 @@ function fillMatSubjectGrid(grid){
     b.onclick = ()=>{ mat.subject = name; mat.category = 'zapisky'; mat.folder = ''; mat.view = 'subject'; renderMaterials(); };
     grid.appendChild(b);
   });
-  const add = document.createElement('button');
-  add.className = 'mat-subj mat-subj-add';
-  add.innerHTML = '<span class="mat-subj-ic add">+</span><span class="mat-subj-name">Přidat předmět</span>';
-  add.onclick = addMatSubject;
-  grid.appendChild(add);
+  if(canContribute()){
+    const add = document.createElement('button');
+    add.className = 'mat-subj mat-subj-add';
+    add.innerHTML = '<span class="mat-subj-ic add">+</span><span class="mat-subj-name">Přidat předmět</span>';
+    add.onclick = addMatSubject;
+    grid.appendChild(add);
+  }
 }
 async function loadMatSubjects(){
   const c = getSB(); if(!c) return;
@@ -2430,6 +2529,7 @@ async function loadMatSubjects(){
   } catch(e){ matSubjects = []; }   // tabulka predmety nemusí ještě existovat
 }
 function addMatSubject(){
+  if(!canContribute()){ alertDialog('Jen prohlížení','V téhle třídě můžou přidávat jen admini.'); return; }
   const c = getSB(); if(!c){ alertDialog('Není připojení','Materiály potřebují cloud (Supabase).'); return; }
   promptDialog('Nový předmět', '', async (name)=>{
     name = (name||'').trim();
@@ -2563,10 +2663,12 @@ function drawWeek(){
     }
     row.appendChild(body);
 
-    const add = document.createElement('button');
-    add.className = 'cal-add'; add.textContent = '+'; add.setAttribute('aria-label','Přidat test v tento den');
-    add.onclick = ()=> openTestSheet(iso);
-    row.appendChild(add);
+    if(canContribute()){
+      const add = document.createElement('button');
+      add.className = 'cal-add'; add.textContent = '+'; add.setAttribute('aria-label','Přidat test v tento den');
+      add.onclick = ()=> openTestSheet(iso);
+      row.appendChild(add);
+    }
 
     week.appendChild(row);
   }
@@ -2583,6 +2685,7 @@ async function openTestSheet(prefill){
 function closeTestSheet(){ hideSheet('test'); }
 
 async function saveTest(){
+  if(!canContribute()){ alertDialog('Jen prohlížení','V téhle třídě můžou přidávat jen admini.'); return; }
   const date = document.getElementById('testDate').value;
   const subject = document.getElementById('testSubject').value;
   const theme = document.getElementById('testTheme').value.trim();
@@ -2632,18 +2735,20 @@ function renderMatSubject(wrap, h1){
   wrap.appendChild(crumb);
 
   // akce: nahrát soubory + nová složka
-  const acts = document.createElement('div');
-  acts.className = 'mat-actions';
-  const up = document.createElement('button');
-  up.className = 'add-grade-btn';
-  up.textContent = '↑ Nahrát';
-  up.onclick = ()=> document.getElementById('matFile').click();
-  const nf = document.createElement('button');
-  nf.className = 'add-grade-btn';
-  nf.textContent = '+ Složka';
-  nf.onclick = createFolder;
-  acts.appendChild(up); acts.appendChild(nf);
-  wrap.appendChild(acts);
+  if(canContribute()){
+    const acts = document.createElement('div');
+    acts.className = 'mat-actions';
+    const up = document.createElement('button');
+    up.className = 'add-grade-btn';
+    up.textContent = '↑ Nahrát';
+    up.onclick = ()=> document.getElementById('matFile').click();
+    const nf = document.createElement('button');
+    nf.className = 'add-grade-btn';
+    nf.textContent = '+ Složka';
+    nf.onclick = createFolder;
+    acts.appendChild(up); acts.appendChild(nf);
+    wrap.appendChild(acts);
+  }
 
   const sortbar = document.createElement('div');
   sortbar.className = 'mat-sortbar';
@@ -2773,6 +2878,7 @@ function drawMatItems(){
 }
 
 function createFolder(){
+  if(!canContribute()){ alertDialog('Jen prohlížení','V téhle třídě můžou přidávat jen admini.'); return; }
   const c = getSB(); if(!c){ alertDialog('Není připojení','Materiály potřebují cloud (Supabase).'); return; }
   promptDialog('Nová složka', '', async (name)=>{
     name = (name||'').trim().replace(/\//g,'');
@@ -2858,6 +2964,7 @@ function dateStr(iso){ try { const d=new Date(iso); return d.getDate()+'.'+(d.ge
 function slug(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_'); }
 
 async function uploadFiles(fileList){
+  if(!canContribute()){ alertDialog('Jen prohlížení','V téhle třídě můžou přidávat jen admini.'); return; }
   const c = getSB(); if(!c) return;
   const arr = Array.from(fileList || []);
   const big = arr.filter(f => f.size > 50*1024*1024);
