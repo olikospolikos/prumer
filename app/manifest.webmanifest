@@ -1,6 +1,7 @@
 {
   "name": "Estudivo",
   "short_name": "Estudivo",
+  "id": "/app/",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

@@ -49,10 +49,11 @@
   "@type": "FAQPage",
   "mainEntity": [
     { "@type": "Question", "name": "Je Estudivo zdarma?", "acceptedAnswer": { "@type": "Answer", "text": "Ano. Výpočet průměru známek i celá aplikace jsou úplně zdarma a bez reklam." } },
-    { "@type": "Question", "name": "Co je vážený průměr známek?", "acceptedAnswer": { "@type": "Answer", "text": "Vážený průměr je průměr, ve kterém má každá známka svou váhu podle důležitosti – třeba písemka váží víc než aktivita. Spočítá se jako součet (známka × váha) dělený součtem vah." } },
-    { "@type": "Question", "name": "Jak se počítá vážený průměr známek?", "acceptedAnswer": { "@type": "Answer", "text": "Každou známku vynásobíš její váhou, výsledky sečteš a vydělíš součtem všech vah. Estudivo to dělá automaticky – stačí zadat známku a její váhu." } },
-    { "@type": "Question", "name": "Musím se registrovat?", "acceptedAnswer": { "@type": "Answer", "text": "Na počítání průměru ne – otevřeš a hned počítáš. Účet potřebuješ jen pro sdílení materiálů ve třídě a synchronizaci známek mezi zařízeními." } },
-    { "@type": "Question", "name": "Funguje Estudivo na mobilu?", "acceptedAnswer": { "@type": "Answer", "text": "Ano. Je to webová aplikace (PWA) – otevřeš ji v prohlížeči a můžeš si ji přidat na plochu telefonu jako appku. Funguje i offline." } }
+    { "@type": "Question", "name": "Co je vážený průměr známek?", "acceptedAnswer": { "@type": "Answer", "text": "Vážený průměr je průměr, ve kterém má každá známka svou váhu podle důležitosti – třeba čtvrtletní písemka váží víc než aktivita. Spočítá se jako součet (známka × váha) dělený součtem všech vah." } },
+    { "@type": "Question", "name": "Jak se počítá vážený průměr?", "acceptedAnswer": { "@type": "Answer", "text": "Každou známku vynásobíš její váhou, výsledky sečteš a vydělíš součtem vah. Estudivo to dělá automaticky – stačí zadat známku a její váhu a průměr se přepočítá sám." } },
+    { "@type": "Question", "name": "Musím se registrovat?", "acceptedAnswer": { "@type": "Answer", "text": "Na počítání průměru ne – otevřeš appku a hned počítáš. Účet potřebuješ jen pro sdílení materiálů ve třídě a synchronizaci známek mezi více zařízeními." } },
+    { "@type": "Question", "name": "Funguje Estudivo na mobilu?", "acceptedAnswer": { "@type": "Answer", "text": "Ano. Je to webová aplikace (PWA) – otevřeš ji v prohlížeči a můžeš si ji přidat na plochu telefonu jako appku. Funguje i offline." } },
+    { "@type": "Question", "name": "Jsou moje známky v bezpečí?", "acceptedAnswer": { "@type": "Answer", "text": "Známky máš uložené přímo ve svém zařízení. Když se přihlásíš, zálohují se na tvůj účet, takže o ně nepřijdeš. Sdílení ve třídě je dobrovolné a chráněné kódem třídy." } }
   ]
 }
 </script>
@@ -405,10 +406,10 @@
       <p>Každý nápad i nahlášená chyba pomáhá Estudivo zlepšit. Zpráva je soukromá – uvidí ji jen autor.</p>
     </div>
     <form class="fb rev" id="fbForm">
-      <textarea id="fbMessage" rows="4" required placeholder="Nápad, co zlepšit, nebo chyba…"></textarea>
-      <input type="text" id="fbContact" placeholder="E-mail nebo jméno – nepovinné, kdybys chtěl odpověď">
+      <textarea id="fbMessage" rows="4" required aria-label="Zpráva zpětné vazby" placeholder="Nápad, co zlepšit, nebo chyba…"></textarea>
+      <input type="text" id="fbContact" aria-label="E-mail nebo jméno (nepovinné)" placeholder="E-mail nebo jméno – nepovinné, kdybys chtěl odpověď">
       <button class="btn btn-primary btn-lg" type="submit" id="fbBtn">Odeslat zpětnou vazbu</button>
-      <p class="fb-status" id="fbStatus" hidden></p>
+      <p class="fb-status" id="fbStatus" role="status" aria-live="polite" hidden></p>
     </form>
   </section>
 
@@ -485,6 +486,16 @@
       }).finally(function(){ btn.disabled=false; btn.textContent=lbl; });
     });
   })();
+  // jednorázový úklid starého service workeru z doby, kdy appka byla na rootu
+  // (odregistruje jen root-scoped SW; nový /app/ SW necháme být)
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(rs){
+      rs.forEach(function(r){
+        var s=(r.scope||'').replace(/\/+$/,'');
+        if(!s.endsWith('/app')) r.unregister();
+      });
+    }).catch(function(){});
+  }
   try{ document.getElementById('yr').textContent=new Date().getFullYear(); }catch(e){}
 </script>
 </body>
