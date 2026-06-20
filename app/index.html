@@ -825,11 +825,6 @@
 
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
-  /* veřejné třídy na bráně */
-  .pub-list{ display:flex; flex-direction:column; gap:8px; }
-  .pub-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:10px 12px; box-shadow:var(--shadow-sm); }
-  .pub-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .pub-join{ flex:0 0 auto; }
   .myclass-code{ flex:0 0 auto; font-family:'Outfit',sans-serif; font-weight:700; font-size:12px; color:var(--ink-faint); letter-spacing:0.05em; }
   .mem-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:background .15s; }
   .mem-row:active{ background:var(--bg-elev2); }
@@ -1028,15 +1023,8 @@
     <label class="fld"><span>Jméno třídy</span>
       <input type="text" id="ncName" placeholder="např. 3.A">
     </label>
-    <div>
-      <label class="fld"><span>Typ třídy</span></label>
-      <div class="calc-toggle" id="ncType">
-        <button class="calc-mode sel" data-v="code">Na kód</button>
-        <button class="calc-mode" data-v="public">Veřejná</button>
-      </div>
-    </div>
   </div>
-  <p class="backup-note" style="margin:12px 2px 0">Veřejná třída se ukáže v seznamu a může se připojit kdokoli. Soukromá je jen na kód.</p>
+  <p class="backup-note" style="margin:12px 2px 0">Vygeneruje se kód třídy — pošli ho spolužákům, ať se připojí.</p>
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeCreateSheet()">Zrušit</button>
     <button class="btn btn-primary" onclick="submitCreateClass()">Vytvořit</button>
@@ -2281,21 +2269,6 @@ function renderMatGate(wrap, h1){
     enterClass(code);
   };
   box.querySelector('#createBtn').onclick = createClassFlow;
-  const pub = document.createElement('div'); pub.id = 'pubClasses'; pub.style.margin = '0 16px';
-  wrap.appendChild(pub);
-  loadPublicClasses(pub);
-}
-function loadPublicClasses(box){
-  const c = getSB(); if(!c) return;
-  c.from('tridy').select('code,name').eq('is_public', true).order('created_at',{ascending:false}).limit(50).then(r=>{
-    const rows = (r && !r.error && r.data) ? r.data : [];
-    if(!rows.length){ box.innerHTML=''; return; }
-    let html = '<div class="section-label" style="padding:20px 4px 10px">Veřejné třídy</div><div class="pub-list">';
-    rows.forEach(t=>{ html += '<div class="pub-row"><span class="pub-name">'+esc(t.name||'Třída')+'</span><button class="subj-action pub-join" data-code="'+esc(t.code)+'">Připojit</button></div>'; });
-    html += '</div>';
-    box.innerHTML = html;
-    box.querySelectorAll('.pub-join').forEach(b=> b.onclick = ()=> enterClass(b.getAttribute('data-code')));
-  }).catch(()=>{ box.innerHTML=''; });
 }
 
 async function enterClass(code){
@@ -2318,10 +2291,6 @@ function genClassCode(){
 function createClassFlow(){ openCreateClassSheet(); }
 function openCreateClassSheet(){
   document.getElementById('ncName').value = '';
-  ['ncType'].forEach(gid=>{
-    const g = document.getElementById(gid);
-    g.querySelectorAll('.calc-mode').forEach((b,i)=>{ b.classList.toggle('sel', i===0); b.onclick = ()=>{ g.querySelectorAll('.calc-mode').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); }; });
-  });
   showSheet('create');
   setTimeout(()=>{ const el=document.getElementById('ncName'); if(el) el.focus(); }, 60);
 }
@@ -2329,7 +2298,7 @@ function closeCreateSheet(){ hideSheet('create'); }
 async function submitCreateClass(){
   const name = (document.getElementById('ncName').value||'').trim();
   if(!name){ alertDialog('Chybí jméno','Zadej jméno třídy.'); return; }
-  const isPublic = document.querySelector('#ncType .calc-mode.sel').getAttribute('data-v') === 'public';
+  const isPublic = false;
   const canAdd   = true;
   const c = getSB(); if(!c){ alertDialog('Není připojení','Vytvoření třídy potřebuje cloud (Supabase).'); return; }
   try {
