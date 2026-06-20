@@ -2376,7 +2376,11 @@ async function loadMyClassRole(){
 }
 async function joinClass(){
   const c = getSB(); if(!c || !authUser || !mat.code) return;
-  try { await c.from('clenove').insert({ code: mat.code, user_id: authUser.id }); } catch(e){}   // duplicitu ignoruj
+  try {
+    const ex = await c.from('clenove').select('user_id').eq('code', mat.code).eq('user_id', authUser.id).limit(1);
+    if(!ex.error && ex.data && ex.data.length) return;   // už člen → neduplikuj (idempotentní, nezávisle na DB constraintu)
+    await c.from('clenove').insert({ code: mat.code, user_id: authUser.id });
+  } catch(e){}
 }
 async function ensureClassOwner(){
   if(mat.owner || !mat.code) return;
@@ -2973,6 +2977,13 @@ function fileEmoji(n){
 function sizeStr(b){ if(b==null) return ''; if(b<1024) return b+' B'; if(b<1048576) return Math.round(b/1024)+' kB'; return (b/1048576).toFixed(1)+' MB'; }
 function dateStr(iso){ try { const d=new Date(iso); return d.getDate()+'.'+(d.getMonth()+1)+'.'; } catch(e){ return ''; } }
 function slug(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_'); }
+// Escape zav\u0159e otev\u0159en\u00fd spodn\u00ed sheet (a11y/UX)
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    var open = document.querySelectorAll('.sheet.show, .sheet-backdrop.show');
+    if(open.length) open.forEach(function(el){ el.classList.remove('show'); });
+  }
+});
 
 async function uploadFiles(fileList){
   if(!canContribute()){ alertDialog('Jen prohlížení','V téhle třídě můžou přidávat jen admini.'); return; }
