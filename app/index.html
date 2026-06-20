@@ -830,6 +830,7 @@
   .pub-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:10px 12px; box-shadow:var(--shadow-sm); }
   .pub-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .pub-join{ flex:0 0 auto; }
+  .myclass-code{ flex:0 0 auto; font-family:'Outfit',sans-serif; font-weight:700; font-size:12px; color:var(--ink-faint); letter-spacing:0.05em; }
   .mem-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:background .15s; }
   .mem-row:active{ background:var(--bg-elev2); }
   .mem-chev{ flex-shrink:0; color:var(--ink-faint); font-size:20px; line-height:1; }
@@ -1034,15 +1035,8 @@
         <button class="calc-mode" data-v="public">Veřejná</button>
       </div>
     </div>
-    <div>
-      <label class="fld"><span>Kdo může přidávat</span></label>
-      <div class="calc-toggle" id="ncAdd">
-        <button class="calc-mode sel" data-v="all">Všichni členové</button>
-        <button class="calc-mode" data-v="admins">Jen admini</button>
-      </div>
-    </div>
   </div>
-  <p class="backup-note" style="margin:12px 2px 0">Veřejná třída se ukáže v seznamu a může se připojit kdokoli. „Jen admini" = ostatní jen prohlíží, nemůžou nahrávat.</p>
+  <p class="backup-note" style="margin:12px 2px 0">Veřejná třída se ukáže v seznamu a může se připojit kdokoli. Soukromá je jen na kód.</p>
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeCreateSheet()">Zrušit</button>
     <button class="btn btn-primary" onclick="submitCreateClass()">Vytvořit</button>
@@ -1131,7 +1125,7 @@
   </button>
   <button class="tab" id="tabMaterials" onclick="setPage('materials')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    Materiály
+    Třídy
   </button>
   <button class="tab" id="tabProfile" onclick="setPage('profile')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
@@ -1887,7 +1881,7 @@ async function restoreUserClass(){
     if(!row) return;
     const tr = await c.from('tridy').select('*').eq('code', row.code).maybeSingle();
     if(tr.error || !tr.data) return;
-    mat.code = row.code; mat.name = tr.data.name; mat.owner = tr.data.owner || null; mat.isPublic = !!tr.data.is_public; mat.canAdd = tr.data.members_can_add !== false; mat.view = 'class'; mat.tab = 'soubory';
+    mat.code = row.code; mat.name = tr.data.name; mat.owner = tr.data.owner || null; mat.isPublic = !!tr.data.is_public; mat.canAdd = tr.data.members_can_add !== false; mat.view = 'list'; mat.tab = 'soubory';
     matSaveClass();
     await loadMyClassRole();
     const pm = document.getElementById('pageMaterials');
@@ -2163,7 +2157,7 @@ function uid(){
 }
 
 const MAT_CATS = [ { id:'zapisky', label:'Zápisky' }, { id:'testy', label:'Testy' } ];
-let mat = { view:'gate', code:null, name:null, subject:null, category:'zapisky', folder:'', tab:'soubory', sort: localStorage.getItem('prumer_mat_sort') || 'date' };
+let mat = { view:'list', code:null, name:null, subject:null, category:'zapisky', folder:'', tab:'soubory', sort: localStorage.getItem('prumer_mat_sort') || 'date' };
 let calRows = [];
 let matRows = [];
 let matFolders = [];
@@ -2174,7 +2168,7 @@ function matSaveClass(){
   else localStorage.removeItem('prumer_mat_class');
 }
 function initMaterials(){
-  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.owner=c.owner||null; mat.canAdd=c.canAdd!==false; mat.isPublic=!!c.isPublic; mat.view='class'; } } catch(e){}
+  try { const c = JSON.parse(localStorage.getItem('prumer_mat_class')); if(c && c.code){ mat.code=c.code; mat.name=c.name; mat.owner=c.owner||null; mat.canAdd=c.canAdd!==false; mat.isPublic=!!c.isPublic; mat.view='list'; } } catch(e){}
 }
 
 function matNotice(title, msg){
@@ -2189,17 +2183,17 @@ function renderMaterials(){
   const h1 = document.getElementById('matH1');
   wrap.innerHTML = '';
   if(!sbConfigured()){
-    h1.textContent = 'Materiály';
+    h1.textContent = 'Třídy';
     wrap.appendChild(matNotice('Materiály ještě nejsou nastavené', 'Sdílení souborů potřebuje cloud (Supabase). V kódu nahoře stačí vyplnit SB_URL a SB_KEY podle návodu. Strana se sama zapne, jakmile je doplníš.'));
     return;
   }
   if(!window.supabase){
-    h1.textContent = 'Materiály';
+    h1.textContent = 'Třídy';
     wrap.appendChild(matNotice('Načítám knihovnu…', 'Pokud tahle hláška nezmizí, jsi nejspíš v náhledu, který blokuje externí knihovny. Na živé adrese (GitHub Pages) to poběží.'));
     return;
   }
   if(!authUser){
-    h1.textContent = 'Materiály';
+    h1.textContent = 'Třídy';
     wrap.appendChild(matNotice('Nejdřív se přihlas', 'Do třídy se dostaneš a třídu vytvoříš až po přihlášení. Otevři záložku Profil a přihlas se emailem.'));
     const b = document.createElement('button');
     b.className = 'btn btn-primary'; b.style.cssText = 'margin:14px 16px 0; width:calc(100% - 32px)';
@@ -2211,10 +2205,53 @@ function renderMaterials(){
   if(mat.view === 'gate')    return renderMatGate(wrap, h1);
   if(mat.view === 'class')   return renderMatClass(wrap, h1);
   if(mat.view === 'subject') return renderMatSubject(wrap, h1);
+  return renderMatList(wrap, h1);
 }
 
+async function loadMyClasses(){
+  const c = getSB(); if(!c || !authUser) return [];
+  try {
+    const r = await c.from('clenove').select('code').eq('user_id', authUser.id);
+    const codes = [...new Set((r.error?[]:(r.data||[])).map(x=>x.code))];
+    if(!codes.length) return [];
+    const tr = await c.from('tridy').select('code,name').in('code', codes);
+    return tr.error ? [] : (tr.data||[]);
+  } catch(e){ return []; }
+}
+async function renderMatList(wrap, h1){
+  h1.textContent = 'Třídy';
+  const add = document.createElement('button');
+  add.className = 'btn btn-primary'; add.style.cssText = 'margin:6px 16px 16px; width:calc(100% - 32px)';
+  add.textContent = '+ Přidat třídu';
+  add.onclick = ()=>{ mat.view = 'gate'; renderMaterials(); };
+  wrap.appendChild(add);
+  const listBox = document.createElement('div'); listBox.id = 'myClasses';
+  listBox.innerHTML = '<div class="empty" style="padding:20px;text-align:center;color:var(--ink-faint)">Načítám…</div>';
+  wrap.appendChild(listBox);
+  const classes = await loadMyClasses();
+  if(!classes.length){ listBox.innerHTML = ''; listBox.appendChild(matNotice('Zatím v žádné třídě','Připoj se přes kód nebo si vyber veřejnou třídu — tlačítkem „Přidat třídu" nahoře.')); return; }
+  let html = '<div class="section-label" style="padding:4px 16px 10px">Moje třídy ('+classes.length+')</div><div class="mem-list">';
+  classes.forEach(t=>{
+    const init = esc(((t.name||'?').trim().charAt(0)||'?').toUpperCase());
+    html += '<div class="mem-row myclass-row" data-code="'+esc(t.code)+'"><div class="mem-av mem-av-ph">'+init+'</div><span class="mem-name">'+esc(t.name||'Třída')+'</span><span class="myclass-code">'+esc(t.code)+'</span><span class="mem-chev">›</span></div>';
+  });
+  html += '</div>';
+  listBox.innerHTML = html;
+  listBox.querySelectorAll('.myclass-row').forEach(r=> r.onclick = ()=> enterClass(r.getAttribute('data-code')));
+}
+function leaveClass(){
+  confirmDialog('Opustit třídu?', 'Přestaneš být členem třídy '+(mat.name||'')+'. Můžeš se kdykoli zase připojit.', 'Opustit', async ()=>{
+    const c = getSB();
+    if(c && authUser && mat.code){ try { await c.from('clenove').delete().eq('code', mat.code).eq('user_id', authUser.id); } catch(e){} }
+    mat.view = 'list'; mat.code = null; mat.name = null; mat.owner = null; mat.isAdmin = false; matSaveClass(); renderMaterials();
+  });
+}
 function renderMatGate(wrap, h1){
-  h1.textContent = 'Kód třídy';
+  h1.textContent = 'Přidat třídu';
+  const back = document.createElement('button');
+  back.className = 'mat-back'; back.innerHTML = '<span class="mat-back-ic">‹</span> Moje třídy';
+  back.onclick = ()=>{ mat.view = 'list'; renderMaterials(); };
+  wrap.appendChild(back);
   const box = document.createElement('div');
   box.className = 'mat-gate';
   box.innerHTML =
@@ -2281,7 +2318,7 @@ function genClassCode(){
 function createClassFlow(){ openCreateClassSheet(); }
 function openCreateClassSheet(){
   document.getElementById('ncName').value = '';
-  ['ncType','ncAdd'].forEach(gid=>{
+  ['ncType'].forEach(gid=>{
     const g = document.getElementById(gid);
     g.querySelectorAll('.calc-mode').forEach((b,i)=>{ b.classList.toggle('sel', i===0); b.onclick = ()=>{ g.querySelectorAll('.calc-mode').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); }; });
   });
@@ -2293,7 +2330,7 @@ async function submitCreateClass(){
   const name = (document.getElementById('ncName').value||'').trim();
   if(!name){ alertDialog('Chybí jméno','Zadej jméno třídy.'); return; }
   const isPublic = document.querySelector('#ncType .calc-mode.sel').getAttribute('data-v') === 'public';
-  const canAdd   = document.querySelector('#ncAdd .calc-mode.sel').getAttribute('data-v') === 'all';
+  const canAdd   = true;
   const c = getSB(); if(!c){ alertDialog('Není připojení','Vytvoření třídy potřebuje cloud (Supabase).'); return; }
   try {
     let code = null;
@@ -2314,12 +2351,16 @@ async function submitCreateClass(){
 
 function renderMatClass(wrap, h1){
   h1.textContent = mat.name || 'Třída';
+  const back = document.createElement('button');
+  back.className = 'mat-back'; back.innerHTML = '<span class="mat-back-ic">‹</span> Moje třídy';
+  back.onclick = ()=>{ mat.view = 'list'; renderMaterials(); };
+  wrap.appendChild(back);
   const bar = document.createElement('div');
   bar.className = 'mat-classbar';
   bar.innerHTML = '<div><div class="mat-code-lbl">kód třídy</div><div class="mat-code-val">'+esc(mat.code)+'</div></div>';
   const out = document.createElement('button');
-  out.className = 'subj-action'; out.style.flex = '0 0 auto'; out.textContent = 'Odhlásit';
-  out.onclick = ()=>{ mat.view='gate'; mat.code=null; mat.name=null; matSaveClass(); renderMaterials(); };
+  out.className = 'subj-action'; out.style.flex = '0 0 auto'; out.textContent = 'Opustit';
+  out.onclick = leaveClass;
   bar.appendChild(out);
   wrap.appendChild(bar);
 
