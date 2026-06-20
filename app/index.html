@@ -27,6 +27,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <script>(function(){try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+<script>(function(){try{var a=localStorage.getItem('prumer_accent');if(a==='blue'||a==='pink')document.documentElement.setAttribute('data-accent',a);}catch(e){}})();</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
 
@@ -38,8 +39,12 @@
     --ink: #f2f4f8;
     --ink-dim: #99a0ae;
     --ink-faint: #5c6373;
-    --accent: #e8b84b;
-    --accent-soft: rgba(232,184,75,0.12);
+    --accent-rgb: 232,184,75;
+    --accent: rgb(var(--accent-rgb));
+    --accent-soft: rgba(var(--accent-rgb),0.12);
+    --accent-deep: #b8860f;
+    --hero-a: #f2c759; --hero-b: #e3a52c; --hero-shadow-rgb: 227,165,44;
+    --hero-ink: #23170a; --hero-sub: #7a5410;
     --good: #5ec77a;
     --warn: #e0894a;
     --bad: #e25c5c;
@@ -62,7 +67,7 @@
     padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 90px);
     min-height: 100vh;
     background:
-      radial-gradient(1200px 500px at 80% -10%, rgba(232,184,75,0.06), transparent 60%),
+      radial-gradient(1200px 500px at 80% -10%, rgba(var(--accent-rgb),0.06), transparent 60%),
       var(--bg);
   }
 
@@ -155,7 +160,7 @@
     display: grid; place-items: center;
     font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
     background: var(--accent-soft); color: var(--accent);
-    border: 1px solid rgba(232,184,75,0.3);
+    border: 1px solid rgba(var(--accent-rgb),0.3);
   }
   .calc-meta { flex: 1; }
   .calc-title { font-size: 16px; font-weight: 600; }
@@ -176,7 +181,7 @@
   .calc-hint { font-size: 12px; color: var(--ink-faint); line-height: 1.4; }
   .calc-result {
     background: var(--accent-soft);
-    border: 1px solid rgba(232,184,75,0.3);
+    border: 1px solid rgba(var(--accent-rgb),0.3);
     border-radius: 10px;
     padding: 13px 15px;
     font-size: 15px; font-weight: 600;
@@ -282,7 +287,7 @@
     display: inline-block; margin-left: 6px; vertical-align: middle;
     font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
     color: var(--accent); background: var(--accent-soft);
-    border: 1px solid rgba(232,184,75,0.35); border-radius: 6px; padding: 1px 6px;
+    border: 1px solid rgba(var(--accent-rgb),0.35); border-radius: 6px; padding: 1px 6px;
   }
 
   .add-grade-btn {
@@ -304,7 +309,7 @@
   .hypo {
     margin: 0 0 14px;
     background: var(--accent-soft);
-    border: 1px solid rgba(232,184,75,0.3);
+    border: 1px solid rgba(var(--accent-rgb),0.3);
     border-radius: 12px;
     padding: 13px 15px;
   }
@@ -558,7 +563,7 @@
   .mat-file-sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
   .mat-dl {
     width: 38px; height: 38px; flex-shrink: 0; cursor: pointer;
-    border-radius: 9px; border: 1px solid rgba(232,184,75,0.3);
+    border-radius: 9px; border: 1px solid rgba(var(--accent-rgb),0.3);
     background: var(--accent-soft); color: var(--accent);
     font-size: 18px; font-weight: 700; display: grid; place-items: center;
   }
@@ -675,7 +680,7 @@
   /* ---------- obrácená kalkulačka (co potřebuju) ---------- */
   .need-box{
     margin:6px 0 12px; background:var(--accent-soft);
-    border:1px solid rgba(232,184,75,0.25); border-radius:12px; padding:12px 14px;
+    border:1px solid rgba(var(--accent-rgb),0.25); border-radius:12px; padding:12px 14px;
   }
   .need-title{ font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:8px; }
   .need-row{ font-size:13px; color:var(--ink-dim); line-height:1.6; }
@@ -687,7 +692,7 @@
   .up-item{ display:flex; align-items:center; gap:12px; background:var(--bg-elev); border:1px solid var(--line); border-radius:14px; padding:11px 14px; }
   .up-when{
     flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent);
-    background:var(--accent-soft); border:1px solid rgba(232,184,75,0.3);
+    background:var(--accent-soft); border:1px solid rgba(var(--accent-rgb),0.3);
     border-radius:9px; padding:6px 10px; min-width:64px; text-align:center;
   }
   .up-meta{ flex:1; min-width:0; }
@@ -707,7 +712,7 @@
     --ink:#1a1f30;
     --ink-dim:#6b7280;
     --ink-faint:#9aa0b0;
-    --accent-soft:rgba(232,184,75,0.16);
+    --accent-soft:rgba(var(--accent-rgb),0.16);
   }
   :root[data-theme="light"] .subject,
   :root[data-theme="light"] .calc,
@@ -722,7 +727,19 @@
     background:rgba(255,255,255,0.92);
     box-shadow:0 -2px 12px rgba(26,31,48,0.06);
   }
-  :root[data-theme="light"] .tab.sel{ color:#b8860f; }
+  :root[data-theme="light"] .tab.sel{ color:var(--accent-deep); }
+
+  /* ---- volitelná barva aplikace (žlutá výchozí / baby blue / baby pink) ---- */
+  :root[data-accent="blue"]{
+    --accent-rgb:95,184,230; --accent-deep:#1f7fb8;
+    --hero-a:#9ad8f3; --hero-b:#52aee2; --hero-shadow-rgb:82,174,226;
+    --hero-ink:#0c2c3e; --hero-sub:#1c6b91;
+  }
+  :root[data-accent="pink"]{
+    --accent-rgb:240,150,191; --accent-deep:#c84e88;
+    --hero-a:#f9c0da; --hero-b:#ef93bd; --hero-shadow-rgb:239,147,189;
+    --hero-ink:#3e1024; --hero-sub:#a8487a;
+  }
 
   /* ---- přepínač režimu (v hlavičce) ---- */
   header{ position:relative; }
@@ -742,29 +759,29 @@
   .overall{
     display:block; margin:6px 16px 22px; padding:22px 22px 20px;
     border:none; border-radius:20px; position:relative; overflow:hidden;
-    background:linear-gradient(155deg,#f2c759,#e3a52c);
-    box-shadow:0 14px 30px rgba(227,165,44,0.30);
+    background:linear-gradient(155deg,var(--hero-a),var(--hero-b));
+    box-shadow:0 14px 30px rgba(var(--hero-shadow-rgb),0.30);
   }
   .overall::after{ content:none; }
   .hero-texture{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
   .hero-texture span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:rgba(255,255,255,0.20); }
   .hero-head{ display:flex; align-items:center; gap:9px; position:relative; }
   .hero-cap{ width:26px; height:20px; flex-shrink:0; }
-  .hero-lbl{ font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#7a5410; }
-  .overall .num{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:66px; line-height:0.92; letter-spacing:-0.02em; color:#23170a; margin-top:10px; }
-  .overall .sub{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:13px; color:#7a5410; margin-top:8px; }
+  .hero-lbl{ font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--hero-sub); }
+  .overall .num{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:66px; line-height:0.92; letter-spacing:-0.02em; color:var(--hero-ink); margin-top:10px; }
+  .overall .sub{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:600; font-size:13px; color:var(--hero-sub); margin-top:8px; }
 
   /* ============ Materiály — hi-fi (E/F/G) ============ */
   /* E) uvítací žlutá karta u kódu třídy */
   .mat-welcome{
     margin:6px 16px 16px; padding:26px 22px 22px; border-radius:20px;
     position:relative; overflow:hidden; text-align:center;
-    background:linear-gradient(155deg,#f2c759,#e3a52c);
-    box-shadow:0 14px 30px rgba(227,165,44,0.28);
+    background:linear-gradient(155deg,var(--hero-a),var(--hero-b));
+    box-shadow:0 14px 30px rgba(var(--hero-shadow-rgb),0.28);
   }
   .mat-welcome-cap{ position:relative; width:76px; height:52px; color:#fff; }
-  .mat-welcome-t{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:21px; color:#23170a; margin-top:12px; }
-  .mat-welcome-m{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:400; font-size:13.5px; line-height:1.5; color:#7a5410; margin-top:6px; }
+  .mat-welcome-t{ position:relative; font-family:'Fraunces',serif; font-weight:600; font-size:21px; color:var(--hero-ink); margin-top:12px; }
+  .mat-welcome-m{ position:relative; font-family:'Hanken Grotesk',sans-serif; font-weight:400; font-size:13.5px; line-height:1.5; color:var(--hero-sub); margin-top:6px; }
 
   /* F) dlaždice předmětů s barevnou iniciálou */
   .mat-subj{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; min-width:0; }
@@ -796,6 +813,16 @@
   .prof-auth-m{ font-size:13.5px; color:var(--ink-dim); line-height:1.5; }
   .fields{ display:flex; flex-direction:column; gap:13px; }
 
+  /* ---- volba barvy aplikace (v profilu) ---- */
+  .accent-pick{ margin-top:16px; background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow-sm); }
+  .accent-pick-t{ font-family:'Outfit',sans-serif; font-weight:700; font-size:14px; color:var(--ink-dim); margin-bottom:12px; }
+  .accent-row{ display:flex; gap:10px; }
+  .accent-sw{ flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; padding:13px 6px; border-radius:13px; cursor:pointer; background:var(--bg-elev2); border:2px solid transparent; color:var(--ink-dim); font-family:inherit; transition:transform .12s, border-color .15s; }
+  .accent-sw:active{ transform:scale(0.97); }
+  .accent-dot{ width:30px; height:30px; border-radius:50%; background:var(--sw); box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+  .accent-name{ font-size:12px; font-weight:600; }
+  .accent-sw.sel{ border-color:var(--sw); color:var(--ink); }
+
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
   .mem-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:background .15s; }
@@ -804,7 +831,7 @@
   .mem-av{ width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--line); }
   .mem-av-ph{ display:grid; place-items:center; background:var(--accent-soft); color:var(--accent); font-family:'Outfit',sans-serif; font-weight:800; font-size:14px; }
   .mem-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mem-admin{ flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); border:1px solid rgba(232,184,75,0.35); border-radius:6px; padding:2px 8px; }
+  .mem-admin{ flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); border:1px solid rgba(var(--accent-rgb),0.35); border-radius:6px; padding:2px 8px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
@@ -836,7 +863,7 @@
     <svg class="hero-cap" viewBox="0 0 28 22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M14 2 27 8 14 14 1 8Z" fill="#fff"/>
       <path d="M6 10.3V15c0 0 3 3 8 3s8-3 8-3v-4.7L14 14 6 10.3Z" fill="#fff"/>
-      <circle cx="14" cy="8" r="1.6" fill="#e3a52c"/>
+      <circle cx="14" cy="8" r="1.6" style="fill:var(--hero-b)"/>
       <path d="M25 8.6V15" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
       <circle cx="25" cy="16.4" r="1.5" fill="#fff"/>
     </svg>
@@ -1934,10 +1961,29 @@ async function renderProfile(){
     wrap.appendChild(matNotice('Profil potřebuje cloud', 'Přihlášení běží přes Supabase. Na živé adrese (GitHub Pages) to poběží.'));
     return;
   }
-  if(!authUser){ h1.textContent = 'Přihlášení'; renderLogin(wrap); return; }
+  if(!authUser){ h1.textContent = 'Přihlášení'; renderLogin(wrap); appendAccentPicker(wrap); return; }
   h1.textContent = 'Profil';
   if(!profile) await loadProfile();
   if(profileEditing) renderProfileEdit(wrap); else renderProfileView(wrap);
+  appendAccentPicker(wrap);
+}
+// volba barvy aplikace – přepíná data-accent (žlutá výchozí / baby blue / baby pink), ukládá do localStorage
+function appendAccentPicker(wrap){
+  const cur = document.documentElement.getAttribute('data-accent') || 'yellow';
+  const opts = [['yellow','Žlutá','#e8b84b'],['blue','Baby blue','#5fb8e6'],['pink','Baby pink','#f096bf']];
+  const box = document.createElement('div');
+  box.className = 'accent-pick';
+  box.innerHTML = '<div class="accent-pick-t">Barva aplikace</div><div class="accent-row">' +
+    opts.map(o => '<button class="accent-sw'+(cur===o[0]?' sel':'')+'" data-a="'+o[0]+'" style="--sw:'+o[2]+'" aria-label="'+o[1]+'"><span class="accent-dot"></span><span class="accent-name">'+o[1]+'</span></button>').join('') +
+    '</div>';
+  box.querySelectorAll('.accent-sw').forEach(b=>{ b.onclick = ()=> setAccent(b.getAttribute('data-a')); });
+  wrap.appendChild(box);
+}
+function setAccent(a){
+  if(a==='yellow') document.documentElement.removeAttribute('data-accent');
+  else document.documentElement.setAttribute('data-accent', a);
+  try{ localStorage.setItem('prumer_accent', a); }catch(e){}
+  renderProfile();
 }
 function renderLogin(wrap){
   if(authStep === 'code'){
