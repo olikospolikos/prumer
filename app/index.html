@@ -823,6 +823,10 @@
   .accent-dot{ width:30px; height:30px; border-radius:50%; background:var(--sw); box-shadow:0 2px 8px rgba(0,0,0,0.15); }
   .accent-name{ font-size:12px; font-weight:600; }
   .accent-sw.sel{ border-color:var(--sw); color:var(--ink); }
+  .theme-row{ display:flex; gap:10px; }
+  .theme-opt{ flex:1; padding:12px 6px; border-radius:13px; cursor:pointer; background:var(--bg-elev2); border:2px solid transparent; color:var(--ink-dim); font-family:inherit; font-size:13px; font-weight:600; transition:.15s; }
+  .theme-opt:active{ transform:scale(0.97); }
+  .theme-opt.sel{ border-color:var(--accent); color:var(--ink); }
 
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
@@ -835,7 +839,7 @@
   .mem-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .mem-admin{ flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); border:1px solid rgba(var(--accent-rgb),0.35); border-radius:6px; padding:2px 8px; }
   /* sdílení karty průměru */
-  .hero-share{ position:absolute; top:14px; right:14px; z-index:2; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:grid; place-items:center; background:rgba(0,0,0,0.14); color:var(--hero-ink); }
+  .hero-share{ position:absolute; bottom:14px; left:14px; z-index:2; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:grid; place-items:center; background:rgba(0,0,0,0.14); color:var(--hero-ink); }
   .hero-share:active{ background:rgba(0,0,0,0.22); }
   /* statistiky */
   .stat-tiles{ display:flex; gap:8px; margin-bottom:6px; }
@@ -874,7 +878,6 @@
     <span style="top:6px;left:60%;font-size:30px;transform:rotate(-12deg)">2</span>
     <span style="bottom:-6px;left:30%;font-size:24px;transform:rotate(9deg)">1</span>
   </div>
-  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">☀️</button>
   <div class="eyebrow">Studijní průměr</div>
   <h1>Moje známky</h1>
 </header>
@@ -2062,15 +2065,29 @@ async function renderProfile(){
 }
 // volba barvy aplikace – přepíná data-accent (žlutá výchozí / baby blue / baby pink), ukládá do localStorage
 function appendAccentPicker(wrap){
-  const cur = document.documentElement.getAttribute('data-accent') || 'yellow';
+  const curAccent = document.documentElement.getAttribute('data-accent') || 'yellow';
+  const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
   const opts = [['yellow','Žlutá','#e8b84b'],['blue','Baby blue','#5fb8e6'],['pink','Baby pink','#f096bf']];
   const box = document.createElement('div');
   box.className = 'accent-pick';
-  box.innerHTML = '<div class="accent-pick-t">Barva aplikace</div><div class="accent-row">' +
-    opts.map(o => '<button class="accent-sw'+(cur===o[0]?' sel':'')+'" data-a="'+o[0]+'" style="--sw:'+o[2]+'" aria-label="'+o[1]+'"><span class="accent-dot"></span><span class="accent-name">'+o[1]+'</span></button>').join('') +
+  box.innerHTML =
+    '<div class="accent-pick-t">Vzhled</div>' +
+    '<div class="theme-row">' +
+      '<button class="theme-opt'+(curTheme==='light'?' sel':'')+'" data-t="light">☀️ Světlý</button>' +
+      '<button class="theme-opt'+(curTheme==='dark'?' sel':'')+'" data-t="dark">🌙 Tmavý</button>' +
+    '</div>' +
+    '<div class="accent-pick-t" style="margin-top:16px">Barva aplikace</div><div class="accent-row">' +
+    opts.map(o => '<button class="accent-sw'+(curAccent===o[0]?' sel':'')+'" data-a="'+o[0]+'" style="--sw:'+o[2]+'" aria-label="'+o[1]+'"><span class="accent-dot"></span><span class="accent-name">'+o[1]+'</span></button>').join('') +
     '</div>';
   box.querySelectorAll('.accent-sw').forEach(b=>{ b.onclick = ()=> setAccent(b.getAttribute('data-a')); });
+  box.querySelectorAll('.theme-opt').forEach(b=>{ b.onclick = ()=> setThemeMode(b.getAttribute('data-t')); });
   wrap.appendChild(box);
+}
+function setThemeMode(mode){
+  if(mode!=='light' && mode!=='dark') return;
+  try{ localStorage.setItem('prumer_theme', mode); }catch(e){}
+  applyTheme(mode);   // přebarví celou appku
+  renderProfile();    // zvýrazní vybraný režim
 }
 function setAccent(a){
   if(a==='yellow') document.documentElement.removeAttribute('data-accent');
