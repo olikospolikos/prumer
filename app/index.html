@@ -841,26 +841,6 @@
   /* sdílení karty průměru */
   .hero-share{ position:absolute; bottom:14px; right:14px; z-index:2; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:grid; place-items:center; background:rgba(0,0,0,0.14); color:var(--hero-ink); }
   .hero-share:active{ background:rgba(0,0,0,0.22); }
-  /* statistiky */
-  .stat-tiles{ display:flex; gap:8px; margin-bottom:6px; }
-  .stat-tile{ flex:1; min-width:0; background:var(--bg-elev2); border:1px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center; }
-  .stat-tile .v{ font-family:'Fraunces',serif; font-weight:600; font-size:19px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .stat-tile .l{ font-size:11px; color:var(--ink-faint); margin-top:2px; }
-  .stat-h{ font-family:'Outfit',sans-serif; font-weight:700; font-size:13px; color:var(--ink-dim); margin:16px 0 9px; }
-  .dist{ display:flex; align-items:flex-end; gap:8px; height:96px; }
-  .dist-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
-  .dist-bar{ width:100%; border-radius:6px 6px 0 0; min-height:3px; transition:height .3s; }
-  .dist-n{ font-size:11px; color:var(--ink-faint); }
-  .dist-c{ font-size:11px; font-weight:700; color:var(--ink-dim); }
-  .ssub{ display:flex; align-items:center; gap:10px; margin-bottom:9px; }
-  .ssub-name{ flex:0 0 36%; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .ssub-track{ flex:1; height:8px; border-radius:6px; background:var(--bg-elev2); overflow:hidden; }
-  .ssub-fill{ height:100%; border-radius:6px; }
-  .ssub-v{ flex:0 0 auto; font-family:'Outfit',sans-serif; font-weight:800; font-size:13px; }
-  .sem-cmp{ display:flex; gap:10px; }
-  .sem-cmp .sc{ flex:1; background:var(--bg-elev2); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
-  .sem-cmp .scv{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; }
-  .sem-cmp .scl{ font-size:11px; color:var(--ink-faint); margin-top:2px; }
   /* sdílení třídy (QR + odkaz) */
   .share-link-row{ display:flex; gap:8px; }
   .share-link-row input{ flex:1; min-width:0; }
@@ -938,18 +918,6 @@
     <button class="btn btn-primary" id="calcBtn" style="width:100%">Vypočítat</button>
     <div class="calc-result" id="calcResult" style="display:none"></div>
   </div>
-</div>
-
-<div class="calc" id="statsCard">
-  <div class="calc-head" id="statsHead">
-    <div class="calc-icon">📊</div>
-    <div class="calc-meta">
-      <div class="calc-title">Statistiky</div>
-      <div class="calc-sub">přehled tvých známek</div>
-    </div>
-    <svg class="chev" id="statsChev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>
-  </div>
-  <div class="calc-body" id="statsBody" style="display:none"></div>
 </div>
 
 <button onclick="openSolSheet()" aria-label="Načíst známky ze Škola OnLine" style="display:flex;align-items:center;gap:13px;width:calc(100% - 32px);margin:6px 16px 18px;padding:15px 17px;border-radius:16px;cursor:pointer;text-align:left;background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);font-family:inherit;">
@@ -1353,7 +1321,6 @@ function render() {
     return aa - bb;
   });
   sorted.forEach(s => wrap.appendChild(renderSubject(s)));
-  const sb=document.getElementById('statsBody'); if(sb && sb.style.display!=='none') renderStats();
 }
 
 function renderSubject(s) {
@@ -3107,47 +3074,6 @@ function shareAvgCard(){
   if(document.fonts && document.fonts.ready){ document.fonts.ready.then(draw); } else { draw(); }
 }
 
-/* ===== statistiky ===== */
-function semOverall(sem){
-  const avgs = data.subjects.map(function(s){ return weightedAvg(s.grades.filter(function(g){ return g.sem===sem; })); }).filter(function(a){ return a!=null; });
-  return avgs.length ? avgs.reduce(function(a,b){ return a+b; },0)/avgs.length : null;
-}
-function toggleStats(){
-  const body=document.getElementById('statsBody'), chev=document.getElementById('statsChev');
-  if(!body) return;
-  const open = body.style.display==='none';
-  body.style.display = open?'':'none';
-  if(chev) chev.style.transform = open?'rotate(90deg)':'';
-  if(open) renderStats();
-}
-function renderStats(){
-  const body=document.getElementById('statsBody'); if(!body) return;
-  const real=[]; data.subjects.forEach(function(s){ s.grades.filter(function(g){ return g.sem===data.sem && !g.hypo; }).forEach(function(g){ real.push(g); }); });
-  if(!real.length){ body.innerHTML='<div class="calc-result" style="display:block">V tomhle pololetí zatím nemáš žádné známky.</div>'; return; }
-  const dist=[0,0,0,0,0]; real.forEach(function(g){ const m=Math.min(5,Math.max(1,Math.round(g.mark))); dist[m-1]++; });
-  const maxD=Math.max.apply(null,dist)||1;
-  const subs=data.subjects.map(function(s){ return { name:s.name, avg:weightedAvg(gradesOf(s)) }; }).filter(function(x){ return x.avg!=null; }).sort(function(a,b){ return a.avg-b.avg; });
-  const o1=semOverall(1), o2=semOverall(2);
-  let h='';
-  h+='<div class="stat-tiles">'
-    +'<div class="stat-tile"><div class="v">'+real.length+'</div><div class="l">známek</div></div>'
-    +'<div class="stat-tile"><div class="v" style="color:'+(subs[0]?markColor(subs[0].avg):'inherit')+'">'+(subs[0]?esc(subs[0].name):'—')+'</div><div class="l">nejlepší</div></div>'
-    +'<div class="stat-tile"><div class="v" style="color:'+(subs.length?markColor(subs[subs.length-1].avg):'inherit')+'">'+(subs.length?esc(subs[subs.length-1].name):'—')+'</div><div class="l">nejhorší</div></div>'
-    +'</div>';
-  h+='<div class="stat-h">Rozložení známek</div><div class="dist">';
-  for(let i=0;i<5;i++){ const c=markColor(i+1); const ht=Math.round(dist[i]/maxD*100); h+='<div class="dist-col"><div class="dist-c">'+dist[i]+'</div><div class="dist-bar" style="height:'+ht+'%;background:'+c+'"></div><div class="dist-n" style="color:'+c+'">'+(i+1)+'</div></div>'; }
-  h+='</div>';
-  h+='<div class="stat-h">Průměr podle předmětů</div>';
-  subs.forEach(function(x){ const c=markColor(x.avg); const fill=Math.max(6,Math.round((5-x.avg)/4*100)); h+='<div class="ssub"><span class="ssub-name">'+esc(x.name)+'</span><span class="ssub-track"><span class="ssub-fill" style="width:'+fill+'%;background:'+c+'"></span></span><span class="ssub-v" style="color:'+c+'">'+fmt(x.avg)+'</span></div>'; });
-  if(o1!=null || o2!=null){
-    h+='<div class="stat-h">Pololetí</div><div class="sem-cmp">'
-      +'<div class="sc"><div class="scv" style="color:'+(o1!=null?markColor(o1):'var(--ink-faint)')+'">'+fmt(o1)+'</div><div class="scl">1. pololetí</div></div>'
-      +'<div class="sc"><div class="scv" style="color:'+(o2!=null?markColor(o2):'var(--ink-faint)')+'">'+fmt(o2)+'</div><div class="scl">2. pololetí</div></div>'
-      +'</div>';
-  }
-  body.innerHTML=h;
-}
-
 /* ===== sdílení třídy (QR + odkaz) ===== */
 function loadScript(src){ return new Promise(function(res,rej){ if(document.querySelector('script[data-s="'+src+'"]')){ res(); return; } var s=document.createElement('script'); s.src=src; s.async=true; s.setAttribute('data-s',src); s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 function classJoinLink(){ return location.origin + '/app/?join=' + encodeURIComponent(mat.code||''); }
@@ -3286,7 +3212,6 @@ if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
 
 applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
 initMaterials();
-(function(){ var _sh=document.getElementById('statsHead'); if(_sh) _sh.onclick=toggleStats; })();
 renderSolStatus();
 solAutoSync();   // tichá aktualizace při otevření
 // znovu po návratu do popředí a periodicky, dokud je appka otevřená (jen iniciuje, throttle uvnitř)
