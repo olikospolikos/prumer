@@ -1051,21 +1051,21 @@
 <div class="sheet-backdrop" id="shareClassBackdrop" onclick="closeShareClass()"></div>
 <div class="sheet" id="shareClassSheet">
   <div class="sheet-grab"></div>
-  <h3>Sdílet třídu</h3>
+  <h3 id="shareClassTitle">Sdílet třídu</h3>
   <div class="fields">
-    <label class="fld"><span>Odkaz pro připojení</span>
+    <label class="fld"><span>Odkaz</span>
       <div class="share-link-row">
         <input type="text" id="shareLink" readonly onclick="this.select()">
         <button class="btn btn-ghost" onclick="copyShareLink()">Kopírovat</button>
       </div>
     </label>
     <div class="qr-box" id="shareQr"></div>
-    <div>
+    <div id="shareCodeWrap">
       <div class="fld"><span>Nebo zadej kód třídy</span></div>
       <div class="share-code-big" id="shareCode"></div>
     </div>
   </div>
-  <p class="backup-note" style="margin:10px 2px 0">Kdo otevře odkaz nebo naskenuje QR, připojí se do třídy (po přihlášení).</p>
+  <p class="backup-note" id="shareNote" style="margin:10px 2px 0">Kdo otevře odkaz nebo naskenuje QR, připojí se do třídy (po přihlášení).</p>
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeShareClass()">Zavřít</button>
     <button class="btn btn-primary" onclick="nativeShareClass()">Sdílet…</button>
@@ -1880,11 +1880,13 @@ async function initAuth(){
       if(authUser){ ensureProfile(); pullGradesCloud(); restoreUserClass(); }
       refreshAuthUI();
       maybeJoinFromLink();
+      maybeFriendFromLink();
     });
   } catch(e){}
   if(authUser){ ensureProfile(); await pullGradesCloud(); await restoreUserClass(); }
   refreshAuthUI();
   maybeJoinFromLink();
+  maybeFriendFromLink();
 }
 function refreshAuthUI(){
   const pp = document.getElementById('pageProfile');
@@ -1926,6 +1928,7 @@ async function pushGradesNow(){
   const c = getSB(); if(!c || !authUser) return;
   clearTimeout(gradesPushTimer);
   try { await c.from('znamky_data').upsert({ user_id: authUser.id, data: data, updated_at: new Date().toISOString() }); } catch(e){}
+  updateSharedAvg();
 }
 function pushGradesCloud(){
   if(!authUser) return;
@@ -1947,6 +1950,7 @@ async function pullGradesCloud(){
     } else {
       pushGradesCloud();                                // lokální novější / cloud prázdný → nahraj nahoru
     }
+    updateSharedAvg();
   } catch(e){}
 }
 
@@ -1970,6 +1974,7 @@ async function authVerifyCode(email, token){
     await pullGradesCloud();
     await restoreUserClass();
     maybeJoinFromLink();
+    maybeFriendFromLink();
     return { ok:true };
   } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
 }
@@ -1997,6 +2002,89 @@ async function saveProfile(fields){
     return { ok:true };
   } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
 }
+/* ===== přátelé + sdílený průměr ===== */
+async function updateSharedAvg(){
+  if(!authUser) return;
+  const subjAvgs = data.subjects.map(function(s){ return weightedAvg(gradesOf(s)); }).filter(function(a){ return a!=null; });
+  const overall = subjAvgs.length ? subjAvgs.reduce(function(a,b){ return a+b; },0)/subjAvgs.length : null;
+  const gc = data.subjects.reduce(function(a,s){ return a+gradesOf(s).length; },0);
+  try{ await saveProfile({ avg: overall, grades_count: gc }); }catch(e){}
+}
+let pendingFriendId = (function(){ try{ return new URLSearchParams(location.search).get('friend')||null; }catch(e){ return null; } })();
+function maybeFriendFromLink(){
+  if(!pendingFriendId || !authUser) return;
+  const id=pendingFriendId; pendingFriendId=null;
+  try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  if(id && id!==authUser.id){ setPage('profile'); sendFriendRequest(id); }
+}
+async function sendFriendRequest(otherId){
+  const c=getSB(); if(!c||!authUser||!otherId||otherId===authUser.id) return;
+  try{
+    const ex = await c.from('pratele').select('*').or('and(requester.eq.'+authUser.id+',addressee.eq.'+otherId+'),and(requester.eq.'+otherId+',addressee.eq.'+authUser.id+')');
+    const rows = (ex.error?[]:(ex.data||[]));
+    const reverse = rows.filter(function(r){ return r.requester===otherId && r.addressee===authUser.id; })[0];
+    const mine = rows.filter(function(r){ return r.requester===authUser.id && r.addressee===otherId; })[0];
+    if(reverse){ await c.from('pratele').update({status:'accepted'}).eq('id',reverse.id); alertDialog('Jste přátelé!','Žádost potvrzena, teď si můžete porovnat průměr.'); }
+    else if(rows.filter(function(r){ return r.status==='accepted'; }).length){ alertDialog('Už jste přátelé','S tímhle člověkem už kamarádíte.'); }
+    else if(mine){ alertDialog('Už odesláno','Žádost už čeká na potvrzení.'); }
+    else { await c.from('pratele').insert({ requester:authUser.id, addressee:otherId, status:'pending' }); alertDialog('Odesláno','Žádost o přátelství je na cestě.'); }
+  }catch(e){ alertDialog('Nepovedlo se', String(e&&e.message||e)); }
+  renderProfile();
+}
+async function loadFriendData(){
+  const c=getSB(); if(!c||!authUser) return { friends:[], requests:[] };
+  try{
+    const r = await c.from('pratele').select('*').or('requester.eq.'+authUser.id+',addressee.eq.'+authUser.id);
+    const rows = (r.error?[]:(r.data||[]));
+    const friendIds=[], reqs=[];
+    rows.forEach(function(x){
+      if(x.status==='accepted'){ friendIds.push(x.requester===authUser.id ? x.addressee : x.requester); }
+      else if(x.status==='pending' && x.addressee===authUser.id){ reqs.push(x); }
+    });
+    const ids=[]; friendIds.concat(reqs.map(function(x){ return x.requester; })).forEach(function(id){ if(ids.indexOf(id)<0) ids.push(id); });
+    const profs={};
+    if(ids.length){ const pr=await c.from('profiles').select('id,name,avatar_url,avg').in('id',ids); (pr.error?[]:(pr.data||[])).forEach(function(p){ profs[p.id]=p; }); }
+    return {
+      friends: friendIds.map(function(id){ return profs[id]||{id:id}; }),
+      requests: reqs.map(function(x){ return { rowId:x.id, p:profs[x.requester]||{id:x.requester} }; })
+    };
+  }catch(e){ return { friends:[], requests:[] }; }
+}
+async function appendFriends(wrap){
+  const box=document.createElement('div'); box.className='accent-pick';
+  box.innerHTML='<div class="accent-pick-t">Přátelé</div>'
+    +'<button class="btn btn-primary" id="friendInviteBtn" style="width:100%">+ Pozvat přátele</button>'
+    +'<div id="friendBody" style="margin-top:12px"><div class="empty" style="color:var(--ink-faint);font-size:13px;text-align:center">Načítám…</div></div>';
+  wrap.appendChild(box);
+  box.querySelector('#friendInviteBtn').onclick=openFriendInvite;
+  const fb=box.querySelector('#friendBody');
+  const fd=await loadFriendData();
+  let h='';
+  if(fd.requests.length){
+    h+='<div class="accent-pick-t" style="margin:2px 0 8px">Žádosti o přátelství</div>';
+    fd.requests.forEach(function(r){
+      h+='<div class="mem-row" style="cursor:default"><span class="mem-name">'+esc((r.p&&r.p.name)||'Někdo')+'</span>'
+        +'<button class="subj-action fr-acc" data-id="'+r.rowId+'" style="flex:0 0 auto">Přijmout</button>'
+        +'<button class="subj-action fr-dec" data-id="'+r.rowId+'" style="flex:0 0 auto">Odmítnout</button></div>';
+    });
+  }
+  const me={ id:authUser.id, name:((profile&&profile.name)||(authUser.email||'').split('@')[0]), avatar_url:(profile&&profile.avatar_url), avg:(profile?profile.avg:null), me:true };
+  const all=[me].concat(fd.friends);
+  all.sort(function(a,b){ return (a.avg==null?99:a.avg)-(b.avg==null?99:b.avg); });
+  h+='<div class="accent-pick-t" style="margin:'+(fd.requests.length?'14px':'2px')+' 0 8px">Porovnání průměru</div>';
+  if(all.length<=1){ h+='<div class="empty" style="color:var(--ink-faint);font-size:13px">Zatím nemáš přátele — pozvi je tlačítkem nahoře.</div>'; }
+  all.forEach(function(x,i){
+    const av=x.avatar_url?'<img class="mem-av" src="'+esc(x.avatar_url)+'" alt="">':'<div class="mem-av mem-av-ph">'+esc((((x.name||'?').trim().charAt(0))||'?').toUpperCase())+'</div>';
+    const col=(x.avg!=null)?markColor(x.avg):'var(--ink-faint)';
+    const val=(x.avg!=null)?fmt(x.avg):'—';
+    h+='<div class="mem-row" style="cursor:default'+(x.me?';border-color:var(--accent)':'')+'"><span style="flex:0 0 16px;font-family:Outfit,sans-serif;font-weight:800;color:var(--ink-faint);font-size:13px">'+(i+1)+'</span>'+av+'<span class="mem-name">'+esc(x.name||'Beze jména')+(x.me?' (ty)':'')+'</span><span style="flex:0 0 auto;font-family:Outfit,sans-serif;font-weight:800;color:'+col+'">'+val+'</span></div>';
+  });
+  fb.innerHTML=h;
+  fb.querySelectorAll('.fr-acc').forEach(function(b){ b.onclick=function(){ acceptFriend(b.getAttribute('data-id')); }; });
+  fb.querySelectorAll('.fr-dec').forEach(function(b){ b.onclick=function(){ declineFriend(b.getAttribute('data-id')); }; });
+}
+async function acceptFriend(rowId){ const c=getSB(); if(c){ try{ await c.from('pratele').update({status:'accepted'}).eq('id',rowId); }catch(e){} } renderProfile(); }
+async function declineFriend(rowId){ const c=getSB(); if(c){ try{ await c.from('pratele').delete().eq('id',rowId); }catch(e){} } renderProfile(); }
 async function uploadAvatar(file){
   const c = getSB(); if(!c || !authUser) return { ok:false, msg:'Nejsi přihlášený.' };
   try {
@@ -2133,6 +2221,7 @@ function renderProfileView(wrap){
       await authLogout(); profileEditing = false; renderProfile(); renderMaterials();
     });
   };
+  appendFriends(wrap);
 }
 function renderProfileEdit(wrap){
   const p = profile || {};
@@ -3077,25 +3166,30 @@ function shareAvgCard(){
 /* ===== sdílení třídy (QR + odkaz) ===== */
 function loadScript(src){ return new Promise(function(res,rej){ if(document.querySelector('script[data-s="'+src+'"]')){ res(); return; } var s=document.createElement('script'); s.src=src; s.async=true; s.setAttribute('data-s',src); s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 function classJoinLink(){ return location.origin + '/app/?join=' + encodeURIComponent(mat.code||''); }
-async function openShareClass(){
-  if(!mat.code) return;
-  document.getElementById('shareLink').value = classJoinLink();
-  document.getElementById('shareCode').textContent = mat.code;
+async function openShareWith(title, link, codeVal, note){
+  document.getElementById('shareClassTitle').textContent = title;
+  document.getElementById('shareLink').value = link;
+  const wrap=document.getElementById('shareCodeWrap');
+  if(codeVal){ wrap.style.display=''; document.getElementById('shareCode').textContent=codeVal; } else { wrap.style.display='none'; }
+  document.getElementById('shareNote').textContent = note||'';
   const qb=document.getElementById('shareQr'); qb.innerHTML='<div class="empty" style="color:var(--ink-faint);font-size:13px">Načítám QR…</div>';
   showSheet('shareClass');
   try {
     await loadScript('https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js');
     qb.innerHTML='';
-    new QRCode(qb, { text: classJoinLink(), width:188, height:188, colorDark:'#1a1f30', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
-  } catch(e){ qb.innerHTML='<div class="empty" style="color:var(--ink-faint);font-size:13px;padding:20px 6px">QR se teď nepovedlo načíst.<br>Použij odkaz nebo kód výše.</div>'; }
+    new QRCode(qb, { text: link, width:188, height:188, colorDark:'#1a1f30', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  } catch(e){ qb.innerHTML='<div class="empty" style="color:var(--ink-faint);font-size:13px;padding:20px 6px">QR se teď nepovedlo načíst.<br>Použij odkaz výše.</div>'; }
 }
+function openShareClass(){ if(!mat.code) return; openShareWith('Sdílet třídu', classJoinLink(), mat.code, 'Kdo otevře odkaz nebo naskenuje QR, připojí se do třídy (po přihlášení).'); }
+function friendLink(){ return location.origin + '/app/?friend=' + (authUser ? authUser.id : ''); }
+function openFriendInvite(){ if(!authUser) return; openShareWith('Pozvat přátele', friendLink(), null, 'Kdo otevře odkaz nebo naskenuje QR, pošle ti žádost o přátelství.'); }
 function closeShareClass(){ hideSheet('shareClass'); }
 function copyShareLink(){
   const inp=document.getElementById('shareLink'); const v=inp.value;
   if(navigator.clipboard){ navigator.clipboard.writeText(v).then(function(){ alertDialog('Zkopírováno','Odkaz na třídu je ve schránce.'); }, function(){ alertDialog('Nešlo zkopírovat','Označ a zkopíruj odkaz ručně.'); }); }
   else { try{ inp.select(); document.execCommand('copy'); alertDialog('Zkopírováno','Odkaz na třídu je ve schránce.'); }catch(e){ alertDialog('Nešlo zkopírovat','Označ a zkopíruj odkaz ručně.'); } }
 }
-function nativeShareClass(){ const v=classJoinLink(); if(navigator.share){ navigator.share({ title:'Třída '+(mat.name||''), text:'Připoj se do mojí třídy v Estudivu', url:v }).catch(function(){}); } else { copyShareLink(); } }
+function nativeShareClass(){ const v=document.getElementById('shareLink').value; if(navigator.share){ navigator.share({ url:v }).catch(function(){}); } else { copyShareLink(); } }
 
 /* ===== připomínky testů ===== */
 function notifyUpcoming(rows){
