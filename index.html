@@ -476,7 +476,7 @@
       var contact=document.getElementById('fbContact').value.trim();
       var st=document.getElementById('fbStatus'); var btn=document.getElementById('fbBtn');
       if(!msg) return;
-      if(!contact || contact.indexOf('@')<1){ st.className='fb-status err'; st.textContent='Vyplň prosím svůj e-mail, ať ti můžu odpovědět.'; st.hidden=false; return; }
+      if(!contact || contact.indexOf('@')<1){ st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Please enter your email.':'Vyplň prosím svůj e-mail.'); st.hidden=false; return; }
       var lbl=btn.textContent; btn.disabled=true; btn.textContent='Odesílám…'; st.hidden=true;
       fetch(SB_URL+'/rest/v1/feedback',{
         method:'POST',
