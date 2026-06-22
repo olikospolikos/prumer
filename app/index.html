@@ -832,6 +832,14 @@
   .cmp-row{ display:grid; grid-template-columns:1fr 54px 54px; gap:6px; align-items:center; padding:8px 4px; border-top:1px solid var(--line); }
   .cmp-name{ font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cmp-v{ text-align:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:14px; }
+  /* zvoneček oznámení */
+  .bell{ position:fixed; top:calc(8px + env(safe-area-inset-top,0px)); left:12px; z-index:45; width:40px; height:40px; border-radius:12px; background:var(--bg-elev); border:1px solid var(--line); color:var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--shadow-sm); }
+  .bell:active{ background:var(--bg-elev2); }
+  .bell-badge{ position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; padding:0 4px; border-radius:9px; background:#e25c5c; color:#fff; font-family:'Outfit',sans-serif; font-weight:800; font-size:11px; display:grid; place-items:center; line-height:1; box-shadow:0 1px 4px rgba(0,0,0,0.25); }
+  .notif-item{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--bg-elev2); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:8px; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .notif-item:active{ background:var(--bg-elev); }
+  .notif-ic{ font-size:20px; flex:0 0 auto; }
+  .notif-tx{ font-size:14px; line-height:1.35; }
 
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
@@ -856,6 +864,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
 <body>
+
+<button class="bell" id="bell" onclick="openNotif()" aria-label="Oznámení">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+  <span class="bell-badge" id="bellBadge" style="display:none">0</span>
+</button>
 
 <div id="pageGrades">
 <header>
@@ -1075,6 +1088,14 @@
     <button class="btn btn-ghost" onclick="closeShareClass()">Zavřít</button>
     <button class="btn btn-primary" onclick="nativeShareClass()">Sdílet…</button>
   </div>
+</div>
+
+<!-- oznámení -->
+<div class="sheet-backdrop" id="notifBackdrop" onclick="closeNotif()"></div>
+<div class="sheet" id="notifSheet">
+  <div class="sheet-grab"></div>
+  <h3>Oznámení</h3>
+  <div id="notifBody"></div>
 </div>
 
 <!-- skola online sheet -->
@@ -1887,12 +1908,14 @@ async function initAuth(){
       refreshAuthUI();
       maybeJoinFromLink();
       maybeFriendFromLink();
+      updateNotifBadge();
     });
   } catch(e){}
   if(authUser){ ensureProfile(); await pullGradesCloud(); await restoreUserClass(); }
   refreshAuthUI();
   maybeJoinFromLink();
   maybeFriendFromLink();
+  updateNotifBadge();
 }
 function refreshAuthUI(){
   const pp = document.getElementById('pageProfile');
@@ -3255,6 +3278,53 @@ function maybeJoinFromLink(){
   enterClass(code);
 }
 
+/* ===== oznámení (zvoneček) ===== */
+function notifSeen(){ var v=null; try{ v=localStorage.getItem('prumer_notif_seen'); }catch(e){} if(v==null){ try{ localStorage.setItem('prumer_notif_seen', String(Date.now())); }catch(e){} return Date.now(); } return parseInt(v,10)||0; }
+async function loadNotifications(){
+  const c=getSB(); if(!c||!authUser) return [];
+  const out=[];
+  try{
+    const fr=await c.from('pratele').select('id,requester,created_at').eq('addressee',authUser.id).eq('status','pending');
+    const frRows=(fr.error?[]:(fr.data||[]));
+    const codes=(await loadMyClasses()).map(function(t){ return t.code; });
+    let memRows=[];
+    if(codes.length){ const mr=await c.from('clenove').select('user_id,code,joined_at').in('code',codes).neq('user_id',authUser.id); memRows=(mr.error?[]:(mr.data||[])); }
+    const ids=[]; frRows.forEach(function(r){ if(ids.indexOf(r.requester)<0) ids.push(r.requester); }); memRows.forEach(function(r){ if(ids.indexOf(r.user_id)<0) ids.push(r.user_id); });
+    const nm={}; if(ids.length){ const pr=await c.from('profiles').select('id,name').in('id',ids); (pr.error?[]:(pr.data||[])).forEach(function(p){ nm[p.id]=p.name; }); }
+    frRows.forEach(function(r){ out.push({ key:'fr'+r.id, ts:(Date.parse(r.created_at)||0), icon:'👋', text:(nm[r.requester]||'Někdo')+' ti poslal žádost o přátelství', go:'profile' }); });
+    const cutoff=Date.now()-14*864e5;
+    memRows.forEach(function(r){ const ts=Date.parse(r.joined_at)||0; if(ts>cutoff) out.push({ key:'jn'+r.code+r.user_id, ts:ts, icon:'🎓', text:(nm[r.user_id]||'Někdo')+' se připojil do třídy '+r.code, go:'materials' }); });
+    out.sort(function(a,b){ return b.ts-a.ts; });
+  }catch(e){}
+  return out.slice(0,25);
+}
+async function updateNotifBadge(){
+  const badge=document.getElementById('bellBadge'); if(!badge) return;
+  if(!authUser){ badge.style.display='none'; return; }
+  const items=await loadNotifications();
+  const seen=notifSeen();
+  const unread=items.filter(function(i){ return i.ts>seen; });
+  if(unread.length){ badge.textContent=unread.length>9?'9+':String(unread.length); badge.style.display=''; } else badge.style.display='none';
+  if(typeof Notification!=='undefined' && Notification.permission==='granted'){
+    let done=[]; try{ done=JSON.parse(localStorage.getItem('prumer_notif_done')||'[]'); }catch(e){}
+    let ch=false;
+    unread.forEach(function(i){ if(done.indexOf(i.key)<0){ try{ new Notification('Estudivo',{ body:i.text, icon:'/icon-192.png' }); }catch(e){} done.push(i.key); ch=true; } });
+    if(ch){ try{ localStorage.setItem('prumer_notif_done', JSON.stringify(done.slice(-150))); }catch(e){} }
+  }
+}
+async function openNotif(){
+  showSheet('notif');
+  const body=document.getElementById('notifBody'); body.innerHTML='<div class="empty" style="color:var(--ink-faint);text-align:center;padding:22px">Načítám…</div>';
+  const items=await loadNotifications();
+  if(items.length){
+    body.innerHTML=items.map(function(i){ return '<button class="notif-item" data-go="'+i.go+'"><span class="notif-ic">'+i.icon+'</span><span class="notif-tx">'+esc(i.text)+'</span></button>'; }).join('');
+    body.querySelectorAll('.notif-item').forEach(function(b){ b.onclick=function(){ closeNotif(); setPage(b.getAttribute('data-go')); }; });
+  } else { body.innerHTML='<div class="empty" style="color:var(--ink-faint);text-align:center;padding:22px">Žádná oznámení.</div>'; }
+  try{ localStorage.setItem('prumer_notif_seen', String(Date.now())); }catch(e){}
+  const badge=document.getElementById('bellBadge'); if(badge) badge.style.display='none';
+}
+function closeNotif(){ hideSheet('notif'); }
+
 function fileEmoji(n){
   const e = (n||'').split('.').pop().toLowerCase();
   if(['jpg','jpeg','png','gif','heic','webp'].indexOf(e) >= 0) return '🖼';
@@ -3347,7 +3417,7 @@ initMaterials();
 renderSolStatus();
 solAutoSync();   // tichá aktualizace při otevření
 // znovu po návratu do popředí a periodicky, dokud je appka otevřená (jen iniciuje, throttle uvnitř)
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ solAutoSync(); renderUpcoming(); } });
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ solAutoSync(); renderUpcoming(); updateNotifBadge(); } });
 setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
 
 // Supabase i ikony/fonty se načítají až po tomto skriptu → dořeš po 'load'
