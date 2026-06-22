@@ -1109,8 +1109,8 @@
     <label class="fld"><span>Tvoje zpráva</span>
       <textarea id="fbMessage" rows="4" placeholder="Nápad, co zlepšit, nebo chyba…" style="resize:vertical;line-height:1.4"></textarea>
     </label>
-    <label class="fld"><span>Kontakt (nepovinné)</span>
-      <input type="text" id="fbContact" placeholder="e-mail / jméno, kdybys chtěl odpověď">
+    <label class="fld"><span>Tvůj e‑mail</span>
+      <input type="email" id="fbContact" placeholder="tvuj@email.cz" autocomplete="email">
     </label>
   </div>
   <p class="backup-note" style="margin:12px 2px 0">Zpráva je soukromá — pošle se jen autorovi aplikace a nikde se veřejně nezobrazuje.</p>
@@ -1614,6 +1614,7 @@ async function sendFeedback(){
   const msg = document.getElementById('fbMessage').value.trim();
   const contact = document.getElementById('fbContact').value.trim();
   if(!msg){ alertDialog('Prázdná zpráva','Napiš prosím nejdřív zprávu.'); return; }
+  if(!contact || contact.indexOf('@')<1){ alertDialog('Chybí e-mail','Vyplň prosím svůj e-mail, ať ti autor může odpovědět.'); return; }
   const c = getSB();
   if(!c){ alertDialog('Není připojení','Odeslání potřebuje cloud (Supabase).'); return; }
   const btn = document.getElementById('fbBtn'); const label = btn.textContent;
