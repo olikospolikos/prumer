@@ -410,7 +410,7 @@
     </div>
     <form class="fb rev" id="fbForm">
       <textarea id="fbMessage" rows="4" required aria-label="Zpráva zpětné vazby" placeholder="Nápad, co zlepšit, nebo chyba…"></textarea>
-      <input type="email" id="fbContact" required aria-label="Tvůj e-mail" placeholder="tvuj@email.cz (ať ti můžu odpovědět)">
+      <input type="email" id="fbContact" required aria-label="Tvůj e-mail" placeholder="tvuj@email.cz">
       <button class="btn btn-primary btn-lg" type="submit" id="fbBtn">Odeslat zpětnou vazbu</button>
       <p class="fb-status" id="fbStatus" role="status" aria-live="polite" hidden></p>
     </form>
@@ -556,22 +556,24 @@
 'Spočítat průměr →':'Calculate average →',
 'Máš nápad nebo našel chybu?':'Got an idea or found a bug?','Napiš nám zpětnou vazbu':'Send us feedback',
 'Každý nápad i nahlášená chyba pomáhá Estudivo zlepšit. Zpráva je soukromá – uvidí ji jen autor.':'Every idea or bug report helps make Estudivo better. Your message is private – only the author sees it.',
-'Nápad, co zlepšit, nebo chyba…':'An idea, something to improve, or a bug…','tvuj@email.cz (ať ti můžu odpovědět)':'you@email.com (so I can reply)',
+'Nápad, co zlepšit, nebo chyba…':'An idea, something to improve, or a bug…','tvuj@email.cz':'you@email.com',
 'Odeslat zpětnou vazbu':'Send feedback','Aplikace':'App','Zpětná vazba':'Feedback',
 'Estudivo · Studijní průměr, materiály a kalendář testů pro studenty. Vážený průměr známek online, zdarma.':'Estudivo · Grade average, materials and a test calendar for students. Weighted grade average online, free.'
   };
+  function norm(s){ return s.replace(/[„“”"]/g,'"').replace(/[‚‘’']/g,"'"); }
+  var ENn={}; Object.keys(EN).forEach(function(k){ ENn[norm(k)]=EN[k]; });
   var nodes=null, attrs=null;
   function snap(){
     nodes=[]; attrs=[];
     var w=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n;
-    while(n=w.nextNode()){ var k=n.nodeValue.trim(); if(k && EN[k]!=null) nodes.push({n:n,cs:n.nodeValue,k:k}); }
+    while(n=w.nextNode()){ var t=n.nodeValue.trim(); var e=t?ENn[norm(t)]:null; if(e!=null) nodes.push({n:n,cs:n.nodeValue,t:t,en:e}); }
     var els=document.querySelectorAll('[placeholder]');
-    for(var i=0;i<els.length;i++){ var v=els[i].getAttribute('placeholder'); if(v && EN[v.trim()]!=null) attrs.push({el:els[i],cs:v,k:v.trim()}); }
+    for(var i=0;i<els.length;i++){ var v=els[i].getAttribute('placeholder'); var e2=v?ENn[norm(v.trim())]:null; if(e2!=null) attrs.push({el:els[i],cs:v,en:e2}); }
   }
   function apply(lang){
     window.LANG=lang; if(!nodes) snap();
-    nodes.forEach(function(o){ o.n.nodeValue = (lang==='en') ? o.cs.replace(o.k, EN[o.k]) : o.cs; });
-    attrs.forEach(function(o){ o.el.setAttribute('placeholder', (lang==='en') ? EN[o.k] : o.cs); });
+    nodes.forEach(function(o){ o.n.nodeValue = (lang==='en') ? o.cs.replace(o.t, o.en) : o.cs; });
+    attrs.forEach(function(o){ o.el.setAttribute('placeholder', (lang==='en') ? o.en : o.cs); });
     var b=document.getElementById('langTgl'); if(b) b.textContent = (lang==='en') ? 'CZ' : 'EN';
     document.documentElement.setAttribute('lang', lang);
   }
