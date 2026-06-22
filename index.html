@@ -257,6 +257,7 @@
       <a href="#faq">Časté dotazy</a>
     </nav>
     <div class="nav-right">
+      <button class="tgl" id="langTgl" aria-label="Language / Jazyk" style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px">EN</button>
       <button class="tgl" id="themeTgl" aria-label="Přepnout světlý/tmavý režim">🌙</button>
       <a class="btn btn-primary" href="/app/">Spočítat průměr</a>
     </div>
@@ -483,9 +484,9 @@
         body:JSON.stringify({message:msg,contact:contact||null,meta:'web landing · '+(navigator.userAgent||'').slice(0,120)})
       }).then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
-        form.reset(); st.className='fb-status ok'; st.textContent='Díky! Zpráva byla odeslaná. 🎉'; st.hidden=false;
+        form.reset(); st.className='fb-status ok'; st.textContent=(window.LANG==='en'?'Thanks! Your message was sent. 🎉':'Díky! Zpráva byla odeslaná. 🎉'); st.hidden=false;
       }).catch(function(){
-        st.className='fb-status err'; st.textContent='Odeslání se teď nepovedlo, zkus to prosím znovu.'; st.hidden=false;
+        st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Sending failed, please try again.':'Odeslání se teď nepovedlo, zkus to prosím znovu.'); st.hidden=false;
       }).finally(function(){ btn.disabled=false; btn.textContent=lbl; });
     });
   })();
@@ -500,6 +501,86 @@
     }).catch(function(){});
   }
   try{ document.getElementById('yr').textContent=new Date().getFullYear(); }catch(e){}
+</script>
+<script>
+(function(){
+  var EN={
+'Funkce':'Features','Jak to funguje':'How it works','Časté dotazy':'FAQ','Spočítat průměr':'Calculate average',
+'🎓 Studijní průměr · zdarma':'🎓 Grade average · free',
+'Spočítej si':'Calculate your','průměr známek':'grade average','za pár vteřin':'in seconds',
+'Estudivo je studentská aplikace na výpočet':'Estudivo is a student app for calculating',
+'váženého průměru známek':'your weighted grade average',
+'. Přidáš známky i s váhami, vidíš průměr v reálném čase a vyzkoušíš si „co kdyby". Materiály a termíny testů sdílíš s celou třídou.':'. Add grades with their weights, watch the average update live, and try "what if". Share materials and test dates with your whole class.',
+'Spočítat průměr známek →':'Calculate grade average →','Import ze Škola OnLine →':'Import from Škola OnLine →',
+'Zdarma a bez reklam':'Free and ad-free',
+'· funguje na mobilu i v počítači · žádná registrace na počítání':'· works on mobile and desktop · no sign-up to calculate',
+'Celkový vážený průměr':'Overall weighted average','z 24 známek · 7 předmětů':'from 24 grades · 7 subjects','1,42':'1.42',
+'Co Estudivo umí':'What Estudivo does','Všechno kolem známek na jednom místě':'Everything about grades in one place',
+'Od výpočtu průměru přes sdílení materiálů až po kalendář písemek pro celou třídu.':'From calculating your average to sharing materials and a test calendar for the whole class.',
+'Vážený průměr':'Weighted average',
+'Každá známka má svou váhu (0,2–1, přesně jako ve škole). Estudivo z nich počítá vážený průměr automaticky a v reálném čase.':'Each grade has its own weight (0.2–1, just like at school). Estudivo calculates the weighted average from them automatically and in real time.',
+'„Co kdyby"':'"What if"',
+'Přidej hypotetickou známku a hned vidíš, jak ti zvedne nebo srazí průměr. Bez rizika, jen na zkoušku.':'Add a hypothetical grade and instantly see how it raises or lowers your average. Risk-free, just to try.',
+'Materiály ve třídě':'Class materials',
+'Nahraj zápisky a testy ke každému předmětu a sdílej je se spolužáky přes čtyřmístný kód třídy.':'Upload notes and tests for each subject and share them with classmates via a four-digit class code.',
+'Kalendář testů':'Test calendar',
+'Sdílený týdenní kalendář, kam celá třída zapisuje termíny písemek. Nikdy tě nepřekvapí test, o kterém jsi nevěděl.':'A shared weekly calendar where the whole class adds test dates. You will never be surprised by a test you did not know about.',
+'Import ze Škola OnLine':'Import from Škola OnLine',
+'Známky si natáhneš přímo ze Škola OnLine – i s váhami a po pololetích. Nemusíš nic přepisovat ručně.':'Pull your grades straight from Škola OnLine – with weights and by semester. No manual retyping.',
+'Funguje offline':'Works offline',
+'Přidej si Estudivo na plochu jako appku (PWA). Běží i bez internetu a tvoje data zůstávají u tebe.':'Add Estudivo to your home screen as an app (PWA). It runs without internet and your data stays with you.',
+'Výpočet krok za krokem':'Step by step','Jak se počítá vážený průměr známek?':'How is a weighted grade average calculated?',
+'Vážený průměr není obyčejný průměr – každá známka se započítá podle své váhy. Estudivo to počítá za tebe, ale tady je vzoreček, kdyby tě zajímal.':'A weighted average is not a plain average – each grade counts by its weight. Estudivo does it for you, but here is the formula if you are curious.',
+'známka₁ × váha₁ + známka₂ × váha₂ + …':'grade₁ × weight₁ + grade₂ × weight₂ + …','váha₁ + váha₂ + …':'weight₁ + weight₂ + …',
+'součet (známka × váha) ÷ součet vah':'sum of (grade × weight) ÷ sum of weights',
+'Příklad:':'Example:','jednička s váhou 1, dvojka s váhou 0,5 a trojka s váhou 0,5.':'a 1 with weight 1, a 2 with weight 0.5, and a 3 with weight 0.5.',
+'(1×1 + 2×0,5 + 3×0,5) ÷ (1 + 0,5 + 0,5) = 3,5 ÷ 2 =':'(1×1 + 2×0.5 + 3×0.5) ÷ (1 + 0.5 + 0.5) = 3.5 ÷ 2 =','1,75':'1.75',
+'Přidej známky':'Add grades','U každého předmětu zadáš známku a její váhu. Můžeš mít dvě pololetí oddělená.':'For each subject, enter a grade and its weight. You can keep two semesters separate.',
+'Vidíš průměr hned':'See the average instantly','Estudivo přepočítá vážený průměr v reálném čase – za předmět i celkově.':'Estudivo recalculates the weighted average in real time – per subject and overall.',
+'Zkus „co kdyby"':'Try "what if"','Přidej hypotetickou známku a podívej se, jak by ti změnila průměr před písemkou.':'Add a hypothetical grade and see how it would change your average before a test.',
+'Sdílej se třídou':'Share with your class','Přihlas se, založ třídu a sdílej materiály i kalendář testů se spolužáky.':'Sign in, create a class, and share materials and the test calendar with classmates.',
+'Co se nejčastěji ptáte':'What people ask most','Je Estudivo zdarma?':'Is Estudivo free?',
+'Ano. Výpočet průměru známek i celá aplikace jsou úplně zdarma a bez reklam.':'Yes. Calculating your grade average and the whole app are completely free and ad-free.',
+'Co je vážený průměr známek?':'What is a weighted grade average?',
+'Vážený průměr je průměr, ve kterém má každá známka svou váhu podle důležitosti – třeba čtvrtletní písemka váží víc než aktivita. Spočítá se jako součet (známka × váha) dělený součtem všech vah.':'A weighted average is one where each grade has a weight by importance – e.g. a term test counts more than class activity. It is the sum of (grade × weight) divided by the sum of all weights.',
+'Jak se počítá vážený průměr?':'How is a weighted average calculated?',
+'Každou známku vynásobíš její váhou, výsledky sečteš a vydělíš součtem vah. Estudivo to dělá automaticky – stačí zadat známku a její váhu a průměr se přepočítá sám.':'Multiply each grade by its weight, add the results, and divide by the sum of weights. Estudivo does it automatically – just enter the grade and its weight and the average updates itself.',
+'Musím se registrovat?':'Do I have to sign up?',
+'Na počítání průměru ne – otevřeš appku a hned počítáš. Účet potřebuješ jen pro sdílení materiálů ve třídě a synchronizaci známek mezi více zařízeními.':'Not to calculate the average – just open the app and start. You only need an account to share class materials and sync grades across devices.',
+'Funguje Estudivo na mobilu?':'Does Estudivo work on mobile?',
+'Ano. Je to webová aplikace (PWA) – otevřeš ji v prohlížeči a můžeš si ji přidat na plochu telefonu jako appku. Funguje i offline.':'Yes. It is a web app (PWA) – open it in your browser and add it to your phone home screen like an app. It works offline too.',
+'Jsou moje známky v bezpečí?':'Are my grades safe?',
+'Známky máš uložené přímo ve svém zařízení. Když se přihlásíš, zálohují se na tvůj účet, takže o ně nepřijdeš. Sdílení ve třídě je dobrovolné a chráněné kódem třídy.':'Your grades are stored on your own device. When you sign in they are backed up to your account so you will not lose them. Class sharing is optional and protected by a class code.',
+'Začni počítat svůj průměr':'Start calculating your average',
+'Přidej první známku nebo si naimportuj známky ze Škola OnLine a za pár vteřin víš, jak na tom jsi.':'Add your first grade or import from Škola OnLine and know where you stand in seconds.',
+'Spočítat průměr →':'Calculate average →',
+'Máš nápad nebo našel chybu?':'Got an idea or found a bug?','Napiš nám zpětnou vazbu':'Send us feedback',
+'Každý nápad i nahlášená chyba pomáhá Estudivo zlepšit. Zpráva je soukromá – uvidí ji jen autor.':'Every idea or bug report helps make Estudivo better. Your message is private – only the author sees it.',
+'Nápad, co zlepšit, nebo chyba…':'An idea, something to improve, or a bug…','tvuj@email.cz (ať ti můžu odpovědět)':'you@email.com (so I can reply)',
+'Odeslat zpětnou vazbu':'Send feedback','Aplikace':'App','Zpětná vazba':'Feedback',
+'Estudivo · Studijní průměr, materiály a kalendář testů pro studenty. Vážený průměr známek online, zdarma.':'Estudivo · Grade average, materials and a test calendar for students. Weighted grade average online, free.'
+  };
+  var nodes=null, attrs=null;
+  function snap(){
+    nodes=[]; attrs=[];
+    var w=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n;
+    while(n=w.nextNode()){ var k=n.nodeValue.trim(); if(k && EN[k]!=null) nodes.push({n:n,cs:n.nodeValue,k:k}); }
+    var els=document.querySelectorAll('[placeholder]');
+    for(var i=0;i<els.length;i++){ var v=els[i].getAttribute('placeholder'); if(v && EN[v.trim()]!=null) attrs.push({el:els[i],cs:v,k:v.trim()}); }
+  }
+  function apply(lang){
+    window.LANG=lang; if(!nodes) snap();
+    nodes.forEach(function(o){ o.n.nodeValue = (lang==='en') ? o.cs.replace(o.k, EN[o.k]) : o.cs; });
+    attrs.forEach(function(o){ o.el.setAttribute('placeholder', (lang==='en') ? EN[o.k] : o.cs); });
+    var b=document.getElementById('langTgl'); if(b) b.textContent = (lang==='en') ? 'CZ' : 'EN';
+    document.documentElement.setAttribute('lang', lang);
+  }
+  window.estSetLang=function(l){ try{ localStorage.setItem('prumer_lang', l); }catch(e){} apply(l); };
+  var saved='cs'; try{ saved=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
+  window.LANG=saved;
+  var b=document.getElementById('langTgl'); if(b) b.onclick=function(){ window.estSetLang(window.LANG==='en'?'cs':'en'); };
+  apply(saved);
+})();
 </script>
 </body>
 </html>
