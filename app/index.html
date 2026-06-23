@@ -1231,7 +1231,7 @@ function load() {
     if (raw) d = JSON.parse(raw);
   } catch(e) {}
   if (!d) {
-    d = { subjects: DEFAULT_SUBJECTS.map((n,i) => ({ id: 's'+i+'_'+Date.now(), name: n, grades: [], open: false })) };
+    d = { subjects: [] };
   }
   return migrate(d);
 }
