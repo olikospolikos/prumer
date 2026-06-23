@@ -232,6 +232,12 @@
   .fb-status.ok{ color:var(--good); }
   .fb-status.err{ color:#e25c5c; }
 
+  /* kalkulačka na webu (iframe) */
+  .hero-lite{ max-width:680px; margin:0 auto; text-align:center; padding:54px 0 22px; }
+  .hero-lite .lead{ margin:18px auto 0; }
+  .calc-sec{ margin:0 0 26px; }
+  #calcFrame{ width:100%; border:0; display:block; min-height:660px; background:transparent; border-radius:18px; }
+
   /* reveal */
   .rev{ opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
   .rev.in{ opacity:1; transform:none; }
@@ -259,7 +265,7 @@
     <div class="nav-right">
       <button class="tgl" id="langTgl" aria-label="Language / Jazyk" style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px">EN</button>
       <button class="tgl" id="themeTgl" aria-label="Přepnout světlý/tmavý režim">🌙</button>
-      <a class="btn btn-primary" href="/app/">Spočítat průměr</a>
+      <a class="btn btn-primary" href="#calc">Spočítat průměr</a>
     </div>
   </div>
 </header>
@@ -268,39 +274,13 @@
 <div class="wrap">
 
   <!-- HERO -->
-  <section class="hero">
-    <div class="hero-copy">
-      <span class="eyebrow rev">🎓 Studijní průměr · zdarma</span>
-      <h1 class="rev">Spočítej si <span class="mark">průměr známek</span> za pár vteřin</h1>
-      <p class="lead rev">Estudivo je studentská aplikace na výpočet <b>váženého průměru známek</b>. Přidáš známky i s váhami, vidíš průměr v reálném čase a vyzkoušíš si „co kdyby“. Materiály a termíny testů sdílíš s celou třídou.</p>
-      <div class="cta-row rev">
-        <a class="btn btn-primary btn-lg" href="/app/">Spočítat průměr známek →</a>
-        <a class="btn btn-ghost btn-lg" href="/app/">Import ze Škola OnLine →</a>
-      </div>
-      <div class="trust rev"><span>✦</span> <b>Zdarma a bez reklam</b> · funguje na mobilu i v počítači · žádná registrace na počítání</div>
-    </div>
-
-    <div class="hero-visual rev">
-      <div class="avg-card">
-        <div class="tex">
-          <span style="top:-10px;left:8%;font-size:54px;transform:rotate(-8deg)">2</span>
-          <span style="bottom:-16px;right:10%;font-size:60px;transform:rotate(7deg)">1</span>
-          <span style="top:40%;right:30%;font-size:30px;transform:rotate(-4deg)">3</span>
-        </div>
-        <div class="avg-head">
-          <svg class="cap" viewBox="0 0 40 30" aria-hidden="true">
-            <path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>
-            <path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>
-            <path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            <circle cx="35" cy="22.6" r="2" fill="currentColor"/>
-          </svg>
-          <span class="avg-lbl">Celkový vážený průměr</span>
-        </div>
-        <div class="avg-num">1,42</div>
-        <div class="avg-sub">z 24 známek · 7 předmětů</div>
-        <div class="avg-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      </div>
-    </div>
+  <section class="hero-lite">
+    <span class="eyebrow rev">🎓 Studijní průměr · zdarma</span>
+    <h1 class="rev">Spočítej si <span class="mark">průměr známek</span> rovnou tady</h1>
+    <p class="lead rev">Přidej známky i s váhami nebo si je naimportuj ze <b>Škola OnLine</b> a hned vidíš svůj vážený průměr. Zdarma, bez registrace, data zůstávají v tvém prohlížeči.</p>
+  </section>
+  <section id="calc" class="calc-sec rev">
+    <iframe id="calcFrame" src="/app/?calc" title="Kalkulačka průměru známek" scrolling="no" loading="lazy"></iframe>
   </section>
 
   <!-- FUNKCE -->
@@ -501,13 +481,16 @@
     }).catch(function(){});
   }
   try{ document.getElementById('yr').textContent=new Date().getFullYear(); }catch(e){}
+  window.addEventListener('message', function(e){ if(e.data && e.data.estH){ var f=document.getElementById('calcFrame'); if(f) f.style.height=(e.data.estH+8)+'px'; } });
 </script>
 <script>
 (function(){
   var EN={
 'Funkce':'Features','Jak to funguje':'How it works','Časté dotazy':'FAQ','Spočítat průměr':'Calculate average',
 '🎓 Studijní průměr · zdarma':'🎓 Grade average · free',
-'Spočítej si':'Calculate your','průměr známek':'grade average','za pár vteřin':'in seconds',
+'Spočítej si':'Calculate your','průměr známek':'grade average','za pár vteřin':'in seconds','rovnou tady':'right here',
+'Přidej známky i s váhami nebo si je naimportuj ze':'Add grades with their weights or import them from',
+'a hned vidíš svůj vážený průměr. Zdarma, bez registrace, data zůstávají v tvém prohlížeči.':'and instantly see your weighted average. Free, no sign-up, your data stays in your browser.',
 'Estudivo je studentská aplikace na výpočet':'Estudivo is a student app for calculating',
 'váženého průměru známek':'your weighted grade average',
 '. Přidáš známky i s váhami, vidíš průměr v reálném čase a vyzkoušíš si „co kdyby". Materiály a termíny testů sdílíš s celou třídou.':'. Add grades with their weights, watch the average update live, and try "what if". Share materials and test dates with your whole class.',

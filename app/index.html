@@ -840,6 +840,10 @@
   .notif-item:active{ background:var(--bg-elev); }
   .notif-ic{ font-size:20px; flex:0 0 auto; }
   .notif-tx{ font-size:14px; line-height:1.35; }
+  /* calc režim (vložení na web přes iframe) — jen výpočet, bez tříd/profilu */
+  body.embed .tabbar, body.embed #bell, body.embed .theme-toggle{ display:none !important; }
+  body.embed{ padding-bottom:24px !important; max-width:none; }
+  body.embed header{ padding-top:18px; }
 
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
@@ -3418,6 +3422,14 @@ if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
 });
 
 applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
+// calc režim: appka vložená na webu přes iframe (?calc) — schová třídy/profil, posílá výšku rodiči
+if(/[?&](calc|embed)/.test(location.search)){
+  document.body.classList.add('embed');
+  var _postH=function(){ try{ parent.postMessage({ estH: document.documentElement.scrollHeight }, '*'); }catch(e){} };
+  window.addEventListener('load', _postH);
+  try{ new ResizeObserver(_postH).observe(document.body); }catch(e){}
+  setInterval(_postH, 1000);
+}
 initMaterials();
 renderSolStatus();
 solAutoSync();   // tichá aktualizace při otevření
