@@ -841,9 +841,9 @@
   .notif-ic{ font-size:20px; flex:0 0 auto; }
   .notif-tx{ font-size:14px; line-height:1.35; }
   /* calc režim (vložení na web přes iframe) — jen výpočet, bez tříd/profilu */
-  body.embed .tabbar, body.embed #bell, body.embed .theme-toggle{ display:none !important; }
-  body.embed{ padding-bottom:24px !important; max-width:none; }
-  body.embed header{ padding-top:18px; }
+  body.embed .tabbar, body.embed #bell, body.embed .theme-toggle, body.embed #pageGrades > header{ display:none !important; }
+  body.embed{ min-height:0 !important; padding:4px 0 10px !important; background:transparent !important; }
+  body.embed .overall{ margin-top:2px; }
 
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
@@ -3425,10 +3425,10 @@ applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
 // calc režim: appka vložená na webu přes iframe (?calc) — schová třídy/profil, posílá výšku rodiči
 if(/[?&](calc|embed)/.test(location.search)){
   document.body.classList.add('embed');
-  var _postH=function(){ try{ parent.postMessage({ estH: document.documentElement.scrollHeight }, '*'); }catch(e){} };
+  var _postH=function(){ try{ var h=Math.ceil(document.body.getBoundingClientRect().height); parent.postMessage({ estH: h }, '*'); }catch(e){} };
   window.addEventListener('load', _postH);
   try{ new ResizeObserver(_postH).observe(document.body); }catch(e){}
-  setInterval(_postH, 1000);
+  [150,500,1200].forEach(function(t){ setTimeout(_postH, t); });
 }
 initMaterials();
 renderSolStatus();
