@@ -842,8 +842,12 @@
   .notif-tx{ font-size:14px; line-height:1.35; }
   /* calc režim (vložení na web přes iframe) — jen výpočet, bez tříd/profilu */
   body.embed .tabbar, body.embed #bell, body.embed .theme-toggle, body.embed #pageGrades > header{ display:none !important; }
-  body.embed{ min-height:0 !important; padding:4px 0 10px !important; background:transparent !important; }
+  body.embed{ min-height:0 !important; max-width:1060px !important; padding:4px 0 10px !important; background:transparent !important; }
   body.embed .overall{ margin-top:2px; }
+  body.embed .embed-grid{ display:grid; grid-template-columns:minmax(0,0.82fr) minmax(0,1.18fr); gap:6px 22px; align-items:start; }
+  body.embed .ec-col{ min-width:0; }
+  body.embed .ec-col > *{ margin-left:0 !important; margin-right:0 !important; }
+  @media(max-width:760px){ body.embed .embed-grid{ grid-template-columns:1fr; } }
 
   /* ============ členové třídy ============ */
   .mem-list{ display:flex; flex-direction:column; gap:8px; margin:0 16px 20px; }
@@ -3425,6 +3429,21 @@ applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
 // calc režim: appka vložená na webu přes iframe (?calc) — schová třídy/profil, posílá výšku rodiči
 if(/[?&](calc|embed)/.test(location.search)){
   document.body.classList.add('embed');
+  (function(){
+    var pg=document.getElementById('pageGrades'); var subjects=document.getElementById('subjects');
+    if(!pg || !subjects) return;
+    var overall=pg.querySelector('.overall'), calc=pg.querySelector('.calc'), sol=pg.querySelector('button[onclick="openSolSheet()"]'), solStatus=document.getElementById('solStatus');
+    var subjLabel=subjects.previousElementSibling; if(subjLabel && !subjLabel.classList.contains('section-label')) subjLabel=null;
+    var addSubj=subjects.nextElementSibling; if(addSubj && !addSubj.classList.contains('add-subject')) addSubj=null;
+    var sem=pg.querySelector('.sem-toggle');
+    var grid=document.createElement('div'); grid.className='embed-grid';
+    var left=document.createElement('div'); left.className='ec-col';
+    var right=document.createElement('div'); right.className='ec-col';
+    [overall, sol, solStatus, calc].forEach(function(el){ if(el) left.appendChild(el); });
+    [subjLabel, subjects, addSubj].forEach(function(el){ if(el) right.appendChild(el); });
+    grid.appendChild(left); grid.appendChild(right);
+    if(sem && sem.parentNode===pg) pg.insertBefore(grid, sem.nextSibling); else pg.insertBefore(grid, pg.firstChild);
+  })();
   var _postH=function(){ try{ var h=Math.ceil(document.body.getBoundingClientRect().height); parent.postMessage({ estH: h }, '*'); }catch(e){} };
   window.addEventListener('load', _postH);
   try{ new ResizeObserver(_postH).observe(document.body); }catch(e){}
