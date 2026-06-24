@@ -3222,10 +3222,14 @@ function deleteFolder(f){
 }
 
 /* ---- náhled souboru ---- */
-function openPreview(r){
+// bucket materialy je PRIVÁTNÍ → dočasný podepsaný odkaz jen pro přihlášené členy (5 min)
+async function fileSignedUrl(path){
+  const c = getSB(); if(!c) return '';
+  try { const sg = await c.storage.from(SB_BUCKET).createSignedUrl(path, 300); return (sg && sg.data && sg.data.signedUrl) || ''; } catch(e){ return ''; }
+}
+async function openPreview(r){
   const c = getSB(); if(!c) return;
-  let url = '';
-  try { const pu = c.storage.from(SB_BUCKET).getPublicUrl(r.path); url = pu && pu.data && pu.data.publicUrl; } catch(e){}
+  const url = await fileSignedUrl(r.path);
   const ext = (r.name || r.path || '').split('.').pop().toLowerCase();
   document.getElementById('previewName').textContent = r.name || '';
   const body = document.getElementById('previewBody');
@@ -3450,8 +3454,7 @@ async function uploadFiles(fileList){
 async function downloadFile(r){
   const c = getSB(); if(!c) return;
   try {
-    const pu = c.storage.from(SB_BUCKET).getPublicUrl(r.path);
-    const url = pu && pu.data && pu.data.publicUrl;
+    const url = await fileSignedUrl(r.path);
     if(url) window.open(url, '_blank');
     else alertDialog('Nelze otevřít','Odkaz se nepodařilo získat.');
   } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
