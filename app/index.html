@@ -2157,7 +2157,7 @@ async function appendFriends(wrap){
     h+='<div class="mem-row" '+(x.me?'style="cursor:default;border-color:var(--accent)"':'data-fid="'+x.id+'" style="cursor:pointer"')+'><span style="flex:0 0 16px;font-family:Outfit,sans-serif;font-weight:800;color:var(--ink-faint);font-size:13px">'+(i+1)+'</span>'+av+'<span class="mem-name">'+esc(x.name||'Beze jména')+(x.me?' (ty)':'')+'</span><span style="flex:0 0 auto;font-family:Outfit,sans-serif;font-weight:800;color:'+col+'">'+val+'</span></div>';
   });
   fb.innerHTML=h;
-  fb.querySelectorAll('[data-fid]').forEach(function(el){ el.onclick=function(){ openMemberProfile(el.getAttribute('data-fid')); }; });
+  fb.querySelectorAll('[data-fid]').forEach(function(el){ el.onclick=function(){ openMemberProfile(el.getAttribute('data-fid'), false); }; });
   fb.querySelectorAll('.fr-acc').forEach(function(b){ b.onclick=function(){ acceptFriend(b.getAttribute('data-id')); }; });
   fb.querySelectorAll('.fr-dec').forEach(function(b){ b.onclick=function(){ declineFriend(b.getAttribute('data-id')); }; });
 }
@@ -2656,13 +2656,13 @@ async function renderMembers(box){
     const av = m.avatar_url ? '<img class="mem-av" src="'+esc(m.avatar_url)+'" alt="">'
                             : '<div class="mem-av mem-av-ph">'+init+'</div>';
     const admin = m.adm ? '<span class="mem-admin">admin</span>' : '';
-    html += '<div class="mem-row" onclick="openMemberProfile(\''+m.id+'\')">'+av+'<span class="mem-name">'+nm+'</span>'+admin+'<span class="mem-chev">›</span></div>';
+    html += '<div class="mem-row" onclick="openMemberProfile(\''+m.id+'\', true)">'+av+'<span class="mem-name">'+nm+'</span>'+admin+'<span class="mem-chev">›</span></div>';
   });
   html += '</div>';
   box.innerHTML = html;
 }
 
-async function openMemberProfile(id){
+async function openMemberProfile(id, inClass){
   const c = getSB(); if(!c) return;
   const body = document.getElementById('memberBody'); if(!body) return;
   body.innerHTML = skelRows(2);
@@ -2670,9 +2670,10 @@ async function openMemberProfile(id){
   try {
     const r = await c.from('profiles').select('*').eq('id', id).maybeSingle();
     const p = (r.error ? null : r.data) || {};
+    // admin je per-třída → ukazuj ho jen když je profil otevřený ZE třídy, ne z přátel
     let targetAdm = false;
-    try { const cr = await c.from('clenove').select('is_admin').eq('code', mat.code).eq('user_id', id).maybeSingle(); targetAdm = !!(cr.data && cr.data.is_admin); } catch(e){}
-    const memberIsAdmin = (id === mat.owner) || targetAdm;
+    if(inClass){ try { const cr = await c.from('clenove').select('is_admin').eq('code', mat.code).eq('user_id', id).maybeSingle(); targetAdm = !!(cr.data && cr.data.is_admin); } catch(e){} }
+    const memberIsAdmin = inClass && ((id === mat.owner) || targetAdm);
     let friendCount = 0;
     try { const fc = await c.from('pratele').select('id', { count:'exact', head:true }).eq('status','accepted').or('requester.eq.'+id+',addressee.eq.'+id); friendCount = fc.count || 0; } catch(e){}
     const rel = await relationWith(id);
@@ -2701,7 +2702,7 @@ async function openMemberProfile(id){
           +'<span class="cmp-v" style="color:'+(thA!=null?markColor(thA):'var(--ink-faint)')+'">'+(thA!=null?fmt(thA):'—')+'</span></div>'; });
       const d=document.createElement('div'); d.innerHTML=cmp; body.appendChild(d);
     }
-    if(isClassAdmin() && id !== mat.owner && id !== (authUser && authUser.id)){
+    if(inClass && isClassAdmin() && id !== mat.owner && id !== (authUser && authUser.id)){
       const btn = document.createElement('button');
       btn.className = 'btn ' + (targetAdm ? 'btn-ghost' : 'btn-primary');
       btn.style.cssText = 'width:100%;margin-top:6px';
