@@ -859,6 +859,20 @@
   .mem-av-ph{ display:grid; place-items:center; background:var(--accent-soft); color:var(--accent); font-family:'Outfit',sans-serif; font-weight:800; font-size:14px; }
   .mem-name{ flex:1; min-width:0; font-size:14px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .mem-admin{ flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); border:1px solid rgba(var(--accent-rgb),0.35); border-radius:6px; padding:2px 8px; }
+  /* ---- skeleton loadery (místo „Načítám…") ---- */
+  .skel{ position:relative; overflow:hidden; background:var(--bg-elev2); border-radius:8px; }
+  .skel::after{ content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent); animation:skelShim 1.2s infinite; }
+  :root[data-theme="light"] .skel::after{ background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent); }
+  @keyframes skelShim{ 100%{ transform:translateX(100%); } }
+  .skel-row{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin:0 16px 8px; box-shadow:var(--shadow-sm); }
+  .skel-av{ width:32px; height:32px; border-radius:50%; flex-shrink:0; }
+  .skel-lines{ flex:1; display:flex; flex-direction:column; gap:7px; }
+  .skel-l1{ height:11px; width:58%; }
+  .skel-l2{ height:9px; width:34%; }
+  .skel-week{ display:flex; flex-direction:column; gap:8px; padding:0 16px; }
+  .skel-day{ height:48px; border-radius:12px; }
+  @media(prefers-reduced-motion:reduce){ .skel::after{ animation:none; } }
+  .cal-chip.pending{ opacity:0.5; }
   /* sdílení karty průměru */
   .hero-share{ position:absolute; bottom:14px; right:14px; z-index:2; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:grid; place-items:center; background:rgba(0,0,0,0.14); color:var(--hero-ink); }
   .hero-share:active{ background:rgba(0,0,0,0.22); }
@@ -1243,6 +1257,13 @@ function save() {
 
 function gradesOf(s) { return s.grades.filter(g => g.sem === data.sem); }
 function plur(n, one, few, many) { return n===1 ? one : (n>=2 && n<=4 ? few : many); }
+/* ---- skeleton loadery ---- */
+function skelRows(n){ var s=''; for(var i=0;i<(n||3);i++) s+='<div class="skel-row"><div class="skel skel-av"></div><div class="skel-lines"><div class="skel skel-l1"></div><div class="skel skel-l2"></div></div></div>'; return s; }
+function skelWeek(){ var s='<div class="skel-week">'; for(var i=0;i<5;i++) s+='<div class="skel skel-day"></div>'; return s+'</div>'; }
+/* ---- cache seznamu tříd (instant navigace) ---- */
+function myClassCacheKey(){ return (typeof authUser!=='undefined' && authUser) ? 'prumer_myclasses_'+authUser.id : null; }
+function myClassCacheGet(){ try{ var k=myClassCacheKey(); if(!k) return null; var r=localStorage.getItem(k); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function myClassCacheSet(list){ try{ var k=myClassCacheKey(); if(k) localStorage.setItem(k, JSON.stringify(list||[])); }catch(e){} }
 
 function setSem(n){ data.sem = n; save(); render(); }
 function updateSemUI(){
@@ -2091,7 +2112,7 @@ async function appendFriends(wrap){
   const box=document.createElement('div'); box.className='accent-pick';
   box.innerHTML='<div class="accent-pick-t">Přátelé</div>'
     +'<button class="btn btn-primary" id="friendInviteBtn" style="width:100%">+ Pozvat přátele</button>'
-    +'<div id="friendBody" style="margin-top:12px"><div class="empty" style="color:var(--ink-faint);font-size:13px;text-align:center">Načítám…</div></div>';
+    +'<div id="friendBody" style="margin-top:12px">'+skelRows(2)+'</div>';
   wrap.appendChild(box);
   box.querySelector('#friendInviteBtn').onclick=openFriendInvite;
   const fb=box.querySelector('#friendBody');
@@ -2392,9 +2413,11 @@ async function loadMyClasses(){
   try {
     const r = await c.from('clenove').select('code').eq('user_id', authUser.id);
     const codes = [...new Set((r.error?[]:(r.data||[])).map(x=>x.code))];
-    if(!codes.length) return [];
+    if(!codes.length){ myClassCacheSet([]); return []; }
     const tr = await c.from('tridy').select('code,name').in('code', codes);
-    return tr.error ? [] : (tr.data||[]);
+    const list = tr.error ? [] : (tr.data||[]);
+    if(!tr.error) myClassCacheSet(list);
+    return list;
   } catch(e){ return []; }
 }
 async function renderMatList(wrap, h1){
@@ -2405,18 +2428,23 @@ async function renderMatList(wrap, h1){
   add.onclick = ()=>{ mat.view = 'gate'; renderMaterials(); };
   wrap.appendChild(add);
   const listBox = document.createElement('div'); listBox.id = 'myClasses';
-  listBox.innerHTML = '<div class="empty" style="padding:20px;text-align:center;color:var(--ink-faint)">Načítám…</div>';
   wrap.appendChild(listBox);
-  const classes = await loadMyClasses();
-  if(!classes.length){ listBox.innerHTML = ''; listBox.appendChild(matNotice('Zatím v žádné třídě','Připoj se přes kód nebo si vyber veřejnou třídu — tlačítkem „Přidat třídu" nahoře.')); return; }
-  let html = '<div class="section-label" style="padding:4px 16px 10px">Moje třídy ('+classes.length+')</div><div class="mem-list">';
-  classes.forEach(t=>{
-    const init = esc(((t.name||'?').trim().charAt(0)||'?').toUpperCase());
-    html += '<div class="mem-row myclass-row" data-code="'+esc(t.code)+'"><div class="mem-av mem-av-ph">'+init+'</div><span class="mem-name">'+esc(t.name||'Třída')+'</span><span class="myclass-code">'+esc(t.code)+'</span><span class="mem-chev">›</span></div>';
-  });
-  html += '</div>';
-  listBox.innerHTML = html;
-  listBox.querySelectorAll('.myclass-row').forEach(r=> r.onclick = ()=> enterClass(r.getAttribute('data-code')));
+  const paint = (classes)=>{
+    if(!classes.length){ listBox.innerHTML = ''; listBox.appendChild(matNotice('Zatím v žádné třídě','Připoj se přes kód nebo si vyber veřejnou třídu — tlačítkem „Přidat třídu" nahoře.')); return; }
+    let html = '<div class="section-label" style="padding:4px 16px 10px">Moje třídy ('+classes.length+')</div><div class="mem-list">';
+    classes.forEach(t=>{
+      const init = esc(((t.name||'?').trim().charAt(0)||'?').toUpperCase());
+      html += '<div class="mem-row myclass-row" data-code="'+esc(t.code)+'"><div class="mem-av mem-av-ph">'+init+'</div><span class="mem-name">'+esc(t.name||'Třída')+'</span><span class="myclass-code">'+esc(t.code)+'</span><span class="mem-chev">›</span></div>';
+    });
+    html += '</div>';
+    listBox.innerHTML = html;
+    listBox.querySelectorAll('.myclass-row').forEach(r=> r.onclick = ()=> enterClass(r.getAttribute('data-code')));
+  };
+  // caching: hned vykresli poslední známý seznam, jinak skeleton
+  const cached = myClassCacheGet();
+  if(cached && cached.length){ paint(cached); } else { listBox.innerHTML = skelRows(3); }
+  const classes = await loadMyClasses();   // na pozadí refresh (zapíše i cache)
+  paint(classes);
 }
 function leaveClass(){
   confirmDialog('Opustit třídu?', 'Přestaneš být členem třídy '+(mat.name||'')+'. Můžeš se kdykoli zase připojit.', 'Opustit', async ()=>{
@@ -2618,7 +2646,7 @@ async function renderMembers(box){
 async function openMemberProfile(id){
   const c = getSB(); if(!c) return;
   const body = document.getElementById('memberBody'); if(!body) return;
-  body.innerHTML = '<div class="empty">Načítám…</div>';
+  body.innerHTML = skelRows(2);
   showSheet('member');
   try {
     const r = await c.from('profiles').select('*').eq('id', id).maybeSingle();
@@ -2840,7 +2868,7 @@ function renderMatCalendar(wrap){
   wrap.appendChild(nav);
 
   const week = document.createElement('div'); week.id='calWeek'; week.className='cal-week';
-  week.innerHTML = '<div class="empty">Načítám…</div>';
+  week.innerHTML = skelWeek();
   wrap.appendChild(week);
 
   function updateLabel(){
@@ -2891,9 +2919,9 @@ function drawWeek(){
     if(dayTests.length){
       dayTests.forEach(r=>{
         const chip = document.createElement('div');
-        chip.className = 'cal-chip';
+        chip.className = 'cal-chip' + (r._pending ? ' pending' : '');
         chip.innerHTML = '<div class="cal-chip-meta"><div class="cal-chip-subj">'+esc(r.subject||'')+'</div>'+(r.theme?'<div class="cal-chip-theme">'+esc(r.theme)+'</div>':'')+'</div>';
-        if(canManage(r)){
+        if(!r._pending && canManage(r)){
           const del = document.createElement('button');
           del.className = 'cal-chip-del'; del.textContent = '×'; del.setAttribute('aria-label','Smazat');
           del.onclick = (e)=>{ e.stopPropagation(); deleteTest(r); };
@@ -2937,22 +2965,36 @@ async function saveTest(){
   const theme = document.getElementById('testTheme').value.trim();
   if(!date){ alertDialog('Chybí datum','Vyber, kdy se test píše.'); return; }
   const c = getSB(); if(!c) return;
+  // optimistic: zavři sheet a hned ukaž test v kalendáři, ulož na pozadí
+  closeTestSheet();
+  const temp = { id:'tmp_'+Date.now(), code:mat.code, date, subject, theme, owner:currentOwner(), _pending:true };
+  calRows.push(temp); drawWeek();
   try {
-    const ins = await c.from('kalendar').insert({ code:mat.code, date, subject, theme, owner:currentOwner() });
+    const ins = await c.from('kalendar').insert({ code:mat.code, date, subject, theme, owner:currentOwner() }).select();
     if(ins.error) throw ins.error;
-    closeTestSheet(); loadTests();
-  } catch(e){ alertDialog('Uložení selhalo', String((e&&e.message)||e)); }
+    const real = (ins.data && ins.data[0]) ? ins.data[0] : null;
+    const i = calRows.indexOf(temp);
+    if(real && i>-1){ calRows[i] = real; drawWeek(); } else { loadTests(); }
+  } catch(e){
+    const i = calRows.indexOf(temp); if(i>-1){ calRows.splice(i,1); drawWeek(); }
+    alertDialog('Uložení selhalo', String((e&&e.message)||e));
+  }
 }
 
 function deleteTest(r){
   if(!canManage(r)){ alertDialog('Nelze smazat','Smazat test může jen jeho autor nebo admin třídy.'); return; }
   confirmDialog('Smazat test?', (r.subject||'') + (r.theme ? ' · '+r.theme : ''), 'Smazat', async ()=>{
     const c = getSB(); if(!c) return;
+    // optimistic: smaž z kalendáře hned, při chybě vrať zpět
+    const i = calRows.indexOf(r);
+    if(i>-1){ calRows.splice(i,1); drawWeek(); }
     try {
       const del = await c.from('kalendar').delete().eq('id', r.id);
       if(del.error) throw del.error;
-      loadTests();
-    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
+    } catch(e){
+      if(i>-1){ calRows.splice(i,0,r); drawWeek(); }
+      alertDialog('Mazání selhalo', String((e&&e.message)||e));
+    }
   });
 }
 
@@ -3012,7 +3054,7 @@ function renderMatSubject(wrap, h1){
 
   const list = document.createElement('div');
   list.id = 'matList'; list.className = 'mat-list';
-  list.innerHTML = '<div class="empty">Načítám…</div>';
+  list.innerHTML = skelRows(3);
   wrap.appendChild(list);
   loadMatItems();
 }
@@ -3327,7 +3369,7 @@ async function updateNotifBadge(){
 }
 async function openNotif(){
   showSheet('notif');
-  const body=document.getElementById('notifBody'); body.innerHTML='<div class="empty" style="color:var(--ink-faint);text-align:center;padding:22px">Načítám…</div>';
+  const body=document.getElementById('notifBody'); body.innerHTML=skelRows(3);
   const items=await loadNotifications();
   if(items.length){
     body.innerHTML=items.map(function(i){ return '<button class="notif-item" data-go="'+i.go+'"><span class="notif-ic">'+i.icon+'</span><span class="notif-tx">'+esc(i.text)+'</span></button>'; }).join('');
@@ -3523,6 +3565,29 @@ window.addEventListener('load', ()=>{
   var mo=new MutationObserver(function(muts){ for(var j=0;j<muts.length;j++){ var an=muts[j].addedNodes; for(var i=0;i<an.length;i++) trEl(an[i]); } });
   function start(){ trEl(document.body); mo.observe(document.body,{childList:true,subtree:true}); document.documentElement.setAttribute('lang','en'); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+</script>
+<script>
+/* Tooltipy: u ikon-only tlačítek zrcadli aria-label do title (hover popisek) */
+(function(){
+  function mirror(el){
+    if(!el || el.nodeType!==1 || !el.getAttribute) return;
+    var al = el.getAttribute('aria-label'); if(!al) return;
+    if(el.hasAttribute('title')) return;
+    var txt = (el.textContent||'').replace(/\s+/g,'');
+    if(txt.length<=2) el.title = al;   // jen ikon-only (prázdný/symbolový obsah)
+  }
+  function scan(root){
+    if(!root) return;
+    if(root.nodeType===1) mirror(root);
+    if(root.querySelectorAll){ var q=root.querySelectorAll('[aria-label]'); for(var i=0;i<q.length;i++) mirror(q[i]); }
+  }
+  function run(){
+    scan(document.body);
+    var mo=new MutationObserver(function(muts){ for(var j=0;j<muts.length;j++){ var an=muts[j].addedNodes; for(var i=0;i<an.length;i++) scan(an[i]); } });
+    mo.observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
 })();
 </script>
 </body>
