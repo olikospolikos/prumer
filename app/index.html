@@ -1210,6 +1210,21 @@
 </nav>
 
 <script>
+/* ---- monitoring chyb (zachytí pády appky, drží posledních 20 v localStorage) ---- */
+(function(){
+  function rec(kind, msg, src){
+    try{
+      var arr = JSON.parse(localStorage.getItem('prumer_errors')||'[]');
+      arr.push({ t:new Date().toISOString(), kind:kind, msg:String(msg||'').slice(0,300), src:String(src||'').slice(0,200) });
+      while(arr.length>20) arr.shift();
+      localStorage.setItem('prumer_errors', JSON.stringify(arr));
+    }catch(e){}
+    try{ console.warn('[Estudivo]', kind, msg); }catch(e){}
+  }
+  window.addEventListener('error', function(e){ rec('error', e&&e.message, e&&(e.filename+':'+e.lineno)); });
+  window.addEventListener('unhandledrejection', function(e){ var r=e&&e.reason; rec('promise', r&&(r.message||r), ''); });
+  window.estErrors = function(){ try{ return JSON.parse(localStorage.getItem('prumer_errors')||'[]'); }catch(e){ return []; } };
+})();
 const STORE_KEY = 'prumer_data_v1';
 const WEIGHTS = [
   { v: 1,   l: 'Velká (1)' },
@@ -1663,7 +1678,10 @@ async function sendFeedback(){
   const msg = document.getElementById('fbMessage').value.trim();
   const contact = document.getElementById('fbContact').value.trim();
   if(!msg){ alertDialog('Prázdná zpráva','Napiš prosím nejdřív zprávu.'); return; }
+  if(msg.length > 2000){ alertDialog('Moc dlouhé','Zkrať prosím zprávu (max 2000 znaků).'); return; }
   if(!contact || contact.indexOf('@')<1){ alertDialog('Chybí e-mail','Vyplň prosím svůj e-mail, ať ti autor může odpovědět.'); return; }
+  // rate-limit: neodesílej víc než jednou za 20 s (ochrana proti spamu)
+  try{ var fbLast=+(localStorage.getItem('prumer_fb_last')||0); if(Date.now()-fbLast < 20000){ alertDialog('Chvilku počkej','Zpětnou vazbu pošli zase za chvíli — ať to neodešleš omylem dvakrát.'); return; } }catch(e){}
   const c = getSB();
   if(!c){ alertDialog('Není připojení','Odeslání potřebuje cloud (Supabase).'); return; }
   const btn = document.getElementById('fbBtn'); const label = btn.textContent;
@@ -1672,6 +1690,7 @@ async function sendFeedback(){
     const meta = 'uid=' + uid() + (mat.code ? (' třída=' + mat.code) : '') + ' · ' + (navigator.userAgent || '').slice(0,120);
     const ins = await c.from('feedback').insert({ message: msg, contact: contact || null, meta });
     if(ins.error) throw ins.error;
+    try{ localStorage.setItem('prumer_fb_last', String(Date.now())); }catch(e){}
     closeFeedbackSheet();
     alertDialog('Děkuju!', 'Zpráva byla odeslaná. Díky za zpětnou vazbu!');
   } catch(e){

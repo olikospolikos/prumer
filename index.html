@@ -476,7 +476,9 @@
       var contact=document.getElementById('fbContact').value.trim();
       var st=document.getElementById('fbStatus'); var btn=document.getElementById('fbBtn');
       if(!msg) return;
+      if(msg.length>2000){ st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Message is too long (max 2000).':'Zpráva je moc dlouhá (max 2000 znaků).'); st.hidden=false; return; }
       if(!contact || contact.indexOf('@')<1){ st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Please enter your email.':'Vyplň prosím svůj e-mail.'); st.hidden=false; return; }
+      try{ var last=+(localStorage.getItem('prumer_fb_last')||0); if(Date.now()-last<20000){ st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Please wait a moment before sending again.':'Chvilku počkej, než pošleš znovu.'); st.hidden=false; return; } }catch(e){}
       var lbl=btn.textContent; btn.disabled=true; btn.textContent='Odesílám…'; st.hidden=true;
       fetch(SB_URL+'/rest/v1/feedback',{
         method:'POST',
@@ -484,6 +486,7 @@
         body:JSON.stringify({message:msg,contact:contact||null,meta:'web landing · '+(navigator.userAgent||'').slice(0,120)})
       }).then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
+        try{ localStorage.setItem('prumer_fb_last', String(Date.now())); }catch(e){}
         form.reset(); st.className='fb-status ok'; st.textContent=(window.LANG==='en'?'Thanks! Your message was sent. 🎉':'Díky! Zpráva byla odeslaná. 🎉'); st.hidden=false;
       }).catch(function(){
         st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Sending failed, please try again.':'Odeslání se teď nepovedlo, zkus to prosím znovu.'); st.hidden=false;
