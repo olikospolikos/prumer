@@ -150,8 +150,8 @@
   .avg-num{ font-family:'Fraunces',serif; font-weight:600; font-size:84px; line-height:1; margin:14px 0 2px; color:#241a02; position:relative; }
   .avg-sub{ font-weight:600; font-size:14px; color:#6b5212; position:relative; }
   .avg-bars{ display:flex; gap:6px; margin-top:18px; position:relative; }
-  .avg-bars i{ flex:1; height:7px; border-radius:6px; background:rgba(255,255,255,0.45); transition:background .25s; }
-  .avg-bars i.on{ background:rgba(36,26,2,0.55); }
+  .avg-bars i{ flex:1; height:7px; border-radius:6px; background:rgba(255,255,255,0.45); }
+  .avg-bars i:nth-child(-n+5){ background:rgba(36,26,2,0.55); }
   @media(max-width:860px){
     .hero{ grid-template-columns:1fr; gap:36px; padding:48px 0 36px; text-align:center; }
     .eyebrow{ }
@@ -232,31 +232,6 @@
   .fb-status.ok{ color:var(--good); }
   .fb-status.err{ color:#e25c5c; }
 
-  /* ---------- KALKULAČKA (nativní, přímo na webu) ---------- */
-  .calc-hero{ align-items:start; padding:64px 0 52px; }
-  .calc-rows{ display:flex; flex-direction:column; gap:10px; margin-top:28px; }
-  .crow{ display:flex; align-items:center; gap:10px; background:var(--bg-elev); border:1px solid var(--line);
-         border-radius:14px; padding:10px 12px; box-shadow:var(--shadow); }
-  .crow select{ font-family:inherit; font-size:15px; color:var(--ink); background:var(--bg-elev2);
-                border:1px solid var(--line); border-radius:10px; padding:9px 30px 9px 11px; cursor:pointer; appearance:none;
-                background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa0b0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
-                background-repeat:no-repeat; background-position:right 10px center; }
-  .crow select:focus{ outline:none; border-color:var(--accent); }
-  .crow .gsel{ font-family:'Outfit',sans-serif; font-weight:800; color:var(--accent-deep); min-width:56px; }
-  .crow .times{ color:var(--ink-faint); font-weight:700; font-size:15px; }
-  .crow .del{ margin-left:auto; width:34px; height:34px; border-radius:9px; border:1px solid var(--line);
-              background:var(--bg-elev2); color:var(--ink-dim); cursor:pointer; display:grid; place-items:center; transition:.15s; }
-  .crow .del:hover{ color:#e25c5c; border-color:#e25c5c; }
-  .crow .del svg{ width:16px; height:16px; }
-  .add-row{ display:inline-flex; align-items:center; gap:8px; margin-top:14px; font-family:'Outfit',sans-serif;
-            font-weight:700; font-size:15px; color:var(--accent-deep); background:var(--accent-soft);
-            border:1px dashed color-mix(in srgb,var(--accent) 55%, var(--line)); border-radius:13px; padding:11px 18px; cursor:pointer; transition:.15s; }
-  .add-row:hover{ background:color-mix(in srgb,var(--accent) 20%, var(--bg-elev)); }
-  .calc-tip{ color:var(--ink-faint); font-size:13.5px; margin-top:16px; max-width:34em; }
-  .calc-card-wrap{ position:sticky; top:90px; }
-  .calc-card-wrap .avg-card{ transform:rotate(-1.4deg); }
-  @media(max-width:860px){ .calc-card-wrap{ position:static; } }
-
   /* reveal */
   .rev{ opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
   .rev.in{ opacity:1; transform:none; }
@@ -284,7 +259,7 @@
     <div class="nav-right">
       <button class="tgl" id="langTgl" aria-label="Language / Jazyk" style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px">EN</button>
       <button class="tgl" id="themeTgl" aria-label="Přepnout světlý/tmavý režim">🌙</button>
-      <a class="btn btn-primary" href="#calc">Spočítat průměr</a>
+      <a class="btn btn-primary" href="/app/">Spočítat průměr</a>
     </div>
   </div>
 </header>
@@ -292,32 +267,38 @@
 <main>
 <div class="wrap">
 
-  <!-- HERO / KALKULAČKA -->
-  <section id="calc" class="hero calc-hero">
+  <!-- HERO -->
+  <section class="hero">
     <div class="hero-copy">
       <span class="eyebrow rev">🎓 Studijní průměr · zdarma</span>
-      <h1 class="rev">Spočítej si <span class="mark">průměr známek</span></h1>
-      <p class="lead rev">Přidej známky i s jejich vahami a vážený průměr se spočítá sám. Zdarma, bez registrace, data zůstávají jen v tvém prohlížeči.</p>
-      <div class="calc-rows rev" id="calcRows"></div>
-      <button type="button" class="add-row rev" id="addRow">+ Přidat známku</button>
-      <p class="calc-tip rev" id="calcTip"></p>
+      <h1 class="rev">Spočítej si <span class="mark">průměr známek</span> za pár vteřin</h1>
+      <p class="lead rev">Estudivo je studentská aplikace na výpočet <b>váženého průměru známek</b>. Přidáš známky i s váhami, vidíš průměr v reálném čase a vyzkoušíš si „co kdyby“. Materiály a termíny testů sdílíš s celou třídou.</p>
       <div class="cta-row rev">
-        <a class="btn btn-primary btn-lg" href="/app/">Otevřít celou aplikaci →</a>
-        <a class="btn btn-ghost btn-lg" href="#funkce">Co všechno umí</a>
+        <a class="btn btn-primary btn-lg" href="/app/">Spočítat průměr známek →</a>
+        <a class="btn btn-ghost btn-lg" href="/app/">Import ze Škola OnLine →</a>
       </div>
+      <div class="trust rev"><span>✦</span> <b>Zdarma a bez reklam</b> · funguje na mobilu i v počítači · žádná registrace na počítání</div>
     </div>
+
     <div class="hero-visual rev">
-      <div class="calc-card-wrap">
-        <div class="avg-card">
-          <div class="tex"><span style="top:-8px;right:10px;font-size:64px;transform:rotate(-8deg)">Ø</span></div>
-          <div class="avg-head">
-            <svg class="cap" viewBox="0 0 40 30" aria-hidden="true"><path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/><path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/></svg>
-            <span class="avg-lbl" id="avgLbl">Tvůj vážený průměr</span>
-          </div>
-          <div class="avg-num" id="avgNum">–</div>
-          <div class="avg-sub" id="avgSub"></div>
-          <div class="avg-bars" id="avgBars"></div>
+      <div class="avg-card">
+        <div class="tex">
+          <span style="top:-10px;left:8%;font-size:54px;transform:rotate(-8deg)">2</span>
+          <span style="bottom:-16px;right:10%;font-size:60px;transform:rotate(7deg)">1</span>
+          <span style="top:40%;right:30%;font-size:30px;transform:rotate(-4deg)">3</span>
         </div>
+        <div class="avg-head">
+          <svg class="cap" viewBox="0 0 40 30" aria-hidden="true">
+            <path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>
+            <path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>
+            <path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="35" cy="22.6" r="2" fill="currentColor"/>
+          </svg>
+          <span class="avg-lbl">Celkový vážený průměr</span>
+        </div>
+        <div class="avg-num">1,42</div>
+        <div class="avg-sub">z 24 známek · 7 předmětů</div>
+        <div class="avg-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </div>
     </div>
   </section>
@@ -526,12 +507,7 @@
   var EN={
 'Funkce':'Features','Jak to funguje':'How it works','Časté dotazy':'FAQ','Spočítat průměr':'Calculate average',
 '🎓 Studijní průměr · zdarma':'🎓 Grade average · free',
-'Spočítej si':'Calculate your','průměr známek':'grade average','za pár vteřin':'in seconds','rovnou tady':'right here',
-'Přidej známky i s váhami nebo si je naimportuj ze':'Add grades with their weights or import them from',
-'Přidej známky i s jejich vahami a vážený průměr se spočítá sám. Zdarma, bez registrace, data zůstávají jen v tvém prohlížeči.':'Add your grades with their weights and the weighted average is calculated for you. Free, no sign-up, your data stays only in your browser.',
-'Otevřít celou aplikaci →':'Open the full app →',
-'Co všechno umí':'See all features',
-'a hned vidíš svůj vážený průměr. Zdarma, bez registrace, data zůstávají v tvém prohlížeči.':'and instantly see your weighted average. Free, no sign-up, your data stays in your browser.',
+'Spočítej si':'Calculate your','průměr známek':'grade average','za pár vteřin':'in seconds',
 'Estudivo je studentská aplikace na výpočet':'Estudivo is a student app for calculating',
 'váženého průměru známek':'your weighted grade average',
 '. Přidáš známky i s váhami, vidíš průměr v reálném čase a vyzkoušíš si „co kdyby". Materiály a termíny testů sdílíš s celou třídou.':'. Add grades with their weights, watch the average update live, and try "what if". Share materials and test dates with your whole class.',
@@ -606,59 +582,6 @@
   window.LANG=saved;
   var b=document.getElementById('langTgl'); if(b) b.onclick=function(){ window.estSetLang(window.LANG==='en'?'cs':'en'); };
   apply(saved);
-})();
-</script>
-<script>
-/* Nativní kalkulačka váženého průměru (žádný iframe, samostatná webová stránka) */
-(function(){
-  var rows=[ {g:1,w:1}, {g:2,w:0.5}, {g:3,w:0.5} ];
-  var GRADES=[1,2,3,4,5];
-  var WEIGHTS=[ {v:1,cs:'Velká',en:'Large'}, {v:0.5,cs:'Střední',en:'Medium'}, {v:0.2,cs:'Malá',en:'Small'} ];
-  function en(){ return window.LANG==='en'; }
-  function t(cs,e){ return en()?e:cs; }
-  function fmtW(v){ var s=String(v); return en()?s:s.replace('.',','); }
-  function fmtN(v){ var s=v.toFixed(2); return en()?s:s.replace('.',','); }
-  function trash(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'; }
-
-  function makeRow(r){
-    var row=document.createElement('div'); row.className='crow';
-    var gs=document.createElement('select'); gs.className='gsel'; gs.setAttribute('aria-label',t('Známka','Grade'));
-    GRADES.forEach(function(g){ var o=document.createElement('option'); o.value=g; o.textContent=g; if(g===r.g)o.selected=true; gs.appendChild(o); });
-    gs.onchange=function(){ r.g=parseInt(gs.value,10); result(); };
-    var x=document.createElement('span'); x.className='times'; x.textContent='×';
-    var ws=document.createElement('select'); ws.setAttribute('aria-label',t('Váha','Weight'));
-    WEIGHTS.forEach(function(w){ var o=document.createElement('option'); o.value=w.v; o.textContent=fmtW(w.v)+' · '+(en()?w.en:w.cs); if(w.v===r.w)o.selected=true; ws.appendChild(o); });
-    ws.onchange=function(){ r.w=parseFloat(ws.value); result(); };
-    var del=document.createElement('button'); del.type='button'; del.className='del'; del.setAttribute('aria-label',t('Smazat','Delete')); del.innerHTML=trash();
-    del.onclick=function(){ var i=rows.indexOf(r); if(i>-1) rows.splice(i,1); render(); };
-    row.appendChild(gs); row.appendChild(x); row.appendChild(ws); row.appendChild(del);
-    return row;
-  }
-  function result(){
-    var sw=0,swg=0,n=0;
-    rows.forEach(function(r){ if(r.g){ sw+=r.w; swg+=r.g*r.w; n++; } });
-    var avg = sw>0 ? swg/sw : null;
-    document.getElementById('avgNum').textContent = avg==null?'–':fmtN(avg);
-    var sub = n===0 ? t('zatím žádné známky','no grades yet')
-      : (en() ? ('from '+n+' grade'+(n===1?'':'s')) : ('z '+n+' '+(n===1?'známky':'známek')));
-    document.getElementById('avgSub').textContent=sub;
-    var bars=document.getElementById('avgBars'); bars.innerHTML='';
-    var dark = avg==null?0:Math.max(1,Math.min(10,Math.round((5-avg)/4*10)));
-    for(var b=0;b<10;b++){ var i=document.createElement('i'); if(b<dark) i.className='on'; bars.appendChild(i); }
-  }
-  function render(){
-    var host=document.getElementById('calcRows'); if(!host) return;
-    host.innerHTML=''; rows.forEach(function(r){ host.appendChild(makeRow(r)); });
-    var add=document.getElementById('addRow'); if(add) add.textContent=t('+ Přidat známku','+ Add grade');
-    var tip=document.getElementById('calcTip'); if(tip) tip.textContent=t('Tip: přidej hypotetickou známku navíc a hned uvidíš, jak by ti zvedla nebo srazila průměr.','Tip: add one hypothetical grade and instantly see how it would raise or lower your average.');
-    var lbl=document.getElementById('avgLbl'); if(lbl) lbl.textContent=t('Tvůj vážený průměr','Your weighted average');
-    result();
-  }
-  var add=document.getElementById('addRow');
-  if(add) add.onclick=function(){ rows.push({g:1,w:1}); render(); };
-  var prev=window.estSetLang;
-  window.estSetLang=function(l){ if(prev) prev(l); render(); };
-  render();
 })();
 </script>
 </body>
