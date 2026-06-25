@@ -1964,7 +1964,7 @@ async function runSolImport(){
 let authUser = null;
 let profile = null;
 let profileEditing = false;
-let authStep = 'email';        // 'email' → 'code'
+let authStep = 'login';        // 'login' | 'signup' | 'reset' | 'resetcode'
 let authEmailPending = '';
 
 function currentOwner(){ return authUser ? authUser.id : uid(); }
@@ -2058,33 +2058,89 @@ async function pullGradesCloud(){
 }
 
 /* ---- přihlášení emailem (kód / OTP) ---- */
-async function authSendCode(email){
-  const c = getSB(); if(!c) return { ok:false, msg:'Není připojení (Supabase).' };
-  try {
-    const { error } = await c.auth.signInWithOtp({ email, options:{ shouldCreateUser:true } });
-    if(error) return { ok:false, msg:error.message };
-    authEmailPending = email;
-    return { ok:true };
-  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
+async function afterSignedIn(user){
+  authUser = user || authUser;
+  authStep = 'login'; profileEditing = false;
+  await ensureProfile();
+  try{ await loadProfile(); }catch(e){}
+  await pullGradesCloud();
+  await restoreUserClass();
+  maybeJoinFromLink();
+  maybeFriendFromLink();
+  updateNotifBadge();
+  renderProfile();
 }
-async function authVerifyCode(email, token){
-  const c = getSB(); if(!c) return { ok:false, msg:'Není připojení (Supabase).' };
-  try {
-    const { data, error } = await c.auth.verifyOtp({ email, token, type:'email' });
-    if(error) return { ok:false, msg:error.message };
-    authUser = (data && data.user) ? data.user : null;
-    await ensureProfile();
-    await pullGradesCloud();
-    await restoreUserClass();
-    maybeJoinFromLink();
-    maybeFriendFromLink();
-    return { ok:true };
-  } catch(e){ return { ok:false, msg:String(e&&e.message||e) }; }
+async function doLogin(){
+  const email=(document.getElementById('authEmail').value||'').trim();
+  const pass=(document.getElementById('authPass').value||'');
+  if(!email || email.indexOf('@')<1){ alertDialog('Neplatný email','Zadej platnou emailovou adresu.'); return; }
+  if(!pass){ alertDialog('Chybí heslo','Zadej svoje heslo.'); return; }
+  const c=getSB(); if(!c){ alertDialog('Není připojení','Přihlášení potřebuje cloud (Supabase).'); return; }
+  const btn=document.getElementById('authLoginBtn'); const lab=btn.textContent; btn.disabled=true; btn.textContent='Přihlašuji…';
+  try{
+    const { data, error } = await c.auth.signInWithPassword({ email, password:pass });
+    if(error) throw error;
+    try{ localStorage.setItem('prumer_auth_email', email); }catch(e){}
+    await afterSignedIn(data && data.user);
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Přihlášení selhalo', /invalid login/i.test(m)?'Špatný email nebo heslo.':(/email not confirmed/i.test(m)?'Email ještě není potvrzený — mrkni do schránky.':m)); }
+  finally{ btn.disabled=false; btn.textContent=lab; }
+}
+async function doSignup(){
+  const email=(document.getElementById('authEmail').value||'').trim();
+  const pass=(document.getElementById('authPass').value||'');
+  if(!email || email.indexOf('@')<1){ alertDialog('Neplatný email','Zadej platnou emailovou adresu.'); return; }
+  if(pass.length<6){ alertDialog('Krátké heslo','Heslo musí mít aspoň 6 znaků.'); return; }
+  const c=getSB(); if(!c){ alertDialog('Není připojení','Registrace potřebuje cloud (Supabase).'); return; }
+  const btn=document.getElementById('authSignupBtn'); const lab=btn.textContent; btn.disabled=true; btn.textContent='Zakládám…';
+  try{
+    const { data, error } = await c.auth.signUp({ email, password:pass });
+    if(error) throw error;
+    try{ localStorage.setItem('prumer_auth_email', email); }catch(e){}
+    if(data && data.session){ await afterSignedIn(data.user); }
+    else { authStep='login'; renderProfile(); alertDialog('Účet vytvořen','Potvrď ho prosím přes odkaz/kód v emailu a pak se přihlas heslem.'); }
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Registrace selhala', /already|registered|exists/i.test(m)?'Tento email už účet má — přihlas se, nebo použij „Zapomněl jsi heslo?".':m); }
+  finally{ btn.disabled=false; btn.textContent=lab; }
+}
+async function authOAuth(provider){
+  const c=getSB(); if(!c){ alertDialog('Není připojení','Přihlášení potřebuje cloud (Supabase).'); return; }
+  try{
+    const { error } = await c.auth.signInWithOAuth({ provider, options:{ redirectTo: location.origin + '/app/' } });
+    if(error) throw error;   // jinak proběhne přesměrování
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Nepovedlo se', /not enabled|provider/i.test(m)?('Přihlášení přes '+(provider==='google'?'Google':'Apple')+' zatím není zapnuté v Supabase.'):m); }
+}
+async function doResetSend(){
+  const email=(document.getElementById('authEmail').value||'').trim();
+  if(!email || email.indexOf('@')<1){ alertDialog('Neplatný email','Zadej email svého účtu.'); return; }
+  const c=getSB(); if(!c){ alertDialog('Není připojení','Reset hesla potřebuje cloud (Supabase).'); return; }
+  const btn=document.getElementById('authResetBtn'); const lab=btn.textContent; btn.disabled=true; btn.textContent='Posílám…';
+  try{
+    const { error } = await c.auth.resetPasswordForEmail(email);
+    if(error) throw error;
+    authEmailPending = email; authStep='resetcode'; renderProfile();
+  }catch(e){ alertDialog('Nepovedlo se', String(e&&e.message||e)); }
+  finally{ btn.disabled=false; btn.textContent=lab; }
+}
+async function doResetVerify(){
+  const code=(document.getElementById('authCode').value||'').replace(/\s/g,'');
+  const pass=(document.getElementById('authPass').value||'');
+  if(code.length<6){ alertDialog('Neúplný kód','Zadej celý kód z emailu.'); return; }
+  if(pass.length<6){ alertDialog('Krátké heslo','Nové heslo musí mít aspoň 6 znaků.'); return; }
+  const c=getSB(); if(!c){ alertDialog('Není připojení','Potřebuje cloud (Supabase).'); return; }
+  const btn=document.getElementById('authNewPassBtn'); const lab=btn.textContent; btn.disabled=true; btn.textContent='Nastavuji…';
+  try{
+    const { data, error } = await c.auth.verifyOtp({ email:authEmailPending, token:code, type:'recovery' });
+    if(error) throw error;
+    const up = await c.auth.updateUser({ password:pass });
+    if(up.error) throw up.error;
+    await afterSignedIn(data && data.user);
+    alertDialog('Hotovo','Nové heslo je nastavené a jsi přihlášený.');
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Nepovedlo se', /expired|invalid|token/i.test(m)?'Kód nesedí nebo vypršel — pošli si nový.':m); }
+  finally{ btn.disabled=false; btn.textContent=lab; }
 }
 async function authLogout(){
   await pushGradesNow();                       // nejdřív dolož poslední změny známek do účtu
   const c = getSB(); if(c){ try { await c.auth.signOut(); } catch(e){} }
-  authUser = null; profile = null;
+  authUser = null; profile = null; authStep = 'login';
   mat.code = null; mat.name = null; mat.owner = null; mat.view = 'gate'; matSaveClass();   // ať se třída neukáže dalšímu účtu na stejném zařízení
   localStorage.removeItem(STORE_KEY); data = load(); render();   // známky zpět na prázdné (zůstávají v účtu, vrátí se po přihlášení)
 }
@@ -2261,55 +2317,73 @@ function setAccent(a){
   try{ localStorage.setItem('prumer_accent', a); }catch(e){}
   renderProfile();
 }
+function oauthButtonsHTML(){
+  const g='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>';
+  const a='<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.03-2.6 2.13-3.85 2.22-3.9-1.21-1.77-3.1-2.02-3.77-2.04-1.6-.16-3.13.94-3.94.94-.81 0-2.07-.92-3.4-.9-1.75.03-3.36 1.02-4.26 2.58-1.81 3.15-.46 7.8 1.3 10.36.86 1.25 1.88 2.66 3.22 2.6 1.29-.05 1.78-.83 3.34-.83 1.55 0 2 .83 3.36.81 1.39-.03 2.27-1.27 3.12-2.53.98-1.45 1.39-2.85 1.41-2.92-.03-.01-2.7-1.04-2.73-4.13zM14.06 4.5c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-3 1.54-.66.76-1.24 1.98-1.08 3.15 1.14.09 2.3-.58 3.02-1.44z"/></svg>';
+  return '<div style="text-align:center;color:var(--ink-faint);font-size:12px;margin:8px 0 2px">nebo</div>'
+    + '<button class="btn btn-ghost" id="authGoogle" style="display:flex;align-items:center;justify-content:center;gap:10px">'+g+' Pokračovat přes Google</button>'
+    + '<button class="btn btn-ghost" id="authApple" style="display:flex;align-items:center;justify-content:center;gap:10px">'+a+' Pokračovat přes Apple</button>';
+}
+function wireOAuth(wrap){
+  const g=wrap.querySelector('#authGoogle'); if(g) g.onclick=()=>authOAuth('google');
+  const a=wrap.querySelector('#authApple'); if(a) a.onclick=()=>authOAuth('apple');
+}
 function renderLogin(wrap){
-  if(authStep === 'code'){
-    wrap.innerHTML =
-      '<div class="prof-auth">' +
-        '<div class="prof-auth-t">Zadej kód z emailu</div>' +
-        '<div class="prof-auth-m">Poslali jsme přihlašovací kód na <b>'+esc(authEmailPending)+'</b>. Mrkni i do spamu.</div>' +
-        '<input id="authCode" inputmode="numeric" autocomplete="one-time-code" placeholder="kód z emailu" maxlength="8" style="text-align:center;letter-spacing:0.25em;font-size:20px">' +
-        '<button class="btn btn-primary" id="authVerifyBtn">Přihlásit se</button>' +
-        '<button class="btn btn-ghost" id="authBackBtn">Změnit email</button>' +
-      '</div>';
-    wrap.querySelector('#authVerifyBtn').onclick = doVerify;
-    wrap.querySelector('#authBackBtn').onclick = ()=>{ authStep='email'; renderProfile(); };
-    wrap.querySelector('#authCode').onkeydown = (e)=>{ if(e.key==='Enter') doVerify(); };
+  if(authStep === 'signup'){
+    wrap.innerHTML = '<div class="prof-auth">' + capSVG('prof-cap') +
+      '<div class="prof-auth-t">Vytvoř si účet</div>' +
+      '<div class="prof-auth-m">Účet uloží tvoje známky napříč zařízeními a odemkne třídy.</div>' +
+      '<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz">' +
+      '<input id="authPass" type="password" autocomplete="new-password" placeholder="heslo (aspoň 6 znaků)">' +
+      '<button class="btn btn-primary" id="authSignupBtn">Vytvořit účet</button>' +
+      oauthButtonsHTML() +
+      '<button class="btn btn-ghost" id="authToLogin">Už mám účet — přihlásit se</button>' +
+    '</div>';
+    wrap.querySelector('#authSignupBtn').onclick = doSignup;
+    wrap.querySelector('#authToLogin').onclick = ()=>{ authStep='login'; renderProfile(); };
+    wrap.querySelector('#authPass').onkeydown = (e)=>{ if(e.key==='Enter') doSignup(); };
+    wireOAuth(wrap);
+  } else if(authStep === 'reset'){
+    wrap.innerHTML = '<div class="prof-auth">' +
+      '<div class="prof-auth-t">Zapomenuté heslo</div>' +
+      '<div class="prof-auth-m">Zadej email svého účtu — pošleme ti na něj kód pro nastavení nového hesla.</div>' +
+      '<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz">' +
+      '<button class="btn btn-primary" id="authResetBtn">Poslat kód</button>' +
+      '<button class="btn btn-ghost" id="authToLogin">Zpět na přihlášení</button>' +
+    '</div>';
+    const saved = localStorage.getItem('prumer_auth_email'); if(saved) wrap.querySelector('#authEmail').value = saved;
+    wrap.querySelector('#authResetBtn').onclick = doResetSend;
+    wrap.querySelector('#authToLogin').onclick = ()=>{ authStep='login'; renderProfile(); };
+  } else if(authStep === 'resetcode'){
+    wrap.innerHTML = '<div class="prof-auth">' +
+      '<div class="prof-auth-t">Nastav nové heslo</div>' +
+      '<div class="prof-auth-m">Poslali jsme kód na <b>'+esc(authEmailPending)+'</b>. Zadej ho a zvol si nové heslo.</div>' +
+      '<input id="authCode" inputmode="numeric" autocomplete="one-time-code" placeholder="kód z emailu" maxlength="8" style="text-align:center;letter-spacing:0.25em;font-size:20px">' +
+      '<input id="authPass" type="password" autocomplete="new-password" placeholder="nové heslo (aspoň 6 znaků)">' +
+      '<button class="btn btn-primary" id="authNewPassBtn">Nastavit heslo a přihlásit</button>' +
+      '<button class="btn btn-ghost" id="authToLogin">Zpět</button>' +
+    '</div>';
+    wrap.querySelector('#authNewPassBtn').onclick = doResetVerify;
+    wrap.querySelector('#authToLogin').onclick = ()=>{ authStep='login'; renderProfile(); };
     setTimeout(()=>{ const el=document.getElementById('authCode'); if(el) el.focus(); }, 60);
   } else {
-    wrap.innerHTML =
-      '<div class="prof-auth">' +
-        capSVG('prof-cap') +
-        '<div class="prof-auth-t">Přihlas se emailem</div>' +
-        '<div class="prof-auth-m">Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš. Stačí email — přijde ti kód.</div>' +
-        '<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz">' +
-        '<button class="btn btn-primary" id="authSendBtn">Poslat kód</button>' +
-      '</div>';
+    wrap.innerHTML = '<div class="prof-auth">' + capSVG('prof-cap') +
+      '<div class="prof-auth-t">Přihlas se</div>' +
+      '<div class="prof-auth-m">Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš.</div>' +
+      '<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz">' +
+      '<input id="authPass" type="password" autocomplete="current-password" placeholder="heslo">' +
+      '<button class="btn btn-primary" id="authLoginBtn">Přihlásit se</button>' +
+      '<button id="authForgot" style="background:none;border:none;color:var(--accent-deep);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:2px;align-self:center">Zapomněl jsi heslo?</button>' +
+      oauthButtonsHTML() +
+      '<button class="btn btn-ghost" id="authToSignup">Nemáš účet? Vytvoř si ho</button>' +
+    '</div>';
     const saved = localStorage.getItem('prumer_auth_email'); if(saved) wrap.querySelector('#authEmail').value = saved;
-    wrap.querySelector('#authSendBtn').onclick = doSend;
-    wrap.querySelector('#authEmail').onkeydown = (e)=>{ if(e.key==='Enter') doSend(); };
+    wrap.querySelector('#authLoginBtn').onclick = doLogin;
+    wrap.querySelector('#authForgot').onclick = ()=>{ authStep='reset'; renderProfile(); };
+    wrap.querySelector('#authToSignup').onclick = ()=>{ authStep='signup'; renderProfile(); };
+    wrap.querySelector('#authPass').onkeydown = (e)=>{ if(e.key==='Enter') doLogin(); };
+    wireOAuth(wrap);
   }
-}
-async function doSend(){
-  const email = (document.getElementById('authEmail').value||'').trim();
-  if(!email || email.indexOf('@')<1){ alertDialog('Neplatný email','Zadej platnou emailovou adresu.'); return; }
-  const btn = document.getElementById('authSendBtn'); const lab = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Posílám…';
-  const r = await authSendCode(email);
-  btn.disabled = false; btn.textContent = lab;
-  if(!r.ok){ alertDialog('Nepovedlo se', r.msg||'Zkus to znovu.'); return; }
-  localStorage.setItem('prumer_auth_email', email);
-  authStep = 'code'; renderProfile();
-}
-async function doVerify(){
-  const token = (document.getElementById('authCode').value||'').replace(/\s/g,'');
-  if(token.length < 6){ alertDialog('Neúplný kód','Zadej celý kód z emailu.'); return; }
-  const btn = document.getElementById('authVerifyBtn'); const lab = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Přihlašuji…';
-  const r = await authVerifyCode(authEmailPending, token);
-  btn.disabled = false; btn.textContent = lab;
-  if(!r.ok){ alertDialog('Nepovedlo se', r.msg || 'Kód nesedí nebo vypršel.'); return; }
-  authStep = 'email'; profileEditing = false;
-  await loadProfile(); renderProfile();
 }
 function renderProfileView(wrap){
   const p = profile || {};
@@ -3686,7 +3760,21 @@ window.addEventListener('load', ()=>{
 'Spočítej si svůj průměr':'Work out your average',
 'Přidej svůj první předmět a do něj známky — vážený průměr se spočítá sám. Známky si můžeš i naimportovat ze Škola OnLine tlačítkem nahoře.':'Add your first subject and its grades — the weighted average is calculated for you. You can also import grades from Škola OnLine using the button above.',
 '+ Přidat první předmět':'+ Add your first subject',
-'žádá o členství ve třídě':'requests to join class'
+'žádá o členství ve třídě':'requests to join class',
+'Přihlas se':'Sign in','Přihlásit se':'Sign in','heslo':'password',
+'Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš.':'Without signing in you cannot join or create a class.',
+'Zapomněl jsi heslo?':'Forgot your password?',
+'Nemáš účet? Vytvoř si ho':'No account? Create one',
+'Vytvoř si účet':'Create an account','Vytvořit účet':'Create account',
+'Účet uloží tvoje známky napříč zařízeními a odemkne třídy.':'An account saves your grades across devices and unlocks classes.',
+'heslo (aspoň 6 znaků)':'password (at least 6 characters)',
+'Už mám účet — přihlásit se':'I already have an account — sign in',
+'Pokračovat přes Google':'Continue with Google','Pokračovat přes Apple':'Continue with Apple',
+'Zapomenuté heslo':'Forgot password',
+'Zadej email svého účtu — pošleme ti na něj kód pro nastavení nového hesla.':'Enter your account email and we will send you a code to set a new password.',
+'Poslat kód':'Send code','Zpět na přihlášení':'Back to sign in','Zpět':'Back',
+'Nastav nové heslo':'Set a new password','Nastavit heslo a přihlásit':'Set password and sign in',
+'kód z emailu':'code from email','nové heslo (aspoň 6 znaků)':'new password (at least 6 characters)'
   };
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;
