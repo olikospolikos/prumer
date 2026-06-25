@@ -15,12 +15,15 @@
 <meta property="og:title" content="Estudivo – známky, průměr a třída na jednom místě">
 <meta property="og:description" content="Přehled známek a průměru, sdílení materiálů ve třídě, kalendář testů a import známek ze Škola OnLine.">
 <meta property="og:url" content="https://estudivo.cz/app/">
-<meta property="og:image" content="https://estudivo.cz/icon-512.png">
+<meta property="og:image" content="https://estudivo.cz/og.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Estudivo – známky, vážený průměr a sdílená třída">
 <meta property="og:locale" content="cs_CZ">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Estudivo – známky, průměr a třída na jednom místě">
 <meta name="twitter:description" content="Přehled známek a průměru, sdílení materiálů ve třídě, kalendář testů a import známek ze Škola OnLine.">
-<meta name="twitter:image" content="https://estudivo.cz/icon-512.png">
+<meta name="twitter:image" content="https://estudivo.cz/og.png?v=2">
 <meta name="apple-mobile-web-app-title" content="Estudivo">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -971,10 +974,10 @@
 </button>
 <div id="solStatus" class="backup-note" style="margin:-10px 16px 16px"></div>
 
-<div class="section-label">Předměty</div>
+<div class="section-label" id="subjLabel">Předměty</div>
 <div class="subjects" id="subjects"></div>
 
-<div class="add-subject">
+<div class="add-subject" id="addSubjBlock">
   <button class="add-subject-btn" onclick="openSubjectSheet()">+ Přidat předmět</button>
 </div>
 
@@ -1388,6 +1391,24 @@ function render() {
 
   const wrap = document.getElementById('subjects');
   wrap.innerHTML = '';
+  const hasSubj = data.subjects.length > 0;
+  const subjLabel = document.getElementById('subjLabel'); if(subjLabel) subjLabel.style.display = hasSubj ? '' : 'none';
+  const addSubjBlock = document.getElementById('addSubjBlock'); if(addSubjBlock) addSubjBlock.style.display = hasSubj ? '' : 'none';
+  if(!hasSubj){
+    const empty = document.createElement('div');
+    empty.style.cssText = 'margin:0 16px 8px; background:var(--bg-elev); border:1px solid var(--line); border-radius:16px; padding:20px 18px; text-align:center; box-shadow:var(--shadow-sm);';
+    empty.innerHTML =
+      '<div style="font-size:30px;line-height:1">🎓</div>'
+      + '<div style="font-family:\'Outfit\',sans-serif;font-weight:800;font-size:17px;color:var(--ink);margin-top:8px">Spočítej si svůj průměr</div>'
+      + '<div style="color:var(--ink-dim);font-size:14px;margin-top:6px;line-height:1.5">Přidej svůj první předmět a do něj známky — vážený průměr se spočítá sám. Známky si můžeš i naimportovat ze Škola OnLine tlačítkem nahoře.</div>';
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary'; btn.style.cssText = 'margin-top:14px';
+    btn.textContent = '+ Přidat první předmět';
+    btn.onclick = openSubjectSheet;
+    empty.appendChild(btn);
+    wrap.appendChild(empty);
+    return;
+  }
   const sorted = data.subjects.slice().sort((a,b)=>{
     const aa = weightedAvg(gradesOf(a)), bb = weightedAvg(gradesOf(b));
     if (aa == null && bb == null) return 0;
@@ -3454,11 +3475,24 @@ async function loadNotifications(){
     const fr=await c.from('pratele').select('id,requester,created_at').eq('addressee',authUser.id).eq('status','pending');
     const frRows=(fr.error?[]:(fr.data||[]));
     const codes=(await loadMyClasses()).map(function(t){ return t.code; });
-    let memRows=[];
-    if(codes.length){ const mr=await c.from('clenove').select('user_id,code,joined_at').in('code',codes).neq('user_id',authUser.id); memRows=(mr.error?[]:(mr.data||[])); }
-    const ids=[]; frRows.forEach(function(r){ if(ids.indexOf(r.requester)<0) ids.push(r.requester); }); memRows.forEach(function(r){ if(ids.indexOf(r.user_id)<0) ids.push(r.user_id); });
+    let memRows=[], pendRows=[];
+    if(codes.length){
+      const mr=await c.from('clenove').select('user_id,code,joined_at,is_admin,status').in('code',codes);
+      const all=(mr.error?[]:(mr.data||[]));
+      // ve kterých třídách jsem admin (owner nebo is_admin) → tam vidím žádosti
+      const owners={}; try{ const tr=await c.from('tridy').select('code,owner').in('code',codes); (tr.error?[]:(tr.data||[])).forEach(function(t){ owners[t.code]=t.owner; }); }catch(e){}
+      const adminCodes={};
+      codes.forEach(function(cd){ if(owners[cd]===authUser.id) adminCodes[cd]=true; });
+      all.forEach(function(r){ if(r.user_id===authUser.id && r.is_admin) adminCodes[r.code]=true; });
+      memRows=all.filter(function(r){ return r.user_id!==authUser.id && (r.status||'approved')!=='pending'; });
+      pendRows=all.filter(function(r){ return r.user_id!==authUser.id && (r.status||'approved')==='pending' && adminCodes[r.code]; });
+    }
+    const ids=[]; frRows.forEach(function(r){ if(ids.indexOf(r.requester)<0) ids.push(r.requester); });
+    memRows.forEach(function(r){ if(ids.indexOf(r.user_id)<0) ids.push(r.user_id); });
+    pendRows.forEach(function(r){ if(ids.indexOf(r.user_id)<0) ids.push(r.user_id); });
     const nm={}; if(ids.length){ const pr=await c.from('profiles').select('id,name').in('id',ids); (pr.error?[]:(pr.data||[])).forEach(function(p){ nm[p.id]=p.name; }); }
     frRows.forEach(function(r){ out.push({ key:'fr'+r.id, ts:(Date.parse(r.created_at)||0), icon:'👋', text:(nm[r.requester]||'Někdo')+' ti poslal žádost o přátelství', go:'profile' }); });
+    pendRows.forEach(function(r){ out.push({ key:'rq'+r.code+r.user_id, ts:(Date.parse(r.joined_at)||0), icon:'📨', text:(nm[r.user_id]||'Někdo')+' žádá o členství ve třídě '+r.code, go:'joinreq', code:r.code }); });
     const cutoff=Date.now()-14*864e5;
     memRows.forEach(function(r){ const ts=Date.parse(r.joined_at)||0; if(ts>cutoff) out.push({ key:'jn'+r.code+r.user_id, ts:ts, icon:'🎓', text:(nm[r.user_id]||'Někdo')+' se připojil do třídy '+r.code, go:'materials' }); });
     out.sort(function(a,b){ return b.ts-a.ts; });
@@ -3484,8 +3518,8 @@ async function openNotif(){
   const body=document.getElementById('notifBody'); body.innerHTML=skelRows(3);
   const items=await loadNotifications();
   if(items.length){
-    body.innerHTML=items.map(function(i){ return '<button class="notif-item" data-go="'+i.go+'"><span class="notif-ic">'+i.icon+'</span><span class="notif-tx">'+esc(i.text)+'</span></button>'; }).join('');
-    body.querySelectorAll('.notif-item').forEach(function(b){ b.onclick=function(){ closeNotif(); setPage(b.getAttribute('data-go')); }; });
+    body.innerHTML=items.map(function(i){ return '<button class="notif-item" data-go="'+i.go+'"'+(i.code?(' data-code="'+esc(i.code)+'"'):'')+'><span class="notif-ic">'+i.icon+'</span><span class="notif-tx">'+esc(i.text)+'</span></button>'; }).join('');
+    body.querySelectorAll('.notif-item').forEach(function(b){ b.onclick=function(){ closeNotif(); var go=b.getAttribute('data-go'); var code=b.getAttribute('data-code'); if(go==='joinreq' && code){ setPage('materials'); enterClass(code); } else setPage(go); }; });
   } else { body.innerHTML='<div class="empty" style="color:var(--ink-faint);text-align:center;padding:22px">Žádná oznámení.</div>'; }
   try{ localStorage.setItem('prumer_notif_seen', String(Date.now())); }catch(e){}
   const badge=document.getElementById('bellBadge'); if(badge) badge.style.display='none';
@@ -3648,7 +3682,11 @@ window.addEventListener('load', ()=>{
 'Zápisky':'Notes','Testy':'Tests','Materiály ještě nejsou nastavené':'Materials not set up yet','Načítám knihovnu…':'Loading library…','Nejdřív se přihlas':'Sign in first','Do třídy se dostaneš a třídu vytvoříš až po přihlášení. Otevři záložku Profil a přihlas se emailem.':'You can join or create a class only after signing in. Open the Profile tab and sign in with email.','Přejít na přihlášení':'Go to sign in','+ Přidat třídu':'+ Add class','Zatím v žádné třídě':'Not in any class yet','Třída':'Class','Opustit třídu?':'Leave class?','Přidat třídu':'Add class','‹ Moje třídy':'‹ My classes','Zadej kód třídy':'Enter class code','Spolužáci sdílí zápisky a materiály na jednom místě.':'Classmates share notes and materials in one place.','Připojit se':'Join','Vytvořit novou třídu':'Create a new class','Zadej všechny čtyři znaky kódu.':'Enter all four characters of the code.','Třída nenalezena':'Class not found','Chybí jméno':'Name missing','Zadej jméno třídy.':'Enter a class name.','Vytvoření třídy potřebuje cloud (Supabase).':'Creating a class needs the cloud (Supabase).','Zkus to prosím ještě jednou.':'Please try again.','Třída vytvořena':'Class created','Pošli ho spolužákům, ať se připojí.':'Send it to your classmates to join.','Je veřejná — najdou ji i v seznamu.':'It is public — it also shows in the list.','kód třídy':'class code','Sdílet':'Share','Kalendář':'Calendar','Vyber předmět':'Pick a subject','zatím prázdné':'empty','Jen prohlížení':'View only','V téhle třídě můžou přidávat jen admini.':'Only admins can add in this class.','Materiály potřebují cloud (Supabase).':'Materials need the cloud (Supabase).','Už existuje':'Already exists','Předmět s tímhle názvem už ve třídě je.':'A subject with this name is already in the class.','Předměty nejsou nastavené':'Subjects not set up',
 'Po':'Mo','Út':'Tu','St':'We','Čt':'Th','Pá':'Fr','So':'Sa','Ne':'Su','🔔 Zapnout připomínky testů':'🔔 Turn on test reminders','Blížící se testy':'Upcoming tests','zítra':'tomorrow','dnes':'today','Zítra':'Tomorrow','Předchozí týden':'Previous week','Další týden':'Next week','Přidat test v tento den':'Add a test on this day','Chybí datum':'Date missing','Vyber, kdy se test píše.':'Pick when the test is.','Smazat test může jen jeho autor nebo admin třídy.':'Only the author or a class admin can delete a test.','Mazání selhalo':'Delete failed',
 '‹ Předměty':'‹ Subjects','↑ Nahrát':'↑ Upload','+ Složka':'+ Folder','Řadit':'Sort','Podle data přidání':'By date added','Podle abecedy':'Alphabetically','Podle velikosti':'By size','🏠 Hlavní':'🏠 Home','Tady zatím nic není':'Nothing here yet','Tahle složka je prázdná.':'This folder is empty.','Nahraj první zápisky pro třídu.':'Upload the first notes for the class.','složka':'folder','Nová složka':'New folder','Složka s tímhle názvem tu už je.':'A folder with this name already exists.','Složky nejsou nastavené':'Folders not set up','Smazat složku může jen její autor nebo admin třídy.':'Only the author or a class admin can delete a folder.','Složka není prázdná':'Folder not empty','Nejdřív z ní smaž soubory a podsložky.':'Delete its files and subfolders first.','Smazat složku?':'Delete folder?','Nelze přejmenovat':'Cannot rename','Přejmenovat soubor může jen jeho autor nebo admin třídy.':'Only the author or a class admin can rename a file.','Přejmenovat soubor':'Rename file','Přejmenování se neuložilo':'Rename not saved','Přejmenování selhalo':'Rename failed','Nelze otevřít':'Cannot open','Odkaz se nepodařilo získat.':'Could not get the link.','Smazat soubor může jen jeho autor nebo admin třídy.':'Only the author or a class admin can delete a file.','Soubor je moc velký':'File too big','Nahrávej prosím soubory do 50 MB.':'Please upload files up to 50 MB.','Některé soubory přeskočeny':'Some files skipped','Část se nenahrála':'Some did not upload','Moc velká':'Too big','Profilová fotka může mít max 5 MB.':'Profile photo can be max 5 MB.','Nahrání selhalo':'Upload failed',
-'Načítám QR…':'Loading QR…','Zkopírováno':'Copied','Odkaz na třídu je ve schránce.':'The class link is on your clipboard.','Nešlo zkopírovat':'Could not copy','Označ a zkopíruj odkaz ručně.':'Select and copy the link manually.','Žádná oznámení.':'No notifications.','CELKOVÝ VÁŽENÝ PRŮMĚR':'OVERALL WEIGHTED AVERAGE'
+'Načítám QR…':'Loading QR…','Zkopírováno':'Copied','Odkaz na třídu je ve schránce.':'The class link is on your clipboard.','Nešlo zkopírovat':'Could not copy','Označ a zkopíruj odkaz ručně.':'Select and copy the link manually.','Žádná oznámení.':'No notifications.','CELKOVÝ VÁŽENÝ PRŮMĚR':'OVERALL WEIGHTED AVERAGE',
+'Spočítej si svůj průměr':'Work out your average',
+'Přidej svůj první předmět a do něj známky — vážený průměr se spočítá sám. Známky si můžeš i naimportovat ze Škola OnLine tlačítkem nahoře.':'Add your first subject and its grades — the weighted average is calculated for you. You can also import grades from Škola OnLine using the button above.',
+'+ Přidat první předmět':'+ Add your first subject',
+'žádá o členství ve třídě':'requests to join class'
   };
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;
@@ -3665,6 +3703,7 @@ window.addEventListener('load', ()=>{
       .replace(/(\d+) (přítel|přátelé|přátel)/g,function(_,n){return n+' '+(n==='1'?'friend':'friends');})
       .replace(/za (\d+) (den|dny|dní)/g,function(_,n){return 'in '+n+' '+(n==='1'?'day':'days');})
       .replace(/ se připojil do třídy /g,' joined class ')
+      .replace(/ žádá o členství ve třídě /g,' requests to join class ')
       .replace(/ ti poslal žádost o přátelství/g,' sent you a friend request')
       .replace(/Moje třídy/g,'My classes').replace(/Ve třídě/g,'In class')
       .replace(/Hypotetická známka/g,'Hypothetical grade').replace(/za váhu/g,'at weight')
