@@ -2164,11 +2164,16 @@ async function saveProfile(fields){
 /* ===== přátelé + sdílený průměr ===== */
 async function updateSharedAvg(){
   if(!authUser) return;
-  const arr=[]; const subjMap={};
-  data.subjects.forEach(function(s){ const a=weightedAvg(gradesOf(s)); if(a!=null){ arr.push(a); subjMap[s.name]=Math.round(a*100)/100; } });
-  const overall = arr.length ? arr.reduce(function(a,b){ return a+b; },0)/arr.length : null;
-  const gc = data.subjects.reduce(function(a,s){ return a+gradesOf(s).length; },0);
-  try{ await saveProfile({ avg: overall, grades_count: gc, subj_avgs: subjMap }); }catch(e){}
+  function semData(sem){
+    const arr=[], m={};
+    data.subjects.forEach(function(s){ const a=weightedAvg(s.grades.filter(function(g){ return g.sem===sem; })); if(a!=null){ arr.push(a); m[s.name]=Math.round(a*100)/100; } });
+    return { map:m, overall: arr.length ? arr.reduce(function(a,b){ return a+b; },0)/arr.length : null };
+  }
+  const s1=semData(1), s2=semData(2);
+  const subjMap = { '1': s1.map, '2': s2.map };          // obě pololetí
+  const cur = data.sem===2 ? s2 : s1;                    // avg/počet = aktuální pololetí (žebříček)
+  const gc = data.subjects.reduce(function(a,s){ return a+s.grades.filter(function(g){ return g.sem===data.sem; }).length; },0);
+  try{ await saveProfile({ avg: cur.overall, grades_count: gc, subj_avgs: subjMap }); }catch(e){}
 }
 let pendingFriendId = (function(){ try{ return new URLSearchParams(location.search).get('friend')||null; }catch(e){ return null; } })();
 function maybeFriendFromLink(){
@@ -2868,17 +2873,35 @@ async function openMemberProfile(id, inClass){
     if(rel==='none' || rel==='received'){ const b=document.createElement('button'); b.className='btn btn-primary'; b.style.cssText='width:100%;margin-top:4px'; b.textContent=(rel==='received'?'Přijmout žádost':'Přidat do přátel'); b.onclick=function(){ closeMemberSheet(); sendFriendRequest(id); }; body.appendChild(b); }
     else if(rel==='sent'){ const b=document.createElement('button'); b.className='btn btn-ghost'; b.style.cssText='width:100%;margin-top:4px'; b.textContent='Žádost odeslána'; b.disabled=true; body.appendChild(b); }
     else if(rel==='friend'){
-      const mine={}; data.subjects.forEach(function(s){ const a=weightedAvg(gradesOf(s)); if(a!=null) mine[s.name.toLowerCase()]={name:s.name,a:a}; });
-      const traw=p.subj_avgs||{}; const theirs={}; Object.keys(traw).forEach(function(k){ theirs[k.toLowerCase()]={name:k,a:traw[k]}; });
-      const keys=[]; Object.keys(mine).forEach(function(k){ keys.push(k); }); Object.keys(theirs).forEach(function(k){ if(keys.indexOf(k)<0) keys.push(k); }); keys.sort();
-      let cmp='<div class="accent-pick-t" style="margin:14px 0 6px">Porovnání známek</div>'
-        +'<div class="cmp-head"><span></span><span>Ty</span><span>'+esc(((p.name||'kamarád').split(' ')[0]))+'</span></div>';
-      if(!keys.length) cmp+='<div class="empty" style="color:var(--ink-faint);font-size:13px">Zatím nejsou žádné předměty k porovnání.</div>';
-      keys.forEach(function(k){ const m=mine[k], t=theirs[k]; const myA=m?m.a:null, thA=t?t.a:null;
-        cmp+='<div class="cmp-row"><span class="cmp-name">'+esc((m&&m.name)||(t&&t.name)||k)+'</span>'
-          +'<span class="cmp-v" style="color:'+(myA!=null?markColor(myA):'var(--ink-faint)')+'">'+(myA!=null?fmt(myA):'—')+'</span>'
-          +'<span class="cmp-v" style="color:'+(thA!=null?markColor(thA):'var(--ink-faint)')+'">'+(thA!=null?fmt(thA):'—')+'</span></div>'; });
-      const d=document.createElement('div'); d.innerHTML=cmp; body.appendChild(d);
+      const friendName = esc(((p.name||'kamarád').split(' ')[0]));
+      function mySemMap(sem){ const m={}; data.subjects.forEach(function(s){ const a=weightedAvg(s.grades.filter(function(g){ return g.sem===sem; })); if(a!=null) m[s.name]=a; }); return m; }
+      function friendSemMap(sem){ const raw=p.subj_avgs||{}; if(raw['1']||raw['2']) return raw[String(sem)]||{}; return raw; /* starý plochý tvar = bez rozlišení pololetí */ }
+      function drawCmp(sem){
+        const mineRaw=mySemMap(sem), traw=friendSemMap(sem);
+        const mine={}; Object.keys(mineRaw).forEach(function(n){ mine[n.toLowerCase()]={name:n,a:mineRaw[n]}; });
+        const theirs={}; Object.keys(traw).forEach(function(k){ theirs[k.toLowerCase()]={name:k,a:traw[k]}; });
+        const keys=[]; Object.keys(mine).forEach(function(k){ keys.push(k); }); Object.keys(theirs).forEach(function(k){ if(keys.indexOf(k)<0) keys.push(k); }); keys.sort();
+        let cmp='<div class="cmp-head"><span></span><span>Ty</span><span>'+friendName+'</span></div>';
+        if(!keys.length) return cmp+'<div class="empty" style="color:var(--ink-faint);font-size:13px">V tomhle pololetí není co porovnat.</div>';
+        keys.forEach(function(k){ const m=mine[k], t=theirs[k]; const myA=m?m.a:null, thA=t?t.a:null;
+          cmp+='<div class="cmp-row"><span class="cmp-name">'+esc((m&&m.name)||(t&&t.name)||k)+'</span>'
+            +'<span class="cmp-v" style="color:'+(myA!=null?markColor(myA):'var(--ink-faint)')+'">'+(myA!=null?fmt(myA):'—')+'</span>'
+            +'<span class="cmp-v" style="color:'+(thA!=null?markColor(thA):'var(--ink-faint)')+'">'+(thA!=null?fmt(thA):'—')+'</span></div>'; });
+        return cmp;
+      }
+      const d=document.createElement('div');
+      let cmpSem = data.sem===2 ? 2 : 1;
+      function paint(){
+        d.innerHTML = '<div class="accent-pick-t" style="margin:14px 0 6px">Porovnání známek</div>'
+          + '<div class="calc-toggle" style="margin:0 0 12px">'
+          +   '<button type="button" class="calc-mode'+(cmpSem===1?' sel':'')+'" data-s="1">1. pololetí</button>'
+          +   '<button type="button" class="calc-mode'+(cmpSem===2?' sel':'')+'" data-s="2">2. pololetí</button>'
+          + '</div>'
+          + drawCmp(cmpSem);
+        d.querySelectorAll('.calc-mode[data-s]').forEach(function(b){ b.onclick=function(){ cmpSem=parseInt(b.getAttribute('data-s'),10); paint(); }; });
+      }
+      paint();
+      body.appendChild(d);
     }
     if(inClass && isClassAdmin() && id !== mat.owner && id !== (authUser && authUser.id)){
       const btn = document.createElement('button');
