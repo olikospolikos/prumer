@@ -1078,8 +1078,14 @@
     <label class="fld"><span>Jméno třídy</span>
       <input type="text" id="ncName" placeholder="např. 3.A">
     </label>
+    <div class="fld"><span>Kdo se může připojit</span>
+      <div class="calc-toggle" id="ncMode" style="margin-top:6px">
+        <button type="button" class="calc-mode sel" data-priv="0">Otevřená</button>
+        <button type="button" class="calc-mode" data-priv="1">Soukromá</button>
+      </div>
+    </div>
   </div>
-  <p class="backup-note" style="margin:12px 2px 0">Vygeneruje se kód třídy — pošli ho spolužákům, ať se připojí.</p>
+  <p class="backup-note" id="ncModeHint" style="margin:10px 2px 0">Otevřená: kdo má kód, hned se připojí. Vygeneruje se kód — pošli ho spolužákům.</p>
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeCreateSheet()">Zrušit</button>
     <button class="btn btn-primary" onclick="submitCreateClass()">Vytvořit</button>
@@ -1985,8 +1991,8 @@ async function restoreUserClass(){
   if(mat.code) return;                       // už nějakou třídu máme lokálně
   const c = getSB(); if(!c || !authUser) return;
   try {
-    const r = await c.from('clenove').select('code, joined_at').eq('user_id', authUser.id).order('joined_at', { ascending:false }).limit(1);
-    const row = (!r.error && r.data && r.data[0]) ? r.data[0] : null;
+    const r = await c.from('clenove').select('code, joined_at, status').eq('user_id', authUser.id).order('joined_at', { ascending:false });
+    const row = (!r.error && r.data) ? r.data.find(x=>(x.status||'approved')==='approved') : null;
     if(!row) return;
     const tr = await c.from('tridy').select('*').eq('code', row.code).maybeSingle();
     if(tr.error || !tr.data) return;
@@ -2430,8 +2436,8 @@ function renderMaterials(){
 async function loadMyClasses(){
   const c = getSB(); if(!c || !authUser) return [];
   try {
-    const r = await c.from('clenove').select('code').eq('user_id', authUser.id);
-    const codes = [...new Set((r.error?[]:(r.data||[])).map(x=>x.code))];
+    const r = await c.from('clenove').select('code, status').eq('user_id', authUser.id);
+    const codes = [...new Set((r.error?[]:(r.data||[])).filter(x=>(x.status||'approved')==='approved').map(x=>x.code))];
     if(!codes.length){ myClassCacheSet([]); return []; }
     const tr = await c.from('tridy').select('code,name').in('code', codes);
     const list = tr.error ? [] : (tr.data||[]);
@@ -2515,8 +2521,22 @@ async function enterClass(code){
     const r = await c.from('tridy').select('*').eq('code', code).maybeSingle();
     if(r.error) throw r.error;
     if(!r.data){ alertDialog('Třída nenalezena','Pod kódem '+code+' žádná třída není. Zkontroluj číslo, nebo vytvoř novou třídu.'); return; }
-    mat.code = code; mat.name = r.data.name; mat.owner = r.data.owner || null; mat.isPublic = !!r.data.is_public; mat.canAdd = r.data.members_can_add !== false; mat.isAdmin = false; mat.view = 'class'; mat.tab = 'soubory';
-    matSaveClass(); await joinClass(); await loadMyClassRole(); renderMaterials();
+    const t = r.data;
+    const amOwner = !!(authUser && t.owner === authUser.id);
+    let myStatus = null;
+    if(authUser){ try { const me = await c.from('clenove').select('status').eq('code', code).eq('user_id', authUser.id).maybeSingle(); if(me.data) myStatus = me.data.status || 'approved'; } catch(e){} }
+    const open = !t.approval_required;
+    if(amOwner || myStatus === 'approved' || open){
+      mat.code = code; mat.name = t.name; mat.owner = t.owner || null; mat.isPublic = !!t.is_public; mat.canAdd = t.members_can_add !== false; mat.approval = !!t.approval_required; mat.isAdmin = false; mat.view = 'class'; mat.tab = 'soubory';
+      matSaveClass();
+      if(!amOwner && myStatus !== 'approved') await joinClass('approved');   // otevřená třída → rovnou člen
+      await loadMyClassRole(); renderMaterials();
+    } else {
+      // soukromá třída a ještě nejsem schválený člen
+      if(myStatus === 'pending'){ alertDialog('Čekáš na schválení','Tvoje žádost o členství čeká, až ji admin třídy schválí.'); return; }
+      await joinClass('pending', code);
+      alertDialog('Žádost odeslána','Třída „'+t.name+'" je soukromá. Admin musí tvou žádost schválit — pak se dostaneš dovnitř.');
+    }
   } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
 }
 
@@ -2529,6 +2549,20 @@ function genClassCode(){
 function createClassFlow(){ openCreateClassSheet(); }
 function openCreateClassSheet(){
   document.getElementById('ncName').value = '';
+  // reset přepínače na Otevřená + napoj kliky
+  const mode = document.getElementById('ncMode'); const hint = document.getElementById('ncModeHint');
+  if(mode){
+    mode.querySelectorAll('.calc-mode').forEach(b=>{
+      b.classList.toggle('sel', b.getAttribute('data-priv')==='0');
+      b.onclick = ()=>{
+        mode.querySelectorAll('.calc-mode').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel');
+        if(hint) hint.textContent = b.getAttribute('data-priv')==='1'
+          ? 'Soukromá: každou žádost o připojení musíš jako admin schválit.'
+          : 'Otevřená: kdo má kód, hned se připojí. Vygeneruje se kód — pošli ho spolužákům.';
+      };
+    });
+  }
   showSheet('create');
   setTimeout(()=>{ const el=document.getElementById('ncName'); if(el) el.focus(); }, 60);
 }
@@ -2538,6 +2572,8 @@ async function submitCreateClass(){
   if(!name){ alertDialog('Chybí jméno','Zadej jméno třídy.'); return; }
   const isPublic = false;
   const canAdd   = true;
+  const selMode  = document.querySelector('#ncMode .calc-mode.sel');
+  const approval = !!(selMode && selMode.getAttribute('data-priv')==='1');   // soukromá = vyžaduje schválení
   const c = getSB(); if(!c){ alertDialog('Není připojení','Vytvoření třídy potřebuje cloud (Supabase).'); return; }
   try {
     let code = null;
@@ -2547,12 +2583,12 @@ async function submitCreateClass(){
       if(!ex.data){ code = cand; break; }
     }
     if(!code){ alertDialog('Nepovedlo se','Zkus to prosím ještě jednou.'); return; }
-    const ins = await c.from('tridy').insert({ code, name, owner: currentOwner(), is_public:isPublic, members_can_add:canAdd });
+    const ins = await c.from('tridy').insert({ code, name, owner: currentOwner(), is_public:isPublic, members_can_add:canAdd, approval_required: approval });
     if(ins.error) throw ins.error;
-    mat.code = code; mat.name = name; mat.owner = currentOwner(); mat.isPublic = isPublic; mat.canAdd = canAdd; mat.isAdmin = false; mat.view = 'class'; mat.tab = 'soubory';
+    mat.code = code; mat.name = name; mat.owner = currentOwner(); mat.isPublic = isPublic; mat.canAdd = canAdd; mat.approval = approval; mat.isAdmin = false; mat.view = 'class'; mat.tab = 'soubory';
     matSaveClass(); await joinClass(); renderMaterials();
     closeCreateSheet();
-    alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. '+(isPublic?'Je veřejná — najdou ji i v seznamu.':'Pošli ho spolužákům, ať se připojí.')+' Jsi její admin.');
+    alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. '+(approval?'Je soukromá — žádosti o připojení budeš schvalovat ty.':'Pošli ho spolužákům, ať se připojí.')+' Jsi její admin.');
   } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
 }
 
@@ -2615,12 +2651,13 @@ async function loadMyClassRole(){
     if(!r.error && r.data) mat.isAdmin = !!r.data.is_admin;
   } catch(e){}
 }
-async function joinClass(){
-  const c = getSB(); if(!c || !authUser || !mat.code) return;
+async function joinClass(status, code){
+  const c = getSB(); if(!c || !authUser) return;
+  const cc = code || mat.code; if(!cc) return;
   try {
-    const ex = await c.from('clenove').select('user_id').eq('code', mat.code).eq('user_id', authUser.id).limit(1);
-    if(!ex.error && ex.data && ex.data.length) return;   // už člen → neduplikuj (idempotentní, nezávisle na DB constraintu)
-    await c.from('clenove').insert({ code: mat.code, user_id: authUser.id });
+    const ex = await c.from('clenove').select('user_id').eq('code', cc).eq('user_id', authUser.id).limit(1);
+    if(!ex.error && ex.data && ex.data.length) return;   // už člen/žádost → neduplikuj (idempotentní)
+    await c.from('clenove').insert({ code: cc, user_id: authUser.id, status: status || 'approved' });
   } catch(e){}
 }
 async function ensureClassOwner(){
@@ -2630,36 +2667,82 @@ async function ensureClassOwner(){
     if(!r.error && r.data){ mat.owner = r.data.owner || null; matSaveClass(); } } catch(e){}
 }
 async function loadMembers(){
-  const c = getSB(); if(!c || !mat.code) return [];
+  const c = getSB(); if(!c || !mat.code) return { approved:[], pending:[] };
   try {
-    const r = await c.from('clenove').select('user_id, is_admin').eq('code', mat.code);
+    const r = await c.from('clenove').select('user_id, is_admin, status').eq('code', mat.code);
     const rows = (r.error ? [] : (r.data||[]));
-    const admById = {}; rows.forEach(x=>{ admById[x.user_id] = admById[x.user_id] || !!x.is_admin; });
-    const ids = Object.keys(admById);
-    if(!ids.length) return [];
+    const ids = [...new Set(rows.map(x=>x.user_id))];
+    if(!ids.length) return { approved:[], pending:[] };
     const pr = await c.from('profiles').select('id,name,avatar_url').in('id', ids);
     const byId = {}; (pr.error ? [] : (pr.data||[])).forEach(p=>{ byId[p.id]=p; });
-    return ids.map(id => Object.assign({ id, name:null, avatar_url:null }, byId[id]||{}, { adm: admById[id] || id===mat.owner }));
-  } catch(e){ return []; }
+    const mk = (x)=> Object.assign({ id:x.user_id, name:null, avatar_url:null }, byId[x.user_id]||{}, { adm: !!x.is_admin || x.user_id===mat.owner });
+    const approved = [], pending = [];
+    rows.forEach(x=>{ ((x.status||'approved')==='pending' ? pending : approved).push(mk(x)); });
+    return { approved, pending };
+  } catch(e){ return { approved:[], pending:[] }; }
+}
+async function approveMember(id){
+  const c = getSB(); if(!c || !mat.code) return;
+  try {
+    const up = await c.from('clenove').update({ status:'approved' }).eq('code', mat.code).eq('user_id', id).select();
+    if(up.error) throw up.error;
+    if(!up.data || !up.data.length){ alertDialog('Nepovedlo se','Chybí oprávnění schválit. V Supabase spusť SQL „tridy-soukrome".'); return; }
+    renderMaterials();
+  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+}
+async function rejectMember(id){
+  const c = getSB(); if(!c || !mat.code) return;
+  try {
+    const del = await c.from('clenove').delete().eq('code', mat.code).eq('user_id', id);
+    if(del.error) throw del.error;
+    renderMaterials();
+  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+}
+function kickMember(id){
+  confirmDialog('Odebrat ze třídy?', 'Člen bude ze třídy odebrán. Může se zase připojit (nebo znovu požádat).', 'Odebrat', async ()=>{
+    const c = getSB(); if(!c || !mat.code) return;
+    try {
+      const del = await c.from('clenove').delete().eq('code', mat.code).eq('user_id', id);
+      if(del.error) throw del.error;
+      closeMemberSheet(); renderMaterials();
+    } catch(e){ alertDialog('Nepovedlo se', String((e&&e.message)||e)); }
+  });
+}
+function memAvatar(m){
+  const init = esc(((m.name||'?').trim().charAt(0)||'?').toUpperCase());
+  return m.avatar_url ? '<img class="mem-av" src="'+esc(m.avatar_url)+'" alt="">'
+                      : '<div class="mem-av mem-av-ph">'+init+'</div>';
 }
 async function renderMembers(box){
   if(!box) return;
   await ensureClassOwner();
   await joinClass();
-  const members = await loadMembers();
-  if(!members.length){ box.innerHTML=''; return; }
-  members.sort((a,b)=> (a.id===mat.owner?0:1) - (b.id===mat.owner?0:1));   // admin první
-  let html = '<div class="section-label" style="padding:4px 16px 10px">Ve třídě ('+members.length+')</div><div class="mem-list">';
-  members.forEach(m=>{
-    const nm = esc(m.name || 'Beze jména');
-    const init = esc(((m.name||'?').trim().charAt(0)||'?').toUpperCase());
-    const av = m.avatar_url ? '<img class="mem-av" src="'+esc(m.avatar_url)+'" alt="">'
-                            : '<div class="mem-av mem-av-ph">'+init+'</div>';
-    const admin = m.adm ? '<span class="mem-admin">admin</span>' : '';
-    html += '<div class="mem-row" onclick="openMemberProfile(\''+m.id+'\', true)">'+av+'<span class="mem-name">'+nm+'</span>'+admin+'<span class="mem-chev">›</span></div>';
-  });
-  html += '</div>';
+  const { approved, pending } = await loadMembers();
+  let html = '';
+  if(approved.length){
+    approved.sort((a,b)=> (a.id===mat.owner?0:1) - (b.id===mat.owner?0:1));   // admin první
+    html += '<div class="section-label" style="padding:4px 16px 10px">Ve třídě ('+approved.length+')</div><div class="mem-list">';
+    approved.forEach(m=>{
+      const nm = esc(m.name || 'Beze jména');
+      const admin = m.adm ? '<span class="mem-admin">admin</span>' : '';
+      html += '<div class="mem-row" onclick="openMemberProfile(\''+m.id+'\', true)">'+memAvatar(m)+'<span class="mem-name">'+nm+'</span>'+admin+'<span class="mem-chev">›</span></div>';
+    });
+    html += '</div>';
+  }
+  // žádosti o členství – jen pro admina
+  if(isClassAdmin() && pending.length){
+    html += '<div class="section-label" style="padding:4px 16px 10px">Žádosti o členství ('+pending.length+')</div><div class="mem-list">';
+    pending.forEach(m=>{
+      const nm = esc(m.name || 'Beze jména');
+      html += '<div class="mem-row" style="cursor:default">'+memAvatar(m)+'<span class="mem-name">'+nm+'</span>'
+            + '<button class="subj-action mem-approve" data-id="'+esc(m.id)+'" style="flex:0 0 auto">Přijmout</button>'
+            + '<button class="subj-action mem-reject" data-id="'+esc(m.id)+'" style="flex:0 0 auto">Odmítnout</button></div>';
+    });
+    html += '</div>';
+  }
   box.innerHTML = html;
+  box.querySelectorAll('.mem-approve').forEach(b=> b.onclick = ()=> approveMember(b.getAttribute('data-id')));
+  box.querySelectorAll('.mem-reject').forEach(b=> b.onclick = ()=> rejectMember(b.getAttribute('data-id')));
 }
 
 async function openMemberProfile(id, inClass){
@@ -2709,6 +2792,11 @@ async function openMemberProfile(id, inClass){
       btn.textContent = targetAdm ? 'Odebrat práva admina' : 'Udělat adminem';
       btn.onclick = ()=> setMemberAdmin(id, !targetAdm);
       body.appendChild(btn);
+      const kb = document.createElement('button');
+      kb.className = 'btn btn-ghost'; kb.style.cssText = 'width:100%;margin-top:6px'; kb.style.color = '#e25c5c';
+      kb.textContent = 'Odebrat ze třídy';
+      kb.onclick = ()=> kickMember(id);
+      body.appendChild(kb);
     }
   } catch(e){ body.innerHTML = '<div class="empty">Profil se nepodařilo načíst.</div>'; }
 }
