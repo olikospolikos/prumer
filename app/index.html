@@ -2150,6 +2150,23 @@ async function authLogout(){
   mat.code = null; mat.name = null; mat.owner = null; mat.view = 'gate'; matSaveClass();   // ať se třída neukáže dalšímu účtu na stejném zařízení
   localStorage.removeItem(STORE_KEY); data = load(); render();   // známky zpět na prázdné (zůstávají v účtu, vrátí se po přihlášení)
 }
+async function authDeleteAccount(){
+  const c = getSB();
+  if(!c || !authUser){ alertDialog('Nejsi přihlášený','Smazat účet jde jen po přihlášení.'); return false; }
+  try {
+    const { error } = await c.rpc('delete_user');   // server-side: smaže profil, známky, členství, přátele + auth účet
+    if(error) throw error;
+  } catch(e){
+    alertDialog('Nepovedlo se','Účet se nepodařilo smazat. Zkus to prosím znovu, nebo nám napiš na info@estudivo.cz.');
+    return false;
+  }
+  try { await c.auth.signOut(); } catch(e){}
+  authUser = null; profile = null; authStep = 'login';
+  mat.code = null; mat.name = null; mat.owner = null; mat.view = 'gate'; matSaveClass();
+  localStorage.removeItem(STORE_KEY); data = load();
+  alertDialog('Účet smazán','Tvůj účet a osobní data byly trvale odstraněny.');
+  return true;
+}
 
 /* ---- profil: načtení / uložení / fotka ---- */
 async function loadProfile(){
@@ -2427,11 +2444,23 @@ function renderProfileView(wrap){
       '<div class="prof-email">'+esc(authUser.email||'')+'</div>' +
     '</div>' +
     '<button class="btn btn-primary" id="profEditBtn" style="width:100%;margin-top:14px">Upravit profil</button>' +
-    '<button class="btn btn-ghost" id="profLogoutBtn" style="width:100%;margin-top:8px">Odhlásit se</button>';
+    '<button class="btn btn-ghost" id="profLogoutBtn" style="width:100%;margin-top:8px">Odhlásit se</button>' +
+    '<button class="btn btn-ghost" id="profDeleteBtn" style="width:100%;margin-top:8px;color:#d6453c">Smazat účet</button>' +
+    '<div style="text-align:center;margin-top:14px;font-size:13px">' +
+      '<a href="/soukromi.html" target="_blank" rel="noopener" style="color:var(--ink-dim)">Ochrana osobních údajů</a>' +
+      '<span style="color:var(--ink-faint);margin:0 8px">·</span>' +
+      '<a href="/podminky.html" target="_blank" rel="noopener" style="color:var(--ink-dim)">Podmínky užití</a>' +
+    '</div>';
   wrap.querySelector('#profEditBtn').onclick = ()=>{ profileEditing = true; renderProfile(); };
   wrap.querySelector('#profLogoutBtn').onclick = ()=>{
     confirmDialog('Odhlásit se?', 'Tvoje známky i třída zůstanou uložené v účtu a vrátí se po přihlášení.', 'Odhlásit', async ()=>{
       await authLogout(); profileEditing = false; renderProfile(); renderMaterials();
+    });
+  };
+  wrap.querySelector('#profDeleteBtn').onclick = ()=>{
+    confirmDialog('Smazat účet?', 'Trvale a nevratně smažeš svůj účet i osobní data — profil, známky, členství ve třídách i přátele. Tuto akci nelze vrátit zpět.', 'Smazat účet', async ()=>{
+      const ok = await authDeleteAccount();
+      if(ok){ profileEditing = false; renderProfile(); renderMaterials(); }
     });
   };
   appendFriends(wrap);
@@ -3820,7 +3849,8 @@ window.addEventListener('load', ()=>{
 'Zadej email svého účtu — pošleme ti na něj kód pro nastavení nového hesla.':'Enter your account email and we will send you a code to set a new password.',
 'Poslat kód':'Send code','Zpět na přihlášení':'Back to sign in','Zpět':'Back',
 'Nastav nové heslo':'Set a new password','Nastavit heslo a přihlásit':'Set password and sign in',
-'kód z emailu':'code from email','nové heslo (aspoň 6 znaků)':'new password (at least 6 characters)'
+'kód z emailu':'code from email','nové heslo (aspoň 6 znaků)':'new password (at least 6 characters)',
+'Smazat účet':'Delete account','Smazat účet?':'Delete account?','Trvale a nevratně smažeš svůj účet i osobní data — profil, známky, členství ve třídách i přátele. Tuto akci nelze vrátit zpět.':'You will permanently and irreversibly delete your account and personal data — profile, grades, class memberships and friends. This action cannot be undone.','Účet smazán':'Account deleted','Tvůj účet a osobní data byly trvale odstraněny.':'Your account and personal data have been permanently removed.','Účet se nepodařilo smazat. Zkus to prosím znovu, nebo nám napiš na info@estudivo.cz.':'We could not delete the account. Please try again, or write to us at info@estudivo.cz.','Nejsi přihlášený':'You are not signed in','Smazat účet jde jen po přihlášení.':'You can delete the account only when signed in.','Ochrana osobních údajů':'Privacy policy','Podmínky užití':'Terms of use'
   };
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;

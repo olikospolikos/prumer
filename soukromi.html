@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Zásady ochrany osobních údajů | Estudivo</title>
+<meta name="description" content="Jak Estudivo zpracovává osobní údaje – jaká data sbíráme, proč, kde je ukládáme a jaká máš práva.">
+<meta name="theme-color" content="#e8b84b">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://estudivo.cz/soukromi.html">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script>(function(){try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap');
+  :root[data-theme="light"]{
+    --bg:#f7f5ef; --bg-elev:#ffffff; --line:#e7e3d8;
+    --ink:#1a1f30; --ink-dim:#6b7280;
+    --accent:#e8b84b; --accent-deep:#c8941f; --accent-soft:rgba(232,184,75,0.16);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1115; --bg-elev:#181b22; --line:#2a2f3a;
+    --ink:#f2f4f8; --ink-dim:#99a0ae;
+    --accent:#e8b84b; --accent-deep:#e8b84b; --accent-soft:rgba(232,184,75,0.12);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Hanken Grotesk',sans-serif; line-height:1.65;
+    background-image:radial-gradient(620px 320px at 88% -4%, var(--accent-soft), transparent 70%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:var(--accent-deep); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  .wrap{ max-width:780px; margin:0 auto; padding:0 22px; }
+  header{ border-bottom:1px solid var(--line); padding:18px 0; position:sticky; top:0;
+          background:color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter:blur(10px); }
+  .brand{ display:flex; align-items:center; gap:9px; font-family:'Outfit',sans-serif; font-weight:800; font-size:21px; letter-spacing:-0.02em; color:var(--ink); }
+  .brand .cap{ width:30px; height:23px; color:var(--accent-deep); }
+  main{ padding:46px 0 70px; }
+  .eyebrow{ display:inline-flex; font-family:'Outfit',sans-serif; font-weight:700; font-size:12.5px;
+            letter-spacing:0.14em; text-transform:uppercase; color:var(--accent-deep);
+            background:var(--accent-soft); padding:7px 13px; border-radius:100px; }
+  h1{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(30px,5vw,46px); line-height:1.08; margin:16px 0 6px; letter-spacing:-0.01em; }
+  .updated{ color:var(--ink-dim); font-size:14.5px; margin-bottom:30px; }
+  h2{ font-family:'Fraunces',serif; font-weight:600; font-size:23px; margin:36px 0 10px; letter-spacing:-0.01em; }
+  p, li{ color:var(--ink); font-size:16.5px; }
+  p{ margin:10px 0; }
+  ul{ margin:10px 0 10px 22px; }
+  li{ margin:6px 0; }
+  .lead{ font-size:18px; color:var(--ink-dim); }
+  .card{ background:var(--bg-elev); border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin:18px 0; }
+  .note{ font-size:14.5px; color:var(--ink-dim); }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:15.5px; }
+  th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th{ font-family:'Outfit',sans-serif; font-weight:700; color:var(--ink-dim); font-size:13px; text-transform:uppercase; letter-spacing:0.05em; }
+  footer{ border-top:1px solid var(--line); padding:24px 0 40px; color:var(--ink-dim); font-size:14px; }
+  footer a{ margin-right:18px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a href="/" class="brand" aria-label="Estudivo">
+      <svg class="cap" viewBox="0 0 40 30" aria-hidden="true">
+        <path d="M20 3 38 11 20 19 2 11Z" fill="currentColor"/>
+        <path d="M8 14v6c0 0 4 4 12 4s12-4 12-4v-6L20 19 8 14Z" fill="currentColor"/>
+        <path d="M35 11.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="35" cy="22.6" r="2" fill="currentColor"/>
+      </svg>
+      <b>Estudivo</b>
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <span class="eyebrow">Soukromí</span>
+    <h1>Zásady ochrany osobních údajů</h1>
+    <div class="updated">Naposledy aktualizováno: 27. 6. 2026</div>
+
+    <p class="lead">Estudivo je studentská aplikace na výpočet průměru známek, sdílení materiálů ve třídě a kalendář testů. Bereme tvoje soukromí vážně. Tady přehledně vysvětlujeme, jaká data sbíráme, proč, kde je ukládáme a jak je můžeš kdykoli smazat.</p>
+
+    <h2>Kdo je správce údajů</h2>
+    <p>Provozovatelem aplikace Estudivo a správcem osobních údajů je provozovatel webu <strong>estudivo.cz</strong>. V čemkoli ohledně osobních údajů nás kontaktuj na <a href="mailto:info@estudivo.cz">info@estudivo.cz</a>.</p>
+
+    <h2>Jaká data zpracováváme</h2>
+    <p>Aplikaci můžeš používat na výpočet průměru <strong>i bez registrace</strong> – v tom případě zůstávají tvoje známky jen ve tvém prohlížeči a žádná osobní data nám neposíláš. Účet potřebuješ jen pro synchronizaci mezi zařízeními a třídy.</p>
+    <table>
+      <tr><th>Údaj</th><th>Proč</th></tr>
+      <tr><td>E-mailová adresa</td><td>Přihlášení a obnova hesla</td></tr>
+      <tr><td>Heslo</td><td>Ukládá se výhradně v zašifrované podobě (bcrypt) u poskytovatele autentizace; nikdy ho nevidíme</td></tr>
+      <tr><td>Jméno, škola, bio, profilová fotka</td><td>Tvůj profil (vyplníš dobrovolně)</td></tr>
+      <tr><td>Známky, předměty a váhy</td><td>Výpočet průměru a synchronizace mezi tvými zařízeními</td></tr>
+      <tr><td>Členství ve třídách, kalendář testů, nahrané materiály</td><td>Sdílené funkce třídy</td></tr>
+      <tr><td>Seznam přátel a sdílený průměr</td><td>Porovnání průměru s přáteli (dobrovolné)</td></tr>
+      <tr><td>Obsah zpětné vazby a kontaktní e-mail</td><td>Vyřízení tvého podnětu</td></tr>
+    </table>
+
+    <h2>Import ze Škola OnLine</h2>
+    <p>Pokud použiješ import známek ze Škola OnLine, tvoje přihlašovací údaje k Škola OnLine se zadávají a zpracovávají <strong>přímo ve tvém prohlížeči</strong> a komunikují pouze se servery Škola OnLine. Na naše servery se tyto přihlašovací údaje <strong>neposílají ani neukládají</strong>. Pro tiché obnovování může být ve tvém zařízení uložen tzv. obnovovací token (ne heslo).</p>
+
+    <h2>Co nesbíráme</h2>
+    <ul>
+      <li>Nemáme žádné reklamy ani reklamní sledovací nástroje.</li>
+      <li>Nepoužíváme analytiku třetích stran sledující jednotlivé uživatele.</li>
+      <li>Osobní údaje <strong>neprodáváme</strong> a nepředáváme je třetím stranám pro marketing.</li>
+    </ul>
+
+    <h2>Soubory cookie a místní úložiště</h2>
+    <p>Používáme jen nezbytné technické úložiště v prohlížeči (localStorage): přihlašovací relace, předvolby (motiv, jazyk, barva) a lokální kopie tvých známek. Nejde o sledovací cookies.</p>
+
+    <h2>Komu data svěřujeme (zpracovatelé)</h2>
+    <p>Pro provoz využíváme prověřené poskytovatele, kteří data zpracovávají jen pro nás:</p>
+    <ul>
+      <li><strong>Supabase</strong> – databáze, přihlašování a úložiště souborů (hostováno v EU).</li>
+      <li><strong>Resend</strong> – odesílání systémových e-mailů (např. obnova hesla).</li>
+      <li><strong>Google</strong> – volitelné přihlášení účtem Google.</li>
+      <li><strong>Apple</strong> – volitelné přihlášení účtem Apple (je-li dostupné).</li>
+      <li><strong>GitHub Pages</strong> – hosting webové aplikace.</li>
+    </ul>
+
+    <h2>Jak dlouho data uchováváme</h2>
+    <p>Údaje uchováváme po dobu, kdy máš účet. Jakmile účet smažeš, smažeme tvůj profil, známky, členství a přátelství. Některé záznamy nutné ze zákona nebo pro provoz (např. obsah zpětné vazby) můžeme uchovat po nezbytně nutnou dobu.</p>
+
+    <h2>Tvoje práva</h2>
+    <ul>
+      <li><strong>Smazání účtu:</strong> kdykoli přímo v aplikaci – Profil → <em>Smazat účet</em>. Tím se trvale odstraní tvůj účet i osobní data.</li>
+      <li>Právo na přístup k údajům, opravu, omezení zpracování a námitku.</li>
+      <li>Právo podat stížnost u Úřadu pro ochranu osobních údajů (uoou.gov.cz).</li>
+    </ul>
+    <p>Pro uplatnění práv nám napiš na <a href="mailto:info@estudivo.cz">info@estudivo.cz</a>.</p>
+
+    <h2>Děti a nezletilí</h2>
+    <p>Estudivo je určené studentům, mezi nimiž jsou i nezletilí. Sbíráme jen minimum údajů potřebných pro fungování aplikace. Pokud je ti méně let, než vyžaduje zákon tvé země pro samostatný souhlas se zpracováním údajů, používej aplikaci se souhlasem rodiče nebo zákonného zástupce.</p>
+
+    <h2>Změny těchto zásad</h2>
+    <p>Zásady můžeme čas od času aktualizovat. Aktuální verze je vždy na této stránce s datem poslední aktualizace.</p>
+
+    <div class="card note">
+      Kontakt ve věci ochrany osobních údajů: <a href="mailto:info@estudivo.cz">info@estudivo.cz</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="/">Domů</a>
+    <a href="/podminky.html">Podmínky užití</a>
+    <a href="/app/">Aplikace</a>
+  </div>
+</footer>
+</body>
+</html>
