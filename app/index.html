@@ -1239,6 +1239,7 @@
   window.addEventListener('error', function(e){ rec('error', e&&e.message, e&&(e.filename+':'+e.lineno)); });
   window.addEventListener('unhandledrejection', function(e){ var r=e&&e.reason; rec('promise', r&&(r.message||r), ''); });
   window.estErrors = function(){ try{ return JSON.parse(localStorage.getItem('prumer_errors')||'[]'); }catch(e){ return []; } };
+  window.estLogErr = function(msg, src){ rec('handled', msg, src); };
 })();
 const STORE_KEY = 'prumer_data_v1';
 const WEIGHTS = [
@@ -1613,6 +1614,17 @@ function promptDialog(title, value, onOk){
 function alertDialog(title, msg){
   showDialog(title, msg, false, 'OK', ()=>{}, null, { primary:true, hideCancel:true });
 }
+/* Lidská hláška z chyby — skryje technický text před uživatelem, pozná offline/výpadek sítě,
+   a syrovou chybu zaloguje do estErrors() pro vývojáře. */
+function errMsg(e){
+  const raw = String((e && e.message) || e || '');
+  try{ if(window.estLogErr) window.estLogErr(raw, 'handled'); }catch(_){}
+  if(typeof navigator !== 'undefined' && navigator.onLine === false)
+    return 'Vypadá to, že nejsi online. Zkontroluj připojení k internetu a zkus to prosím znovu.';
+  if(/failed to fetch|networkerror|load failed|timeout|network|fetch/i.test(raw))
+    return 'Nepodařilo se spojit se serverem. Zkontroluj připojení a zkus to prosím znovu.';
+  return 'Něco se nepovedlo. Zkus to prosím znovu — kdyby potíže trvaly, napiš nám na info@estudivo.cz.';
+}
 function showDialog(title, msg, isInput, okLabel, onOk, value, opts){
   opts = opts || {};
   const bd=document.getElementById('dlgBackdrop');
@@ -1732,8 +1744,7 @@ async function sendFeedback(){
     closeFeedbackSheet();
     alertDialog('Děkuju!', 'Zpráva byla odeslaná. Díky za zpětnou vazbu!');
   } catch(e){
-    const m = String((e&&e.message)||e);
-    alertDialog('Nepovedlo se', m);
+    alertDialog('Nepovedlo se', errMsg(e));
   } finally { btn.disabled = false; btn.textContent = label; }
 }
 
@@ -1964,7 +1975,7 @@ async function runSolImport(){
         alertDialog('Hotovo', 'Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
       });
   } catch(e){
-    alertDialog('Chyba spojení', String((e&&e.message)||e) + '\n(Zkus to na živé adrese, ne v náhledu — náhled může blokovat cizí spojení.)');
+    alertDialog('Chyba spojení', errMsg(e) + '\n(Zkus to na živé adrese, ne v náhledu — náhled může blokovat cizí spojení.)');
   } finally {
     btn.disabled = false; btn.textContent = label;
   }
@@ -2092,7 +2103,7 @@ async function doLogin(){
     if(error) throw error;
     try{ localStorage.setItem('prumer_auth_email', email); }catch(e){}
     await afterSignedIn(data && data.user);
-  }catch(e){ const m=String(e&&e.message||e); alertDialog('Přihlášení selhalo', /invalid login/i.test(m)?'Špatný email nebo heslo.':(/email not confirmed/i.test(m)?'Email ještě není potvrzený — mrkni do schránky.':m)); }
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Přihlášení selhalo', /invalid login/i.test(m)?'Špatný email nebo heslo.':(/email not confirmed/i.test(m)?'Email ještě není potvrzený — mrkni do schránky.':errMsg(e))); }
   finally{ btn.disabled=false; btn.textContent=lab; }
 }
 async function doSignup(){
@@ -2108,7 +2119,7 @@ async function doSignup(){
     try{ localStorage.setItem('prumer_auth_email', email); }catch(e){}
     if(data && data.session){ await afterSignedIn(data.user); }
     else { authStep='login'; renderProfile(); alertDialog('Účet vytvořen','Potvrď ho prosím přes odkaz/kód v emailu a pak se přihlas heslem.'); }
-  }catch(e){ const m=String(e&&e.message||e); alertDialog('Registrace selhala', /already|registered|exists/i.test(m)?'Tento email už účet má — přihlas se, nebo použij „Zapomněl jsi heslo?".':m); }
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Registrace selhala', /already|registered|exists/i.test(m)?'Tento email už účet má — přihlas se, nebo použij „Zapomněl jsi heslo?".':errMsg(e)); }
   finally{ btn.disabled=false; btn.textContent=lab; }
 }
 async function authOAuth(provider){
@@ -2116,7 +2127,7 @@ async function authOAuth(provider){
   try{
     const { error } = await c.auth.signInWithOAuth({ provider, options:{ redirectTo: location.origin + '/app/' } });
     if(error) throw error;   // jinak proběhne přesměrování
-  }catch(e){ const m=String(e&&e.message||e); alertDialog('Nepovedlo se', /not enabled|provider/i.test(m)?('Přihlášení přes '+(provider==='google'?'Google':'Apple')+' zatím není zapnuté v Supabase.'):m); }
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Nepovedlo se', /not enabled|provider/i.test(m)?('Přihlášení přes '+(provider==='google'?'Google':'Apple')+' zatím není zapnuté v Supabase.'):errMsg(e)); }
 }
 async function doResetSend(){
   const email=(document.getElementById('authEmail').value||'').trim();
@@ -2127,7 +2138,7 @@ async function doResetSend(){
     const { error } = await c.auth.resetPasswordForEmail(email);
     if(error) throw error;
     authEmailPending = email; authStep='resetcode'; renderProfile();
-  }catch(e){ alertDialog('Nepovedlo se', String(e&&e.message||e)); }
+  }catch(e){ alertDialog('Nepovedlo se', errMsg(e)); }
   finally{ btn.disabled=false; btn.textContent=lab; }
 }
 async function doResetVerify(){
@@ -2144,7 +2155,7 @@ async function doResetVerify(){
     if(up.error) throw up.error;
     await afterSignedIn(data && data.user);
     alertDialog('Hotovo','Nové heslo je nastavené a jsi přihlášený.');
-  }catch(e){ const m=String(e&&e.message||e); alertDialog('Nepovedlo se', /expired|invalid|token/i.test(m)?'Kód nesedí nebo vypršel — pošli si nový.':m); }
+  }catch(e){ const m=String(e&&e.message||e); alertDialog('Nepovedlo se', /expired|invalid|token/i.test(m)?'Kód nesedí nebo vypršel — pošli si nový.':errMsg(e)); }
   finally{ btn.disabled=false; btn.textContent=lab; }
 }
 async function authLogout(){
@@ -2220,7 +2231,7 @@ async function sendFriendRequest(otherId){
     else if(rows.filter(function(r){ return r.status==='accepted'; }).length){ alertDialog('Už jste přátelé','S tímhle člověkem už kamarádíte.'); }
     else if(mine){ alertDialog('Už odesláno','Žádost už čeká na potvrzení.'); }
     else { await c.from('pratele').insert({ requester:authUser.id, addressee:otherId, status:'pending' }); alertDialog('Odesláno','Žádost o přátelství je na cestě.'); }
-  }catch(e){ alertDialog('Nepovedlo se', String(e&&e.message||e)); }
+  }catch(e){ alertDialog('Nepovedlo se', errMsg(e)); }
   renderProfile();
 }
 async function loadFriendData(){
@@ -2693,7 +2704,7 @@ async function enterClass(code){
       await joinClass('pending', code);
       alertDialog('Žádost odeslána','Třída „'+t.name+'" je soukromá. Admin musí tvou žádost schválit — pak se dostaneš dovnitř.');
     }
-  } catch(e){ alertDialog('Chyba spojení', String((e&&e.message)||e)); }
+  } catch(e){ alertDialog('Chyba spojení', errMsg(e)); }
 }
 
 function genClassCode(){
@@ -2745,7 +2756,7 @@ async function submitCreateClass(){
     matSaveClass(); await joinClass(); renderMaterials();
     closeCreateSheet();
     alertDialog('Třída vytvořena', 'Kód třídy je '+code+'. '+(approval?'Je soukromá — žádosti o připojení budeš schvalovat ty.':'Pošli ho spolužákům, ať se připojí.')+' Jsi její admin.');
-  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+  } catch(e){ alertDialog('Chyba', errMsg(e)); }
 }
 
 function renderMatClass(wrap, h1){
@@ -2844,7 +2855,7 @@ async function approveMember(id){
     if(up.error) throw up.error;
     if(!up.data || !up.data.length){ alertDialog('Nepovedlo se','Chybí oprávnění schválit. V Supabase spusť SQL „tridy-soukrome".'); return; }
     renderMaterials();
-  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+  } catch(e){ alertDialog('Chyba', errMsg(e)); }
 }
 async function rejectMember(id){
   const c = getSB(); if(!c || !mat.code) return;
@@ -2852,7 +2863,7 @@ async function rejectMember(id){
     const del = await c.from('clenove').delete().eq('code', mat.code).eq('user_id', id);
     if(del.error) throw del.error;
     renderMaterials();
-  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+  } catch(e){ alertDialog('Chyba', errMsg(e)); }
 }
 function kickMember(id){
   confirmDialog('Odebrat ze třídy?', 'Člen bude ze třídy odebrán. Může se zase připojit (nebo znovu požádat).', 'Odebrat', async ()=>{
@@ -2861,7 +2872,7 @@ function kickMember(id){
       const del = await c.from('clenove').delete().eq('code', mat.code).eq('user_id', id);
       if(del.error) throw del.error;
       closeMemberSheet(); renderMaterials();
-    } catch(e){ alertDialog('Nepovedlo se', String((e&&e.message)||e)); }
+    } catch(e){ alertDialog('Nepovedlo se', errMsg(e)); }
   });
 }
 function memAvatar(m){
@@ -2993,7 +3004,7 @@ function setMemberAdmin(id, makeAdmin){
       const up = await c.from('clenove').update({ is_admin: makeAdmin }).eq('code', mat.code).eq('user_id', id);
       if(up.error) throw up.error;
       closeMemberSheet(); renderMaterials();
-    } catch(e){ alertDialog('Nepovedlo se', String((e&&e.message)||e)); }
+    } catch(e){ alertDialog('Nepovedlo se', errMsg(e)); }
   });
 }
 function closeMemberSheet(){ hideSheet('member'); }
@@ -3092,7 +3103,7 @@ function addMatSubject(){
     } catch(e){
       const m = String((e&&e.message)||e);
       if(/predmety|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Předměty nejsou nastavené','V Supabase je potřeba spustit SQL pro tabulku „predmety" (viz návod v chatu).');
-      else alertDialog('Nepovedlo se', m);
+      else alertDialog('Nepovedlo se', errMsg(e));
     }
   });
 }
@@ -3174,7 +3185,7 @@ async function loadTests(){
     if(r.error) throw r.error;
     calRows = r.data || [];
     drawWeek();
-  } catch(e){ week.innerHTML=''; week.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
+  } catch(e){ week.innerHTML=''; week.appendChild(matNotice('Chyba', errMsg(e))); }
 }
 
 function drawWeek(){
@@ -3259,7 +3270,7 @@ async function saveTest(){
     if(real && i>-1){ calRows[i] = real; drawWeek(); } else { loadTests(); }
   } catch(e){
     const i = calRows.indexOf(temp); if(i>-1){ calRows.splice(i,1); drawWeek(); }
-    alertDialog('Uložení selhalo', String((e&&e.message)||e));
+    alertDialog('Uložení selhalo', errMsg(e));
   }
 }
 
@@ -3275,7 +3286,7 @@ function deleteTest(r){
       if(del.error) throw del.error;
     } catch(e){
       if(i>-1){ calRows.splice(i,0,r); drawWeek(); }
-      alertDialog('Mazání selhalo', String((e&&e.message)||e));
+      alertDialog('Mazání selhalo', errMsg(e));
     }
   });
 }
@@ -3379,7 +3390,7 @@ async function loadMatItems(){
       matFolders = (fr.error ? [] : (fr.data || []));   // tabulka slozky nemusí ještě existovat
     } catch(e){ matFolders = []; }
     drawMatItems();
-  } catch(e){ list.innerHTML=''; list.appendChild(matNotice('Chyba', String((e&&e.message)||e))); }
+  } catch(e){ list.innerHTML=''; list.appendChild(matNotice('Chyba', errMsg(e))); }
 }
 
 function sortFiles(rows){
@@ -3462,7 +3473,7 @@ function createFolder(){
     } catch(e){
       const m = String((e&&e.message)||e);
       if(/slozky|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Složky nejsou nastavené','V Supabase je potřeba spustit SQL pro tabulku „slozky" (viz návod v chatu).');
-      else alertDialog('Nepovedlo se', m);
+      else alertDialog('Nepovedlo se', errMsg(e));
     }
   });
 }
@@ -3479,7 +3490,7 @@ function deleteFolder(f){
       const del = await c.from('slozky').delete().eq('id', f.id);
       if(del.error) throw del.error;
       loadMatItems();
-    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
+    } catch(e){ alertDialog('Mazání selhalo', errMsg(e)); }
   });
 }
 
@@ -3522,7 +3533,7 @@ function renameFile(r){
       if(upd.error) throw upd.error;
       if(!upd.data || !upd.data.length){ alertDialog('Přejmenování se neuložilo','Chybí pravidlo pro úpravu. V Supabase spusť SQL na povolení update (viz zpráva v chatu).'); return; }
       loadMatItems();
-    } catch(e){ alertDialog('Přejmenování selhalo', String((e&&e.message)||e)); }
+    } catch(e){ alertDialog('Přejmenování selhalo', errMsg(e)); }
   });
 }
 
@@ -3732,7 +3743,7 @@ async function downloadFile(r){
     const url = await fileSignedUrl(r.path);
     if(url) window.open(url, '_blank');
     else alertDialog('Nelze otevřít','Odkaz se nepodařilo získat.');
-  } catch(e){ alertDialog('Chyba', String((e&&e.message)||e)); }
+  } catch(e){ alertDialog('Chyba', errMsg(e)); }
 }
 
 function deleteFile(r){
@@ -3744,7 +3755,7 @@ function deleteFile(r){
       const del = await c.from('materialy').delete().eq('id', r.id);
       if(del.error) throw del.error;
       loadMatItems();
-    } catch(e){ alertDialog('Mazání selhalo', String((e&&e.message)||e)); }
+    } catch(e){ alertDialog('Mazání selhalo', errMsg(e)); }
   });
 }
 
@@ -3829,6 +3840,9 @@ window.addEventListener('load', ()=>{
 'Prázdná zpráva':'Empty message','Napiš prosím nejdřív zprávu.':'Please write a message first.','Chybí e-mail':'Email missing','Vyplň prosím svůj e-mail, ať ti autor může odpovědět.':'Please enter your email so the author can reply.','Není připojení':'No connection','Odeslání potřebuje cloud (Supabase).':'Sending needs the cloud (Supabase).','Odesílám…':'Sending…','Děkuju!':'Thanks!','Zpráva byla odeslaná. Díky za zpětnou vazbu!':'Message sent. Thanks for the feedback!','Není nastaveno':'Not set up',
 'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.':'Pulls your grades straight from Škola OnLine. Your password is never stored.','Smaže se uložené přihlášení. Známky v aplikaci zůstanou, ale dál se nebudou aktualizovat samy.':'Your saved login will be removed. Grades stay in the app but will no longer auto-update.','Aktualizuji známky…':'Updating grades…','Chybí údaje':'Missing info','Vyplň přihlašovací jméno i heslo.':'Enter your username and password.','Přihlašuji…':'Signing in…','Špatné přihlašovací jméno nebo heslo.':'Wrong username or password.','Nepodařilo se načíst účet nebo známky.':'Could not load the account or grades.','Žádné známky':'No grades','Načíst známky?':'Load grades?','Načíst':'Load','Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.':'Grades loaded. From now on they update automatically every time you open the app.','Chyba spojení':'Connection error',
 'Není připojení (Supabase).':'No connection (Supabase).','Nejsi přihlášený.':'You are not signed in.','odhlásit':'sign out',
+'Vypadá to, že nejsi online. Zkontroluj připojení k internetu a zkus to prosím znovu.':'Looks like you are offline. Check your internet connection and try again.',
+'Nepodařilo se spojit se serverem. Zkontroluj připojení a zkus to prosím znovu.':'Could not reach the server. Check your connection and try again.',
+'Něco se nepovedlo. Zkus to prosím znovu — kdyby potíže trvaly, napiš nám na info@estudivo.cz.':'Something went wrong. Please try again — if it keeps happening, email us at info@estudivo.cz.',
 'Jste přátelé!':'You are friends now!','Žádost potvrzena, teď si můžete porovnat průměr.':'Request accepted, now you can compare averages.','Už jste přátelé':'Already friends','S tímhle člověkem už kamarádíte.':'You are already friends with this person.','Už odesláno':'Already sent','Žádost už čeká na potvrzení.':'The request is already pending.','Odesláno':'Sent','Žádost o přátelství je na cestě.':'Friend request sent.','Přátelé':'Friends','+ Pozvat přátele':'+ Invite friends','Načítám…':'Loading…','Žádosti o přátelství':'Friend requests','Někdo':'Someone','Přijmout':'Accept','Odmítnout':'Decline','Porovnání průměru':'Average comparison','Zatím nemáš přátele — pozvi je tlačítkem nahoře.':'No friends yet — invite them with the button above.','Beze jména':'No name','Přijmout žádost':'Accept request','Přidat do přátel':'Add friend','Žádost odeslána':'Request sent','Porovnání známek':'Grade comparison','kamarád':'friend','Zatím nejsou žádné předměty k porovnání.':'No subjects to compare yet.','Odebrat práva admina':'Remove admin','Udělat adminem':'Make admin','Udělat adminem?':'Make admin?','Člen bude moct spravovat třídu — mazat a přejmenovat obsah, a v režimu „jen prohlížení" i přidávat.':'The member will be able to manage the class — delete and rename content, and add in "view only" mode too.','Člen přijde o práva admina.':'The member will lose admin rights.','Profil se nepodařilo načíst.':'Could not load the profile.',
 'Profil potřebuje cloud':'Profile needs the cloud','Přihlášení běží přes Supabase. Na živé adrese (GitHub Pages) to poběží.':'Sign-in runs via Supabase. It works on the live site (GitHub Pages).','Přihlášení':'Sign in','Zadej kód z emailu':'Enter the code from your email','Přihlásit se':'Sign in','Změnit email':'Change email','Přihlas se emailem':'Sign in with email','Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš. Stačí email — přijde ti kód.':'Without signing in you cannot join or create a class. Just an email — you will get a code.','Poslat kód':'Send code','Neplatný email':'Invalid email','Posílám…':'Sending…','Neúplný kód':'Incomplete code','Zadej celý kód z emailu.':'Enter the full code from your email.','Kód nesedí nebo vypršel.':'The code is wrong or expired.','. Mrkni i do spamu.':'. Check your spam too.','Odhlásit se':'Sign out','Odhlásit se?':'Sign out?','Tvoje známky i třída zůstanou uložené v účtu a vrátí se po přihlášení.':'Your grades and class stay saved in your account and return after signing in.','Odhlásit':'Sign out','Změnit fotku':'Change photo','Jméno':'Name','Kde studuješ':'Where you study','Bio':'Bio','Ukládám…':'Saving…','Uložení selhalo':'Save failed','Upravit profil':'Edit profile',
 'Vzhled':'Appearance','☀️ Světlý':'☀️ Light','🌙 Tmavý':'🌙 Dark','Barva aplikace':'App colour','Žlutá':'Yellow',
