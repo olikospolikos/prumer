@@ -1721,15 +1721,19 @@ async function sendFeedback(){
   btn.disabled = true; btn.textContent = 'Odesílám…';
   try {
     const meta = 'uid=' + uid() + (mat.code ? (' třída=' + mat.code) : '') + ' · ' + (navigator.userAgent || '').slice(0,120);
-    const ins = await c.from('feedback').insert({ message: msg, contact: contact || null, meta });
-    if(ins.error) throw ins.error;
+    const resp = await fetch(SB_URL + '/functions/v1/feedback', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey': SB_KEY },
+      body: JSON.stringify({ message: msg, contact: contact || null, meta })
+    });
+    if(resp.status === 429){ alertDialog('Chvilku počkej','Posíláš zpětnou vazbu moc často. Zkus to prosím za chvíli.'); return; }
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
     try{ localStorage.setItem('prumer_fb_last', String(Date.now())); }catch(e){}
     closeFeedbackSheet();
     alertDialog('Děkuju!', 'Zpráva byla odeslaná. Díky za zpětnou vazbu!');
   } catch(e){
     const m = String((e&&e.message)||e);
-    if(/feedback|relation|does not exist|schema cache|404/i.test(m)) alertDialog('Není nastaveno','V Supabase chybí tabulka „feedback" — spusť SQL z návodu v chatu.');
-    else alertDialog('Nepovedlo se', m);
+    alertDialog('Nepovedlo se', m);
   } finally { btn.disabled = false; btn.textContent = label; }
 }
 

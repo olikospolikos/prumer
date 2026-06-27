@@ -485,16 +485,20 @@
       if(!contact || contact.indexOf('@')<1){ st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Please enter your email.':'Vyplň prosím svůj e-mail.'); st.hidden=false; return; }
       try{ var last=+(localStorage.getItem('prumer_fb_last')||0); if(Date.now()-last<20000){ st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Please wait a moment before sending again.':'Chvilku počkej, než pošleš znovu.'); st.hidden=false; return; } }catch(e){}
       var lbl=btn.textContent; btn.disabled=true; btn.textContent='Odesílám…'; st.hidden=true;
-      fetch(SB_URL+'/rest/v1/feedback',{
+      fetch(SB_URL+'/functions/v1/feedback',{
         method:'POST',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
         body:JSON.stringify({message:msg,contact:contact||null,meta:'web landing · '+(navigator.userAgent||'').slice(0,120)})
       }).then(function(r){
+        if(r.status===429){ var e=new Error('rate'); e.rl=true; throw e; }
         if(!r.ok) throw new Error('HTTP '+r.status);
         try{ localStorage.setItem('prumer_fb_last', String(Date.now())); }catch(e){}
         form.reset(); st.className='fb-status ok'; st.textContent=(window.LANG==='en'?'Thanks! Your message was sent. 🎉':'Díky! Zpráva byla odeslaná. 🎉'); st.hidden=false;
-      }).catch(function(){
-        st.className='fb-status err'; st.textContent=(window.LANG==='en'?'Sending failed, please try again.':'Odeslání se teď nepovedlo, zkus to prosím znovu.'); st.hidden=false;
+      }).catch(function(err){
+        st.className='fb-status err';
+        if(err&&err.rl) st.textContent=(window.LANG==='en'?'Too many messages, please wait a bit.':'Posíláš zprávy moc často, zkus to prosím za chvíli.');
+        else st.textContent=(window.LANG==='en'?'Sending failed, please try again.':'Odeslání se teď nepovedlo, zkus to prosím znovu.');
+        st.hidden=false;
       }).finally(function(){ btn.disabled=false; btn.textContent=lbl; });
     });
   })();
