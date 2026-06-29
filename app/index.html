@@ -375,8 +375,9 @@
   /* ---------- modal / sheet ---------- */
   .sheet-backdrop {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(3px);
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
     opacity: 0; pointer-events: none;
     transition: opacity .25s;
     z-index: 40;
@@ -418,8 +419,9 @@
   /* custom dialog */
   .dlg-backdrop {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.65);
-    backdrop-filter: blur(3px);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
     display: flex; align-items: center; justify-content: center;
     padding: 28px;
     opacity: 0; pointer-events: none;
@@ -489,20 +491,23 @@
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
     max-width: 560px; margin: 0 auto;
     display: flex; gap: 4px;
-    background: rgba(24,27,34,0.92);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid var(--line);
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(24,27,34,0.62);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 11px 12px calc(11px + env(safe-area-inset-bottom));
   }
   .tab {
     flex: 1; border: none; background: none; cursor: pointer;
-    font-family: inherit; font-size: 11.5px; font-weight: 700;
     color: var(--ink-faint);
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 6px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 8px; border-radius: 14px;
+    transition: color .15s, transform .15s;
   }
-  .tab svg { width: 22px; height: 22px; }
+  .tab svg { width: 26px; height: 26px; }
+  .tab:active { transform: scale(0.9); }
   .tab.sel { color: var(--accent); }
+  .tab.sel svg { stroke-width: 2.4; }
 
   /* ---------- materials ---------- */
   .mat-notice {
@@ -728,8 +733,11 @@
   :root[data-theme="light"] .mat-notice{ box-shadow:0 1px 2px rgba(26,31,48,0.05); }
   /* spodní lišta ve světlém režimu */
   :root[data-theme="light"] .tabbar{
-    background:rgba(255,255,255,0.92);
-    box-shadow:0 -2px 12px rgba(26,31,48,0.06);
+    background:rgba(255,255,255,0.62);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-top:1px solid rgba(26,31,48,0.08);
+    box-shadow:0 -2px 16px rgba(26,31,48,0.06);
   }
   :root[data-theme="light"] .tab.sel{ color:var(--accent-deep); }
 
@@ -1210,17 +1218,14 @@
 </div>
 
 <nav class="tabbar">
-  <button class="tab sel" id="tabGrades" onclick="setPage('grades')">
+  <button class="tab sel" id="tabGrades" aria-label="Známky" onclick="setPage('grades')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-    Známky
   </button>
-  <button class="tab" id="tabMaterials" onclick="setPage('materials')">
+  <button class="tab" id="tabMaterials" aria-label="Třídy" onclick="setPage('materials')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    Třídy
   </button>
-  <button class="tab" id="tabProfile" onclick="setPage('profile')">
+  <button class="tab" id="tabProfile" aria-label="Profil" onclick="setPage('profile')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-    Profil
   </button>
 </nav>
 
@@ -2780,7 +2785,7 @@ function renderMatClass(wrap, h1){
 
   const tog = document.createElement('div');
   tog.className = 'calc-toggle'; tog.style.margin = '0 16px 16px';
-  [['soubory','Materiály'],['kalendar','Kalendář']].forEach(t=>{
+  [['soubory','Materiály'],['kalendar','Kalendář'],['lide','Lidi']].forEach(t=>{
     const b = document.createElement('button');
     b.className = 'calc-mode' + (mat.tab===t[0] ? ' sel' : '');
     b.textContent = t[1];
@@ -2790,10 +2795,12 @@ function renderMatClass(wrap, h1){
   wrap.appendChild(tog);
 
   if(mat.tab === 'kalendar'){ renderMatCalendar(wrap); return; }
-
-  const memBox = document.createElement('div'); memBox.id = 'memBox';
-  wrap.appendChild(memBox);
-  renderMembers(memBox);
+  if(mat.tab === 'lide'){
+    const memBox = document.createElement('div'); memBox.id = 'memBox';
+    wrap.appendChild(memBox);
+    renderMembers(memBox);
+    return;
+  }
 
   const lbl = document.createElement('div');
   lbl.className = 'section-label'; lbl.style.padding = '4px 16px 12px'; lbl.textContent = 'Vyber předmět';
@@ -3846,7 +3853,7 @@ window.addEventListener('load', ()=>{
 'Jste přátelé!':'You are friends now!','Žádost potvrzena, teď si můžete porovnat průměr.':'Request accepted, now you can compare averages.','Už jste přátelé':'Already friends','S tímhle člověkem už kamarádíte.':'You are already friends with this person.','Už odesláno':'Already sent','Žádost už čeká na potvrzení.':'The request is already pending.','Odesláno':'Sent','Žádost o přátelství je na cestě.':'Friend request sent.','Přátelé':'Friends','+ Pozvat přátele':'+ Invite friends','Načítám…':'Loading…','Žádosti o přátelství':'Friend requests','Někdo':'Someone','Přijmout':'Accept','Odmítnout':'Decline','Porovnání průměru':'Average comparison','Zatím nemáš přátele — pozvi je tlačítkem nahoře.':'No friends yet — invite them with the button above.','Beze jména':'No name','Přijmout žádost':'Accept request','Přidat do přátel':'Add friend','Žádost odeslána':'Request sent','Porovnání známek':'Grade comparison','kamarád':'friend','Zatím nejsou žádné předměty k porovnání.':'No subjects to compare yet.','Odebrat práva admina':'Remove admin','Udělat adminem':'Make admin','Udělat adminem?':'Make admin?','Člen bude moct spravovat třídu — mazat a přejmenovat obsah, a v režimu „jen prohlížení" i přidávat.':'The member will be able to manage the class — delete and rename content, and add in "view only" mode too.','Člen přijde o práva admina.':'The member will lose admin rights.','Profil se nepodařilo načíst.':'Could not load the profile.',
 'Profil potřebuje cloud':'Profile needs the cloud','Přihlášení běží přes Supabase. Na živé adrese (GitHub Pages) to poběží.':'Sign-in runs via Supabase. It works on the live site (GitHub Pages).','Přihlášení':'Sign in','Zadej kód z emailu':'Enter the code from your email','Přihlásit se':'Sign in','Změnit email':'Change email','Přihlas se emailem':'Sign in with email','Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš. Stačí email — přijde ti kód.':'Without signing in you cannot join or create a class. Just an email — you will get a code.','Poslat kód':'Send code','Neplatný email':'Invalid email','Posílám…':'Sending…','Neúplný kód':'Incomplete code','Zadej celý kód z emailu.':'Enter the full code from your email.','Kód nesedí nebo vypršel.':'The code is wrong or expired.','. Mrkni i do spamu.':'. Check your spam too.','Odhlásit se':'Sign out','Odhlásit se?':'Sign out?','Tvoje známky i třída zůstanou uložené v účtu a vrátí se po přihlášení.':'Your grades and class stay saved in your account and return after signing in.','Odhlásit':'Sign out','Změnit fotku':'Change photo','Jméno':'Name','Kde studuješ':'Where you study','Bio':'Bio','Ukládám…':'Saving…','Uložení selhalo':'Save failed','Upravit profil':'Edit profile',
 'Vzhled':'Appearance','☀️ Světlý':'☀️ Light','🌙 Tmavý':'🌙 Dark','Barva aplikace':'App colour','Žlutá':'Yellow',
-'Zápisky':'Notes','Testy':'Tests','Materiály ještě nejsou nastavené':'Materials not set up yet','Načítám knihovnu…':'Loading library…','Nejdřív se přihlas':'Sign in first','Do třídy se dostaneš a třídu vytvoříš až po přihlášení. Otevři záložku Profil a přihlas se emailem.':'You can join or create a class only after signing in. Open the Profile tab and sign in with email.','Přejít na přihlášení':'Go to sign in','+ Přidat třídu':'+ Add class','Zatím v žádné třídě':'Not in any class yet','Třída':'Class','Opustit třídu?':'Leave class?','Přidat třídu':'Add class','‹ Moje třídy':'‹ My classes','Zadej kód třídy':'Enter class code','Spolužáci sdílí zápisky a materiály na jednom místě.':'Classmates share notes and materials in one place.','Připojit se':'Join','Vytvořit novou třídu':'Create a new class','Zadej všechny čtyři znaky kódu.':'Enter all four characters of the code.','Třída nenalezena':'Class not found','Chybí jméno':'Name missing','Zadej jméno třídy.':'Enter a class name.','Vytvoření třídy potřebuje cloud (Supabase).':'Creating a class needs the cloud (Supabase).','Zkus to prosím ještě jednou.':'Please try again.','Třída vytvořena':'Class created','Pošli ho spolužákům, ať se připojí.':'Send it to your classmates to join.','Je veřejná — najdou ji i v seznamu.':'It is public — it also shows in the list.','kód třídy':'class code','Sdílet':'Share','Kalendář':'Calendar','Vyber předmět':'Pick a subject','zatím prázdné':'empty','Jen prohlížení':'View only','V téhle třídě můžou přidávat jen admini.':'Only admins can add in this class.','Materiály potřebují cloud (Supabase).':'Materials need the cloud (Supabase).','Už existuje':'Already exists','Předmět s tímhle názvem už ve třídě je.':'A subject with this name is already in the class.','Předměty nejsou nastavené':'Subjects not set up',
+'Zápisky':'Notes','Testy':'Tests','Materiály ještě nejsou nastavené':'Materials not set up yet','Načítám knihovnu…':'Loading library…','Nejdřív se přihlas':'Sign in first','Do třídy se dostaneš a třídu vytvoříš až po přihlášení. Otevři záložku Profil a přihlas se emailem.':'You can join or create a class only after signing in. Open the Profile tab and sign in with email.','Přejít na přihlášení':'Go to sign in','+ Přidat třídu':'+ Add class','Zatím v žádné třídě':'Not in any class yet','Třída':'Class','Opustit třídu?':'Leave class?','Přidat třídu':'Add class','‹ Moje třídy':'‹ My classes','Zadej kód třídy':'Enter class code','Spolužáci sdílí zápisky a materiály na jednom místě.':'Classmates share notes and materials in one place.','Připojit se':'Join','Vytvořit novou třídu':'Create a new class','Zadej všechny čtyři znaky kódu.':'Enter all four characters of the code.','Třída nenalezena':'Class not found','Chybí jméno':'Name missing','Zadej jméno třídy.':'Enter a class name.','Vytvoření třídy potřebuje cloud (Supabase).':'Creating a class needs the cloud (Supabase).','Zkus to prosím ještě jednou.':'Please try again.','Třída vytvořena':'Class created','Pošli ho spolužákům, ať se připojí.':'Send it to your classmates to join.','Je veřejná — najdou ji i v seznamu.':'It is public — it also shows in the list.','kód třídy':'class code','Sdílet':'Share','Kalendář':'Calendar','Lidi':'People','Vyber předmět':'Pick a subject','zatím prázdné':'empty','Jen prohlížení':'View only','V téhle třídě můžou přidávat jen admini.':'Only admins can add in this class.','Materiály potřebují cloud (Supabase).':'Materials need the cloud (Supabase).','Už existuje':'Already exists','Předmět s tímhle názvem už ve třídě je.':'A subject with this name is already in the class.','Předměty nejsou nastavené':'Subjects not set up',
 'Po':'Mo','Út':'Tu','St':'We','Čt':'Th','Pá':'Fr','So':'Sa','Ne':'Su','🔔 Zapnout připomínky testů':'🔔 Turn on test reminders','Blížící se testy':'Upcoming tests','zítra':'tomorrow','dnes':'today','Zítra':'Tomorrow','Předchozí týden':'Previous week','Další týden':'Next week','Přidat test v tento den':'Add a test on this day','Chybí datum':'Date missing','Vyber, kdy se test píše.':'Pick when the test is.','Smazat test může jen jeho autor nebo admin třídy.':'Only the author or a class admin can delete a test.','Mazání selhalo':'Delete failed',
 '‹ Předměty':'‹ Subjects','↑ Nahrát':'↑ Upload','+ Složka':'+ Folder','Řadit':'Sort','Podle data přidání':'By date added','Podle abecedy':'Alphabetically','Podle velikosti':'By size','🏠 Hlavní':'🏠 Home','Tady zatím nic není':'Nothing here yet','Tahle složka je prázdná.':'This folder is empty.','Nahraj první zápisky pro třídu.':'Upload the first notes for the class.','složka':'folder','Nová složka':'New folder','Složka s tímhle názvem tu už je.':'A folder with this name already exists.','Složky nejsou nastavené':'Folders not set up','Smazat složku může jen její autor nebo admin třídy.':'Only the author or a class admin can delete a folder.','Složka není prázdná':'Folder not empty','Nejdřív z ní smaž soubory a podsložky.':'Delete its files and subfolders first.','Smazat složku?':'Delete folder?','Nelze přejmenovat':'Cannot rename','Přejmenovat soubor může jen jeho autor nebo admin třídy.':'Only the author or a class admin can rename a file.','Přejmenovat soubor':'Rename file','Přejmenování se neuložilo':'Rename not saved','Přejmenování selhalo':'Rename failed','Nelze otevřít':'Cannot open','Odkaz se nepodařilo získat.':'Could not get the link.','Smazat soubor může jen jeho autor nebo admin třídy.':'Only the author or a class admin can delete a file.','Soubor je moc velký':'File too big','Nahrávej prosím soubory do 50 MB.':'Please upload files up to 50 MB.','Některé soubory přeskočeny':'Some files skipped','Část se nenahrála':'Some did not upload','Moc velká':'Too big','Profilová fotka může mít max 5 MB.':'Profile photo can be max 5 MB.','Nahrání selhalo':'Upload failed',
 'Načítám QR…':'Loading QR…','Zkopírováno':'Copied','Odkaz na třídu je ve schránce.':'The class link is on your clipboard.','Nešlo zkopírovat':'Could not copy','Označ a zkopíruj odkaz ručně.':'Select and copy the link manually.','Žádná oznámení.':'No notifications.','CELKOVÝ VÁŽENÝ PRŮMĚR':'OVERALL WEIGHTED AVERAGE',
