@@ -499,10 +499,7 @@
     border-radius: 30px;
     padding: 9px 14px;
     box-shadow: 0 10px 34px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.22);
-    transform-origin: bottom center;
-    transition: transform .28s cubic-bezier(.32,.72,0,1), opacity .28s;
   }
-  .tabbar.mini { transform: scale(0.82); opacity: 0.9; }
   .tab {
     flex: 1; border: none; background: none; cursor: pointer;
     color: var(--ink-faint);
@@ -3933,27 +3930,6 @@ window.addEventListener('load', ()=>{
     mo.observe(document.body,{childList:true,subtree:true});
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
-})();
-</script>
-<script>
-/* Spodní lišta: při scrollu dolů se zmenší, při scrollu nahoru zase zvětší (jako Instagram) */
-(function(){
-  function init(){
-    var bar = document.querySelector('.tabbar'); if(!bar) return;
-    var lastY = window.scrollY || 0, ticking = false;
-    function update(){
-      ticking = false;
-      var y = window.scrollY || 0;
-      if(Math.abs(y - lastY) < 8){ return; }
-      if(y > lastY && y > 60) bar.classList.add('mini');   // dolů → zmenšit
-      else bar.classList.remove('mini');                   // nahoru → zvětšit
-      lastY = y;
-    }
-    window.addEventListener('scroll', function(){
-      if(!ticking){ ticking = true; requestAnimationFrame(update); }
-    }, { passive:true });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 </body>
