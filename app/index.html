@@ -30,7 +30,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<script>(function(){try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+<script>(function(){function sys(){try{return(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}catch(e){return'light';}}try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:sys();document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme',sys());}})();</script>
 <script>(function(){try{var a=localStorage.getItem('prumer_accent');if(a==='blue'||a==='pink')document.documentElement.setAttribute('data-accent',a);}catch(e){}})();</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
@@ -1377,7 +1377,8 @@ function needHTML(grades){
 function initialTheme(){
   const s = localStorage.getItem('prumer_theme');
   if(s==='light' || s==='dark') return s;
-  return 'light';   // výchozí pro nové uživatele = světlý režim
+  try{ if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'; }catch(e){}
+  return 'light';   // výchozí pro nové uživatele = podle systému telefonu (fallback světlý)
 }
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
