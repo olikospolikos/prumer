@@ -414,6 +414,7 @@
     <form class="fb rev" id="fbForm">
       <textarea id="fbMessage" rows="4" required aria-label="Zpráva zpětné vazby" placeholder="Nápad, co zlepšit, nebo chyba…"></textarea>
       <input type="email" id="fbContact" required aria-label="Tvůj e-mail" placeholder="tvuj@email.cz">
+      <input type="text" id="fbWebsite" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none">
       <button class="btn btn-primary btn-lg" type="submit" id="fbBtn">Odeslat zpětnou vazbu</button>
       <p class="fb-status" id="fbStatus" role="status" aria-live="polite" hidden></p>
     </form>
@@ -488,7 +489,7 @@
       fetch(SB_URL+'/functions/v1/feedback',{
         method:'POST',
         headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
-        body:JSON.stringify({message:msg,contact:contact||null,meta:'web landing · '+(navigator.userAgent||'').slice(0,120)})
+        body:JSON.stringify({message:msg,contact:contact||null,meta:'web landing · '+(navigator.userAgent||'').slice(0,120),website:(document.getElementById('fbWebsite')||{}).value||''})
       }).then(function(r){
         if(r.status===429){ var e=new Error('rate'); e.rl=true; throw e; }
         if(!r.ok) throw new Error('HTTP '+r.status);

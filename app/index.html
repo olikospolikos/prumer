@@ -1180,6 +1180,7 @@
     <label class="fld"><span>Tvůj e‑mail</span>
       <input type="email" id="fbContact" placeholder="tvuj@email.cz" autocomplete="email">
     </label>
+    <input type="text" id="fbWebsite" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none">
   </div>
   <p class="backup-note" style="margin:12px 2px 0">Zpráva je soukromá — pošle se jen autorovi aplikace a nikde se veřejně nezobrazuje.</p>
   <div class="sheet-actions">
@@ -1742,10 +1743,11 @@ async function sendFeedback(){
   btn.disabled = true; btn.textContent = 'Odesílám…';
   try {
     const meta = 'uid=' + uid() + (mat.code ? (' třída=' + mat.code) : '') + ' · ' + (navigator.userAgent || '').slice(0,120);
+    const hp = (document.getElementById('fbWebsite') || {}).value || '';
     const resp = await fetch(SB_URL + '/functions/v1/feedback', {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'apikey': SB_KEY },
-      body: JSON.stringify({ message: msg, contact: contact || null, meta })
+      body: JSON.stringify({ message: msg, contact: contact || null, meta, website: hp })
     });
     if(resp.status === 429){ alertDialog('Chvilku počkej','Posíláš zpětnou vazbu moc často. Zkus to prosím za chvíli.'); return; }
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
