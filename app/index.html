@@ -69,6 +69,9 @@
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
   }
+  /* rezervuj místo pro svislý scrollbar, ať se stránka neposouvá při přepnutí tabu
+     (krátká stránka bez scrollbaru jinak posune vycentrovaný obsah doprava) */
+  html:not(.embed) { scrollbar-gutter: stable; }
 
   body {
     max-width: 560px;
@@ -3792,6 +3795,7 @@ applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
 // calc režim: appka vložená na webu přes iframe (?calc) — schová třídy/profil, posílá výšku rodiči
 if(/[?&](calc|embed)/.test(location.search)){
   document.body.classList.add('embed');
+  document.documentElement.classList.add('embed');   // ať se vypne scrollbar-gutter (jinak by v iframe přidal ~15px vpravo)
   (function(){
     var pg=document.getElementById('pageGrades'); var subjects=document.getElementById('subjects');
     if(!pg || !subjects) return;
