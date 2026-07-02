@@ -2,7 +2,7 @@
    Stránka (HTML) = network-first → vždy čerstvá, když jsi online; offline z cache.
    Fonty/ikony/knihovny = stale-while-revalidate (rychlé z cache, na pozadí se obnoví).
    Verzi cache zvyš (v3, v4…) při změnách, ať se stará vyhodí. */
-const CACHE = 'prumer-v63';
+const CACHE = 'prumer-v65';
 const ASSETS = [
   './',
   './index.html',
@@ -56,6 +56,7 @@ self.addEventListener('fetch', e => {
       }
       return res;
     }).catch(() => cached);
-    return cached || network;
+    // fallback: nikdy nevracet undefined (cache i síť prázdné) → čisté 504 místo tvrdé chyby
+    return cached || (await network) || new Response('', { status: 504 });
   })());
 });

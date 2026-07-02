@@ -2,6 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://aplikace.skolaonline.cz; frame-src https://*.supabase.co; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -30,10 +31,14 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<!-- fonty: preconnect + stylesheet v <head> (dřív blokující @import uvnitř CSS) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap">
 <script>(function(){function sys(){try{return(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}catch(e){return'light';}}try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:sys();document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme',sys());}})();</script>
 <script>(function(){try{var a=localStorage.getItem('prumer_accent');if(a==='blue'||a==='pink')document.documentElement.setAttribute('data-accent',a);}catch(e){}})();</script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap');
+  /* fonty se načítají přes <link rel="stylesheet"> v <head> (rychlejší než blokující @import) */
 
   :root {
     --bg: #0f1115;
@@ -42,7 +47,7 @@
     --line: #2a2f3a;
     --ink: #f2f4f8;
     --ink-dim: #99a0ae;
-    --ink-faint: #5c6373;
+    --ink-faint: #7e8595;
     --accent-rgb: 232,184,75;
     --accent: rgb(var(--accent-rgb));
     --accent-soft: rgba(var(--accent-rgb),0.12);
@@ -689,15 +694,6 @@
   }
   .cal-add:active { background: var(--bg-elev2); }
 
-  /* ---------- obrácená kalkulačka (co potřebuju) ---------- */
-  .need-box{
-    margin:6px 0 12px; background:var(--accent-soft);
-    border:1px solid rgba(var(--accent-rgb),0.25); border-radius:12px; padding:12px 14px;
-  }
-  .need-title{ font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:8px; }
-  .need-row{ font-size:13px; color:var(--ink-dim); line-height:1.6; }
-  .need-row .need-n{ display:inline-block; min-width:42px; color:var(--ink); font-weight:700; }
-  .need-row b{ color:var(--ink); font-weight:700; }
 
   /* ---------- blížící se testy (hlavní strana) ---------- */
   .up-list{ padding:0 16px; display:flex; flex-direction:column; gap:8px; margin-bottom:22px; }
@@ -891,7 +887,10 @@
   .skel-l2{ height:9px; width:34%; }
   .skel-week{ display:flex; flex-direction:column; gap:8px; padding:0 16px; }
   .skel-day{ height:48px; border-radius:12px; }
-  @media(prefers-reduced-motion:reduce){ .skel::after{ animation:none; } }
+  @media(prefers-reduced-motion:reduce){
+    .skel::after{ animation:none; }
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  }
   .cal-chip.pending{ opacity:0.5; }
   /* sdílení karty průměru */
   .hero-share{ position:absolute; bottom:14px; right:14px; z-index:2; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:grid; place-items:center; background:rgba(0,0,0,0.14); color:var(--hero-ink); }
@@ -903,7 +902,7 @@
   .qr-box img, .qr-box canvas{ display:block; }
   .share-code-big{ text-align:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:28px; letter-spacing:0.28em; color:var(--accent-deep); margin-top:4px; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0" integrity="sha384-DjOvX/sJLsmbMrw4wTvf6l3kiGBjdxyOO6X2MTFwOOXGkjN/mE08BoDzrpaaIjil" crossorigin="anonymous" defer></script>
 </head>
 <body>
 
@@ -1270,13 +1269,31 @@ let data = load();
 let editing = { subjectId: null, mark: null, weight: 1 };
 
 function migrate(d) {
+  // odolnost proti poškozenému/cizímu localStorage (číslo, string, pole, null prvky)
+  if (!d || typeof d !== 'object' || Array.isArray(d)) d = { subjects: [] };
   d.sem = d.sem === 2 ? 2 : 1;
   if (!Array.isArray(d.subjects)) d.subjects = [];
+  d.subjects = d.subjects.filter(s => s && typeof s === 'object');
   d.subjects.forEach(s => {
     if (!Array.isArray(s.grades)) s.grades = [];
-    s.grades.forEach(g => { if (g.sem !== 1 && g.sem !== 2) g.sem = 1; });
+    s.grades = s.grades.filter(g => g && typeof g === 'object');
+    s.grades.forEach(g => {
+      if (g.sem !== 1 && g.sem !== 2) g.sem = 1;
+      const m = Number(g.mark);   g.mark   = (Number.isFinite(m) && m >= 1 && m <= 5) ? m : 1;
+      const w = Number(g.weight); g.weight = (Number.isFinite(w) && w > 0)           ? w : 1;
+    });
   });
   return d;
+}
+// Hypotetické (ruční „co kdyby") známky jsou jen dočasné: smažou se při každém načtení
+// appky (tj. po zavření zmizí), neukládají se do cloudu a nezapočítávají se do průměru
+// sdíleného kamarádům. Na obrazovce se ale během práce dál promítají do tvého průměru.
+function stripHypo(d){
+  if(d && Array.isArray(d.subjects)) d.subjects.forEach(function(s){ if(Array.isArray(s.grades)) s.grades = s.grades.filter(function(g){ return !g.hypo; }); });
+  return d;
+}
+function stripHypoCopy(d){
+  return Object.assign({}, d, { subjects: (d && d.subjects || []).map(function(s){ return Object.assign({}, s, { grades: (s.grades||[]).filter(function(g){ return !g.hypo; }) }); }) });
 }
 function load() {
   let d = null;
@@ -1287,7 +1304,7 @@ function load() {
   if (!d) {
     d = { subjects: [] };
   }
-  return migrate(d);
+  return stripHypo(migrate(d));   // ruční hypotetické známky se po zavření/načtení neuchovávají
 }
 function save() {
   data.updatedAt = Date.now();
@@ -1316,9 +1333,14 @@ function weightedAvg(grades, extra) {
   if (extra) all = all.concat([extra]);
   if (!all.length) return null;
   let sw = 0, swm = 0;
-  all.forEach(g => { sw += g.weight; swm += g.weight * g.mark; });
+  all.forEach(g => {
+    const w = Number(g.weight), m = Number(g.mark);
+    if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(m)) return;   // ignoruj nevalidní známku (žádné NaN)
+    sw += w; swm += w * m;
+  });
   if (sw === 0) return null;
-  return swm / sw;
+  const avg = swm / sw;
+  return Number.isFinite(avg) ? avg : null;
 }
 
 function fmt(n) { return n == null ? '—' : n.toFixed(2).replace('.', ','); }
@@ -1332,47 +1354,6 @@ function markColor(m) {
   return pal[i];
 }
 
-/* ---- obrácená kalkulačka: co je potřeba z příští práce ---- */
-function roundedGrade(cur){
-  if(cur==null) return 1;
-  if(cur<=1.5) return 1; if(cur<=2.5) return 2; if(cur<=3.5) return 3; if(cur<=4.5) return 4; return 5;
-}
-// A = cílový průměr (≤ A → vyjde na danou známku). Spočítá, jakou VÁHU musí mít příští
-// jednička, aby průměr klesl na ≤ A (váhu zaokrouhlí na nejbližší možnou: 0,2–1).
-function reqText(S, T, A){
-  const deficit = S - A*T;                 // > 0 → průměr je nad cílem
-  if(deficit <= 1e-9) return 'splněno';
-  const Wneed = deficit / (A - 1);         // minimální váha jedničky
-  if(Wneed <= 1.000001){
-    const opts = [0.2, 0.4, 0.6, 0.8, 1];
-    const w = opts.find(o => o >= Wneed - 1e-9) || 1;
-    return 'potřebuješ <b>1 za váhu '+w.toFixed(1).replace('.', ',')+'</b>';
-  }
-  const k = Math.ceil(Wneed - 1e-9);       // jedna plná jednička nestačí → kolik jich je třeba
-  if(k <= 6) return 'potřebuješ <b>'+k+'× 1 za váhu 1,0</b>';
-  return 'jednou prací už to nedáš';
-}
-// o stupeň horší: jak velkou váhu by musela mít pětka, aby tě stáhla na R+1
-function dropText(S, T, R){
-  const A = R + 0.5, denom = 5 - A;        // R ≤ 4 → denom ≥ 0,5
-  if(denom <= 0) return 'už níž to nejde';
-  const Wneed = (A*T - S) / denom;          // pětka musí mít víc než tahle váha
-  const opts = [0.2, 0.4, 0.6, 0.8, 1];
-  const w = opts.find(o => o > Wneed + 1e-9);
-  if(!w) return 'nestáhne tě ani 5 za váhu 1,0';
-  return 'stáhne tě <b>5 za váhu '+w.toFixed(1).replace('.', ',')+'</b>';
-}
-function needHTML(grades){
-  let T=0, S=0;
-  grades.forEach(g=>{ T += g.weight; S += g.weight*g.mark; });
-  const cur = T>0 ? S/T : null;
-  const R = roundedGrade(cur);
-  let rows = '';
-  if(R > 1) rows += '<div class="need-row"><span class="need-n">Na '+(R-1)+'</span> '+reqText(S, T, (R-1)+0.5)+'</div>';   // o stupeň lepší
-  if(R < 5) rows += '<div class="need-row"><span class="need-n">Na '+(R+1)+'</span> '+dropText(S, T, R)+'</div>';          // o stupeň horší
-  if(!rows) rows = '<div class="need-row">Lepší ani horší známka už není 🎉</div>';
-  return '<div class="need-title">Co potřebuješ z příští práce</div>'+rows;
-}
 
 /* ---- světlý / tmavý režim ---- */
 function initialTheme(){
@@ -1444,7 +1425,7 @@ function renderSubject(s) {
 
   const head = document.createElement('div');
   head.className = 'subject-head';
-  head.onclick = () => { s.open = !s.open; save(); render(); };
+  head.onclick = () => { s.open = !s.open; save(); el.replaceWith(renderSubject(s)); };   // částečný render: jen tento předmět (nezahodí pozici scrollu)
   const pc = avg==null ? null : markColor(avg);
   const pillStyle = pc ? `color:${pc};background:${pc}1a;border-color:${pc}55` : 'color:var(--ink-faint)';
   head.innerHTML = `
@@ -1481,13 +1462,6 @@ function renderSubject(s) {
       body.appendChild(row);
     });
 
-    if(gs.length){
-      const need = document.createElement('div');
-      need.className = 'need-box';
-      need.innerHTML = needHTML(gs);
-      body.appendChild(need);
-    }
-
     const addBtn = document.createElement('button');
     addBtn.className = 'add-grade-btn';
     addBtn.textContent = '+ Přidat hypotetickou známku';
@@ -1513,7 +1487,8 @@ function renderSubject(s) {
   return el;
 }
 
-function esc(t){ return (t||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function esc(t){ return (t||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function isUuid(s){ return typeof s==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s); }
 function fmtDate(d){ const p=d.split('-'); return p.length===3 ? p[2]+'.'+p[1]+'.' : d; }
 
 /* ---- grade sheet ---- */
@@ -1552,7 +1527,7 @@ function saveGrade(){
   const s=data.subjects.find(x=>x.id===editing.subjectId);
   if(!s) return;
   s.grades.push({
-    id:'g'+Date.now(),
+    id:'g'+Date.now()+Math.random().toString(36).slice(2,6),
     mark:editing.mark,
     weight:editing.weight,
     desc:document.getElementById('gradeDesc').value.trim(),
@@ -1597,21 +1572,33 @@ function openSubjectSheet(){ document.getElementById('subjectName').value=''; sh
 function saveSubject(){
   const n=document.getElementById('subjectName').value.trim();
   if(!n) return;
-  data.subjects.push({ id:'s'+Date.now(), name:n, grades:[], open:true });
+  data.subjects.push({ id:'s'+Date.now()+Math.random().toString(36).slice(2,6), name:n, grades:[], open:true });
   save(); render(); closeSubjectSheet();
 }
 
 /* ---- sheet helpers ---- */
+let _sheetReturnFocus = null;
 function showSheet(which){
   const b=document.getElementById(which+'Backdrop');
   const s=document.getElementById(which+'Sheet');
-  b.classList.add('show'); s.classList.add('show');
+  if(s){
+    // a11y: dialog role + navázání na nadpis, ať čtečka pozná modál
+    s.setAttribute('role','dialog'); s.setAttribute('aria-modal','true');
+    const h=s.querySelector('h3,h4'); if(h){ if(!h.id) h.id=which+'SheetTitle'; s.setAttribute('aria-labelledby',h.id); }
+  }
+  if(b) b.classList.add('show'); if(s) s.classList.add('show');
+  // ulož fokus a přesuň ho do sheetu (po zavření se vrátí)
+  _sheetReturnFocus = document.activeElement;
+  const f = s && s.querySelector('input,select,textarea,button,[tabindex]:not([tabindex="-1"])');
+  if(f) setTimeout(()=>{ try{ f.focus(); }catch(e){} }, 60);
 }
 function closeGradeSheet(){ hideSheet('grade'); }
 function closeSubjectSheet(){ hideSheet('subject'); }
 function hideSheet(which){
   document.getElementById(which+'Backdrop').classList.remove('show');
   document.getElementById(which+'Sheet').classList.remove('show');
+  if(_sheetReturnFocus && _sheetReturnFocus.focus){ try{ _sheetReturnFocus.focus(); }catch(e){} }
+  _sheetReturnFocus = null;
 }
 
 /* ---- custom dialog (confirm/prompt) — funguje i v náhledu ---- */
@@ -1773,8 +1760,10 @@ function solApiBase(instance){
   return SOL_API;
 }
 function solBumpId(id, by){
-  const m = String(id||'').match(/^([^\d]*)(\d+)$/);
-  return m ? m[1] + (parseInt(m[2],10)+by) : null;   // C29933 + 1 → C29934
+  const s = String(id||'');
+  const m = s.match(/(\d+)(?!.*\d)/);                 // poslední číselná skupina kdekoli v řetězci
+  if(!m) return null;
+  return s.slice(0, m.index) + (parseInt(m[0],10)+by) + s.slice(m.index + m[0].length);   // C29933 → C29934
 }
 function solCurrentSem(){
   const m = new Date().getMonth()+1;
@@ -1782,11 +1771,12 @@ function solCurrentSem(){
 }
 function solParseMark(txt){
   const t = String(txt||'').trim();
-  const d = t.match(/[1-5]/);
-  if(!d) return null;                 // slovní hodnocení, „N", „Sl", „–" apod. přeskoč
-  let v = parseInt(d[0],10);
-  if(t.indexOf('-')>=0) v += 0.5;     // např. „1-" bereme jako 1,5
-  else if(t.indexOf('+')>=0) v -= 0.5;
+  // vezmi číslici 1–5 i se znaménkem TĚSNĚ za ní (ne kdekoliv v textu — jinak pomlčka/plus v poznámce zkreslí známku)
+  const m = t.match(/([1-5])([+-])?/);
+  if(!m) return null;                 // slovní hodnocení, „N", „Sl", „–" apod. přeskoč
+  let v = parseInt(m[1],10);
+  if(m[2]==='-') v += 0.5;            // např. „1-" bereme jako 1,5
+  else if(m[2]==='+') v -= 0.5;      // „2+" bereme jako 1,5
   return Math.max(1, Math.min(5, v));
 }
 
@@ -2061,8 +2051,11 @@ async function restoreUserClass(){
 let gradesPushTimer = null;
 async function pushGradesNow(){
   const c = getSB(); if(!c || !authUser) return;
-  clearTimeout(gradesPushTimer);
-  try { await c.from('znamky_data').upsert({ user_id: authUser.id, data: data, updated_at: new Date().toISOString() }); } catch(e){}
+  clearTimeout(gradesPushTimer); gradesPushTimer = null;
+  try {
+    const { error } = await c.from('znamky_data').upsert({ user_id: authUser.id, data: stripHypoCopy(data), updated_at: new Date().toISOString() });
+    if(error && window.estLogErr) window.estLogErr('cloud push', error.message);   // selhání synchronizace už není úplně tiché
+  } catch(e){ if(window.estLogErr) window.estLogErr('cloud push', e && e.message); }
   updateSharedAvg();
 }
 function pushGradesCloud(){
@@ -2072,18 +2065,23 @@ function pushGradesCloud(){
 }
 async function pullGradesCloud(){
   const c = getSB(); if(!c || !authUser) return;
+  if(gradesPushTimer){ await pushGradesNow(); }   // flush čekajících lokálních změn, ať je pull nepřepíše (race)
   try {
     const r = await c.from('znamky_data').select('data, updated_at').eq('user_id', authUser.id).maybeSingle();
-    const cloud = (!r.error && r.data) ? r.data : null;
+    const cloudData = (!r.error && r.data && r.data.data) ? r.data.data : null;
     const localTs = (data && data.updatedAt) ? data.updatedAt : 0;
-    const cloudTs = (cloud && cloud.data && cloud.data.updatedAt) ? cloud.data.updatedAt
-                  : (cloud && cloud.updated_at ? Date.parse(cloud.updated_at) : 0);
-    if(cloud && cloud.data && cloudTs >= localTs){
-      data = migrate(cloud.data);                       // cloud je novější → použij ho
+    const cloudTs = (cloudData && cloudData.updatedAt) ? cloudData.updatedAt
+                  : (r.data && r.data.updated_at ? Date.parse(r.data.updated_at) : 0);
+    const hasGrades = d => !!(d && Array.isArray(d.subjects) && d.subjects.some(s => s.grades && s.grades.some(g => !g.hypo)));
+    const localHas = hasGrades(data), cloudHas = hasGrades(cloudData);
+    // Cloud převezmi JEN když reálně obsahuje známky A je novější (nebo je lokál prázdný).
+    // Prázdný/starší cloud tak NIKDY nepřepíše neprázdný lokál → konec tichých ztrát známek.
+    if(cloudData && cloudHas && (cloudTs >= localTs || !localHas)){
+      data = migrate(cloudData);
       localStorage.setItem(STORE_KEY, JSON.stringify(data));
       render();
     } else {
-      pushGradesCloud();                                // lokální novější / cloud prázdný → nahraj nahoru
+      pushGradesCloud();                                // lokál novější/neprázdný nebo cloud prázdný → nahraj nahoru
     }
     updateSharedAvg();
   } catch(e){}
@@ -2215,13 +2213,13 @@ async function updateSharedAvg(){
   if(!authUser) return;
   function semData(sem){
     const arr=[], m={};
-    data.subjects.forEach(function(s){ const a=weightedAvg(s.grades.filter(function(g){ return g.sem===sem; })); if(a!=null){ arr.push(a); m[s.name]=Math.round(a*100)/100; } });
+    data.subjects.forEach(function(s){ const a=weightedAvg(s.grades.filter(function(g){ return g.sem===sem && !g.hypo; })); if(a!=null){ arr.push(a); m[s.name]=Math.round(a*100)/100; } });
     return { map:m, overall: arr.length ? arr.reduce(function(a,b){ return a+b; },0)/arr.length : null };
   }
   const s1=semData(1), s2=semData(2);
   const subjMap = { '1': s1.map, '2': s2.map };          // obě pololetí
   const cur = data.sem===2 ? s2 : s1;                    // avg/počet = aktuální pololetí (žebříček)
-  const gc = data.subjects.reduce(function(a,s){ return a+s.grades.filter(function(g){ return g.sem===data.sem; }).length; },0);
+  const gc = data.subjects.reduce(function(a,s){ return a+s.grades.filter(function(g){ return g.sem===data.sem && !g.hypo; }).length; },0);
   try{ await saveProfile({ avg: cur.overall, grades_count: gc, subj_avgs: subjMap }); }catch(e){}
 }
 let pendingFriendId = (function(){ try{ return new URLSearchParams(location.search).get('friend')||null; }catch(e){ return null; } })();
@@ -2229,10 +2227,11 @@ function maybeFriendFromLink(){
   if(!pendingFriendId || !authUser) return;
   const id=pendingFriendId; pendingFriendId=null;
   try{ history.replaceState(null,'',location.pathname); }catch(e){}
-  if(id && id!==authUser.id){ setPage('profile'); sendFriendRequest(id); }
+  if(id && id!==authUser.id && isUuid(id)){ setPage('profile'); sendFriendRequest(id); }
 }
 async function sendFriendRequest(otherId){
   const c=getSB(); if(!c||!authUser||!otherId||otherId===authUser.id) return;
+  if(!isUuid(otherId)) return;   // jen platné UUID → ochrana proti injekci do PostgREST .or() filtru
   try{
     const ex = await c.from('pratele').select('*').or('and(requester.eq.'+authUser.id+',addressee.eq.'+otherId+'),and(requester.eq.'+otherId+',addressee.eq.'+authUser.id+')');
     const rows = (ex.error?[]:(ex.data||[]));
@@ -2288,7 +2287,7 @@ async function appendFriends(wrap){
   h+='<div class="accent-pick-t" style="margin:'+(fd.requests.length?'14px':'2px')+' 0 8px">Porovnání průměru</div>';
   if(all.length<=1){ h+='<div class="empty" style="color:var(--ink-faint);font-size:13px">Zatím nemáš přátele — pozvi je tlačítkem nahoře.</div>'; }
   all.forEach(function(x,i){
-    const av=x.avatar_url?'<img class="mem-av" src="'+esc(x.avatar_url)+'" alt="">':'<div class="mem-av mem-av-ph">'+esc((((x.name||'?').trim().charAt(0))||'?').toUpperCase())+'</div>';
+    const av=x.avatar_url?'<img class="mem-av" loading="lazy" decoding="async" src="'+esc(x.avatar_url)+'" alt="">':'<div class="mem-av mem-av-ph">'+esc((((x.name||'?').trim().charAt(0))||'?').toUpperCase())+'</div>';
     const col=(x.avg!=null)?markColor(x.avg):'var(--ink-faint)';
     const val=(x.avg!=null)?fmt(x.avg):'—';
     h+='<div class="mem-row" '+(x.me?'style="cursor:default;border-color:var(--accent)"':'data-fid="'+x.id+'" style="cursor:pointer"')+'><span style="flex:0 0 16px;font-family:Outfit,sans-serif;font-weight:800;color:var(--ink-faint);font-size:13px">'+(i+1)+'</span>'+av+'<span class="mem-name">'+esc(x.name||'Beze jména')+(x.me?' (ty)':'')+'</span><span style="flex:0 0 auto;font-family:Outfit,sans-serif;font-weight:800;color:'+col+'">'+val+'</span></div>';
@@ -2460,7 +2459,7 @@ function renderProfileView(wrap){
   const p = profile || {};
   const init = esc(((p.name || authUser.email || '?').trim().charAt(0) || '?').toUpperCase());
   const av = p.avatar_url
-    ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
+    ? '<img class="prof-avatar" loading="lazy" decoding="async" src="'+esc(p.avatar_url)+'" alt="">'
     : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
   wrap.innerHTML =
     '<div class="prof-card">' + av +
@@ -2495,7 +2494,7 @@ function renderProfileEdit(wrap){
   const p = profile || {};
   const init = esc(((p.name || '?').trim().charAt(0) || '?').toUpperCase());
   const av = p.avatar_url
-    ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
+    ? '<img class="prof-avatar" loading="lazy" decoding="async" src="'+esc(p.avatar_url)+'" alt="">'
     : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
   wrap.innerHTML =
     '<div class="prof-card">' + av +
@@ -2890,7 +2889,7 @@ function kickMember(id){
 }
 function memAvatar(m){
   const init = esc(((m.name||'?').trim().charAt(0)||'?').toUpperCase());
-  return m.avatar_url ? '<img class="mem-av" src="'+esc(m.avatar_url)+'" alt="">'
+  return m.avatar_url ? '<img class="mem-av" loading="lazy" decoding="async" src="'+esc(m.avatar_url)+'" alt="">'
                       : '<div class="mem-av mem-av-ph">'+init+'</div>';
 }
 async function renderMembers(box){
@@ -2941,7 +2940,7 @@ async function openMemberProfile(id, inClass){
     try { const fc = await c.from('pratele').select('id', { count:'exact', head:true }).eq('status','accepted').or('requester.eq.'+id+',addressee.eq.'+id); friendCount = fc.count || 0; } catch(e){}
     const rel = await relationWith(id);
     const init = esc(((p.name||'?').trim().charAt(0)||'?').toUpperCase());
-    const av = p.avatar_url ? '<img class="prof-avatar" src="'+esc(p.avatar_url)+'" alt="">'
+    const av = p.avatar_url ? '<img class="prof-avatar" loading="lazy" decoding="async" src="'+esc(p.avatar_url)+'" alt="">'
                             : '<div class="prof-avatar prof-avatar-ph">'+init+'</div>';
     body.innerHTML =
       '<div style="text-align:center;padding:4px 4px 8px">' + av +
@@ -3847,7 +3846,6 @@ window.addEventListener('load', ()=>{
 'Sdílet třídu':'Share class','Odkaz':'Link','Kopírovat':'Copy','Nebo zadej kód třídy':'Or enter the class code','Kdo otevře odkaz nebo naskenuje QR, připojí se do třídy (po přihlášení).':'Anyone who opens the link or scans the QR joins the class (after signing in).','Zavřít':'Close','Sdílet…':'Share…','Pozvat přátele':'Invite friends','Kdo otevře odkaz nebo naskenuje QR, pošle ti žádost o přátelství.':'Anyone who opens the link or scans the QR sends you a friend request.',
 'Oznámení':'Notifications','Načíst ze Škola OnLine':'Import from Škola OnLine','Přihlašovací jméno':'Username','Heslo':'Password','Server (většinou neměnit)':'Server (usually leave as is)','Heslo se použije jen pro stažení a nikam se neukládá. Stažení přepíše současné známky.':'The password is used only for the download and is never stored. The download overwrites your current grades.','Stáhnout':'Download',
 'Tvoje zpráva':'Your message','Tvůj e‑mail':'Your email','Tvůj e-mail':'Your email','Zpráva je soukromá — pošle se jen autorovi aplikace a nikde se veřejně nezobrazuje.':'The message is private — it goes only to the app author and is never shown publicly.','Odeslat':'Send','Otevřít / stáhnout':'Open / download',
-'splněno':'done','jednou prací už to nedáš':'one assignment will not be enough','už níž to nejde':'cannot go lower','nestáhne tě ani 5 za váhu 1,0':'even a 5 at weight 1.0 will not drag you down','Co potřebuješ z příští práce':'What you need from the next assignment','Lepší ani horší známka už není 🎉':'No better or worse grade left 🎉','potřebuješ':'you need',
 'zatím bez známek':'no grades yet','hypotetická':'hypothetical','+ Přidat hypotetickou známku':'+ Add hypothetical grade','Přejmenovat':'Rename','Smazat předmět':'Delete subject','Smazat známku?':'Delete grade?','Tuto akci nelze vrátit.':'This cannot be undone.','Přejmenovat předmět':'Rename subject','Předmět zatím nemá žádné známky.':'This subject has no grades yet.',
 'Zadej platné maximum bodů.':'Enter a valid maximum of points.','Zadej získané body.':'Enter the points you scored.',
 'Prázdná zpráva':'Empty message','Napiš prosím nejdřív zprávu.':'Please write a message first.','Chybí e-mail':'Email missing','Vyplň prosím svůj e-mail, ať ti autor může odpovědět.':'Please enter your email so the author can reply.','Není připojení':'No connection','Odeslání potřebuje cloud (Supabase).':'Sending needs the cloud (Supabase).','Odesílám…':'Sending…','Děkuju!':'Thanks!','Zpráva byla odeslaná. Díky za zpětnou vazbu!':'Message sent. Thanks for the feedback!','Není nastaveno':'Not set up',
