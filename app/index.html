@@ -102,6 +102,10 @@
     margin-top: 6px;
     letter-spacing: -0.01em;
   }
+  /* značka: logo (čepice) vedle názvu, vycentrované */
+  .brand { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .brand h1 { margin-top: 0; font-size: 44px; white-space: nowrap; }
+  .brand-logo { width: 46px; height: 46px; flex: none; display: block; }
 
   /* ---------- semester toggle ---------- */
   .sem-toggle {
@@ -915,8 +919,17 @@
     <span style="top:6px;left:60%;font-size:30px;transform:rotate(-12deg)">2</span>
     <span style="bottom:-6px;left:30%;font-size:24px;transform:rotate(9deg)">1</span>
   </div>
-  <div class="eyebrow">Studijní průměr</div>
-  <h1>Moje známky</h1>
+  <div class="brand">
+    <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#e8b84b"/>
+      <path d="M32 17 57 27 32 37 7 27Z" fill="#fff"/>
+      <path d="M16 31.5V40c0 0 6 5.5 16 5.5s16-5.5 16-5.5v-8.5L32 38.5 16 31.5Z" fill="#fff"/>
+      <path d="M53 27V42" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="53" cy="44.6" r="3" fill="#fff"/>
+      <circle cx="32" cy="27" r="2.3" fill="#e3a52c"/>
+    </svg>
+    <h1>Estudivo</h1>
+  </div>
   <button class="bell" id="bell" onclick="openNotif()" aria-label="Oznámení">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
     <span class="bell-badge" id="bellBadge" style="display:none">0</span>
