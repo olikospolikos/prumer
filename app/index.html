@@ -103,8 +103,8 @@
     letter-spacing: -0.01em;
   }
   /* značka: logo (čepice) vedle názvu, vycentrované */
-  .brand { display: flex; align-items: center; justify-content: center; gap: 12px; }
-  .brand h1 { margin-top: 0; font-size: 44px; white-space: nowrap; }
+  .brand { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+  .brand h1 { margin-top: 0; font-size: 34px; font-weight: 700; white-space: nowrap; }
   .brand-logo { width: 46px; height: 46px; flex: none; display: block; }
 
   /* ---------- semester toggle ---------- */
@@ -920,14 +920,6 @@
     <span style="bottom:-6px;left:30%;font-size:24px;transform:rotate(9deg)">1</span>
   </div>
   <div class="brand">
-    <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill="#e8b84b"/>
-      <path d="M32 17 57 27 32 37 7 27Z" fill="#fff"/>
-      <path d="M16 31.5V40c0 0 6 5.5 16 5.5s16-5.5 16-5.5v-8.5L32 38.5 16 31.5Z" fill="#fff"/>
-      <path d="M53 27V42" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-      <circle cx="53" cy="44.6" r="3" fill="#fff"/>
-      <circle cx="32" cy="27" r="2.3" fill="#e3a52c"/>
-    </svg>
     <h1>Estudivo</h1>
   </div>
   <button class="bell" id="bell" onclick="openNotif()" aria-label="Oznámení">
@@ -958,7 +950,7 @@
       <path d="M25 8.6V15" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
       <circle cx="25" cy="16.4" r="1.5" fill="#fff"/>
     </svg>
-    <span class="hero-lbl">Celkový vážený průměr</span>
+    <span class="hero-lbl">Celkový průměr</span>
   </div>
   <div class="num" id="overallNum">—</div>
   <div class="sub" id="overallSub">žádné známky</div>
@@ -3586,7 +3578,7 @@ function shareAvgCard(){
     x.strokeStyle='#fff'; x.lineWidth=7; x.lineCap='round'; x.beginPath(); x.moveTo(cx+s, cy); x.lineTo(cx+s, cy+s*0.7); x.stroke();
     x.beginPath(); x.arc(cx+s, cy+s*0.78, 11, 0, 7); x.fill();
     x.textAlign='center';
-    x.fillStyle=sub; x.font='700 40px "Hanken Grotesk", sans-serif'; x.fillText('CELKOVÝ VÁŽENÝ PRŮMĚR', cx, 560);
+    x.fillStyle=sub; x.font='700 40px "Hanken Grotesk", sans-serif'; x.fillText('CELKOVÝ PRŮMĚR', cx, 560);
     x.fillStyle=ink; x.font='600 300px Fraunces, Georgia, serif'; x.fillText(num, cx, 800);
     x.fillStyle=sub; x.font='600 42px "Hanken Grotesk", sans-serif'; x.fillText(subtxt, cx, 880);
     x.fillStyle=ink; x.globalAlpha=0.72; x.font='800 38px Outfit, sans-serif'; x.fillText('estudivo.cz', cx, 1004); x.globalAlpha=1;
@@ -3852,7 +3844,7 @@ window.addEventListener('load', ()=>{
   var EN={
 'Velká (1)':'Large (1)','Malá (0,2)':'Small (0.2)','0,8':'0.8','0,6':'0.6','0,4':'0.4',
 'Studijní průměr':'Grade average','Moje známky':'My grades','Známky':'Grades','Třídy':'Classes','Profil':'Profile','Materiály':'Materials','Sdílení ve třídě':'Class sharing','Tvůj účet':'Your account',
-'1. pololetí':'1st semester','2. pololetí':'2nd semester','Celkový vážený průměr':'Overall weighted average','žádné známky':'no grades',
+'1. pololetí':'1st semester','2. pololetí':'2nd semester','Celkový průměr':'Overall average','žádné známky':'no grades',
 'Kalkulačka bodů a procent':'Points & percent calculator','body ↔ procenta u testu':'points ↔ percent on a test','Spočítat procenta':'Calculate percent','Spočítat body':'Calculate points','Maximum bodů':'Max points','Získané body':'Points scored','Procenta':'Percent','Vypočítat':'Calculate',
 'Načíst známky ze Škola OnLine':'Import grades from Škola OnLine','Stáhne známky i s váhami — nemusíš nic přepisovat':'Pulls grades with weights — no manual retyping',
 'Předměty':'Subjects','+ Přidat předmět':'+ Add subject','Přidat předmět':'Add subject','Zpětná vazba':'Feedback','Napsat zpětnou vazbu':'Write feedback','Napiš nápad nebo chybu. Zpráva je soukromá — uvidí ji jen autor aplikace, nikde se veřejně nezobrazuje.':'Write an idea or a bug. The message is private — only the app author sees it, it is never shown publicly.',
