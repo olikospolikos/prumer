@@ -1030,6 +1030,81 @@
   <input type="file" id="avatarFile" accept="image/*" style="display:none">
 </div>
 
+<div id="pageAI" style="display:none">
+  <header>
+    <div class="eyebrow">Uč se chytře</div>
+    <h1 id="aiH1">Studijní plán</h1>
+  </header>
+  <div id="aiBody"></div>
+  <input type="file" id="aiFile" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.csv,.docx" style="display:none">
+</div>
+
+<style>
+  #pageAI .ai-intro{ padding:2px 16px 14px; color:var(--ink-dim); font-size:14px; line-height:1.5; }
+  #pageAI .ai-sec{ padding:0 16px 16px; }
+  .ai-card{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; }
+  .ai-plan-item{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--bg-elev); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-bottom:10px; color:var(--ink); cursor:pointer; }
+  .ai-plan-item:active{ transform:scale(.99); }
+  .ai-plan-item .grow{ flex:1; min-width:0; }
+  .ai-plan-item .t{ font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ai-plan-item .d{ font-size:12px; color:var(--ink-dim); margin-top:2px; }
+  .ai-del{ flex:none; width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--bg-elev2); color:var(--ink-dim); cursor:pointer; }
+  .ai-empty{ text-align:center; color:var(--ink-dim); padding:34px 20px; }
+  .ai-empty svg{ width:52px; height:52px; opacity:.5; margin-bottom:10px; }
+  .ai-src{ display:flex; gap:12px; align-items:center; width:100%; text-align:left; background:var(--bg-elev); border:1px solid var(--line); border-radius:14px; padding:15px; margin-bottom:12px; color:var(--ink); cursor:pointer; }
+  .ai-src .ic{ flex:none; width:42px; height:42px; border-radius:12px; display:grid; place-items:center; background:rgba(var(--accent-rgb),.16); color:var(--accent); }
+  .ai-src .ic svg{ width:22px; height:22px; }
+  .ai-src .st{ font-weight:600; }
+  .ai-src .ss{ font-size:12.5px; color:var(--ink-dim); margin-top:2px; }
+  .ai-file{ display:flex; align-items:center; gap:11px; padding:11px 13px; border:1px solid var(--line); border-radius:12px; margin-bottom:9px; cursor:pointer; background:var(--bg-elev); }
+  .ai-file.sel{ border-color:var(--accent); background:rgba(var(--accent-rgb),.10); }
+  .ai-file .chk{ flex:none; width:22px; height:22px; border-radius:7px; border:1.6px solid var(--line); display:grid; place-items:center; color:#fff; }
+  .ai-file.sel .chk{ background:var(--accent); border-color:var(--accent); }
+  .ai-file .nm{ flex:1; min-width:0; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ai-file .ex{ flex:none; font-size:11px; text-transform:uppercase; color:var(--ink-dim); letter-spacing:.04em; }
+  .ai-q{ margin-bottom:20px; }
+  .ai-q .ql{ font-weight:600; font-size:15px; margin-bottom:3px; }
+  .ai-q .qh{ font-size:12.5px; color:var(--ink-dim); margin-bottom:10px; }
+  .ai-opts{ display:flex; flex-wrap:wrap; gap:8px; }
+  .ai-opt{ padding:9px 14px; border-radius:999px; border:1px solid var(--line); background:var(--bg-elev); color:var(--ink); font-size:14px; cursor:pointer; }
+  .ai-opt.sel{ border-color:var(--accent); background:rgba(var(--accent-rgb),.14); color:var(--accent); font-weight:600; }
+  #pageAI textarea.ai-ta{ width:100%; box-sizing:border-box; resize:vertical; min-height:64px; line-height:1.4; background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; color:var(--ink); padding:11px 13px; font:inherit; }
+  .ai-loading{ text-align:center; padding:56px 24px; color:var(--ink-dim); }
+  .ai-spin{ width:38px; height:38px; margin:0 auto 16px; border:3px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:aispin .8s linear infinite; }
+  @keyframes aispin{ to{ transform:rotate(360deg); } }
+  .ai-hero{ background:linear-gradient(135deg, rgba(var(--accent-rgb),.18), rgba(var(--accent-rgb),.06)); border:1px solid rgba(var(--accent-rgb),.3); border-radius:var(--radius); padding:16px 17px; margin-bottom:16px; }
+  .ai-hero h2{ margin:0 0 8px; font-size:19px; line-height:1.25; }
+  .ai-hero .prehled{ font-size:14.5px; line-height:1.5; }
+  .ai-hero .proc{ font-size:13px; color:var(--ink-dim); margin-top:9px; font-style:italic; }
+  .ai-daytitle{ font-weight:700; font-size:15px; margin:18px 2px 10px; }
+  .ai-block{ display:flex; gap:12px; margin-bottom:8px; }
+  .ai-block .rail{ flex:none; width:56px; text-align:right; font-variant-numeric:tabular-nums; }
+  .ai-block .rail .min{ font-weight:700; font-size:15px; }
+  .ai-block .rail .un{ font-size:10.5px; color:var(--ink-dim); text-transform:uppercase; }
+  .ai-block .body{ flex:1; background:var(--bg-elev); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:12px; padding:10px 13px; }
+  .ai-block.pauza .body{ border-left-color:var(--line); background:transparent; border-style:dashed; color:var(--ink-dim); }
+  .ai-block .bt{ font-weight:600; font-size:14.5px; }
+  .ai-block .typ{ display:inline-block; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); background:rgba(var(--accent-rgb),.14); border-radius:6px; padding:1px 7px; margin-left:7px; vertical-align:middle; }
+  .ai-block .bn{ font-size:13px; color:var(--ink-dim); margin-top:5px; line-height:1.45; }
+  .ai-tabs{ display:flex; gap:6px; margin:22px 0 14px; background:var(--bg-elev2); border:1px solid var(--line); border-radius:12px; padding:4px; }
+  .ai-tabs button{ flex:1; padding:8px 4px; border:none; background:none; color:var(--ink-dim); font:inherit; font-size:13.5px; border-radius:9px; cursor:pointer; }
+  .ai-tabs button.sel{ background:var(--accent); color:#fff; font-weight:600; }
+  .ai-sum{ background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .ai-sum .st{ font-weight:600; margin-bottom:6px; }
+  .ai-sum ul{ margin:0; padding-left:18px; }
+  .ai-sum li{ margin:3px 0; font-size:14px; line-height:1.45; }
+  .ai-flip{ perspective:1000px; margin-bottom:11px; cursor:pointer; }
+  .ai-flip-inner{ position:relative; transition:transform .5s; transform-style:preserve-3d; min-height:88px; }
+  .ai-flip.flipped .ai-flip-inner{ transform:rotateY(180deg); }
+  .ai-flip-face{ position:absolute; inset:0; backface-visibility:hidden; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; border-radius:14px; border:1px solid var(--line); box-sizing:border-box; }
+  .ai-flip-front{ background:var(--bg-elev); font-weight:600; font-size:15px; }
+  .ai-flip-back{ background:rgba(var(--accent-rgb),.12); border-color:rgba(var(--accent-rgb),.4); transform:rotateY(180deg); font-size:14px; line-height:1.45; }
+  .ai-flip-hint{ position:absolute; bottom:6px; right:10px; font-size:10px; color:var(--ink-dim); }
+  .ai-qa{ background:var(--bg-elev); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:9px; }
+  .ai-qa .qq{ font-weight:600; font-size:14.5px; margin-bottom:6px; }
+  .ai-qa .qa{ font-size:13.5px; color:var(--ink-dim); line-height:1.45; }
+</style>
+
 <!-- grade sheet -->
 <div class="sheet-backdrop" id="gradeBackdrop" onclick="closeGradeSheet()"></div>
 <div class="sheet" id="gradeSheet">
@@ -1234,6 +1309,9 @@
   </button>
   <button class="tab" id="tabMaterials" aria-label="Třídy" onclick="setPage('materials')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+  </button>
+  <button class="tab" id="tabAI" aria-label="AI plán" onclick="setPage('ai')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5 10.1 7.6 12 3z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
   </button>
   <button class="tab" id="tabProfile" aria-label="Profil" onclick="setPage('profile')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
@@ -2264,7 +2342,7 @@ async function loadFriendData(){
     });
     const ids=[]; friendIds.concat(reqs.map(function(x){ return x.requester; })).forEach(function(id){ if(ids.indexOf(id)<0) ids.push(id); });
     const profs={};
-    if(ids.length){ const pr=await c.from('profiles').select('id,name,avatar_url,avg').in('id',ids); (pr.error?[]:(pr.data||[])).forEach(function(p){ profs[p.id]=p; }); }
+    if(ids.length){ const pr=await c.from('profiles').select('id,name,avatar_url,avg,subj_avgs').in('id',ids); (pr.error?[]:(pr.data||[])).forEach(function(p){ profs[p.id]=p; }); }
     return {
       friends: friendIds.map(function(id){ return profs[id]||{id:id}; }),
       requests: reqs.map(function(x){ return { rowId:x.id, p:profs[x.requester]||{id:x.requester} }; })
@@ -2289,7 +2367,19 @@ async function appendFriends(wrap){
         +'<button class="subj-action fr-dec" data-id="'+r.rowId+'" style="flex:0 0 auto">Odmítnout</button></div>';
     });
   }
-  const me={ id:authUser.id, name:((profile&&profile.name)||(authUser.email||'').split('@')[0]), avatar_url:(profile&&profile.avatar_url), avg:(profile?profile.avg:null), me:true };
+  // žebříček řadíme podle toho, jaké pololetí MOMENTÁLNĚ je (ne dle vybraného) — počítáme z subj_avgs pro aktuální pololetí
+  const curSem = solCurrentSem();
+  function overallForSem(raw, sem){
+    const m = (raw && (raw['1']||raw['2'])) ? (raw[String(sem)]||{}) : (raw||{});   // starý plochý tvar = stejný pro obě pololetí
+    const vals=[]; Object.keys(m).forEach(function(k){ if(typeof m[k]==='number') vals.push(m[k]); });
+    return vals.length ? vals.reduce(function(a,b){ return a+b; },0)/vals.length : null;
+  }
+  function myOverall(sem){
+    const arr=[]; data.subjects.forEach(function(s){ const a=weightedAvg(s.grades.filter(function(g){ return g.sem===sem && !g.hypo; })); if(a!=null) arr.push(a); });
+    return arr.length ? arr.reduce(function(a,b){ return a+b; },0)/arr.length : null;
+  }
+  const me={ id:authUser.id, name:((profile&&profile.name)||(authUser.email||'').split('@')[0]), avatar_url:(profile&&profile.avatar_url), avg:myOverall(curSem), me:true };
+  fd.friends.forEach(function(f){ f.avg = overallForSem(f.subj_avgs, curSem); });
   const all=[me].concat(fd.friends);
   all.sort(function(a,b){ return (a.avg==null?99:a.avg)-(b.avg==null?99:b.avg); });
   h+='<div class="accent-pick-t" style="margin:'+(fd.requests.length?'14px':'2px')+' 0 8px">Porovnání průměru</div>';
@@ -2344,7 +2434,7 @@ async function renderProfile(){
 function appendAccentPicker(wrap){
   const curAccent = document.documentElement.getAttribute('data-accent') || 'yellow';
   const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
-  const opts = [['yellow','Žlutá','#e8b84b'],['blue','Baby blue','#5fb8e6'],['pink','Baby pink','#f096bf']];
+  const opts = [['yellow','Žlutá','#e8b84b'],['blue','Modrá','#5fb8e6'],['pink','Růžová','#f096bf']];
   const box = document.createElement('div');
   box.className = 'accent-pick';
   box.innerHTML =
@@ -2538,16 +2628,19 @@ function renderProfileEdit(wrap){
 
 /* přepínání stran */
 function setPage(p){
-  const grades = p==='grades', materials = p==='materials', profilePg = p==='profile';
+  const grades = p==='grades', materials = p==='materials', profilePg = p==='profile', aiPg = p==='ai';
   document.getElementById('pageGrades').style.display    = grades ? '' : 'none';
   document.getElementById('pageMaterials').style.display = materials ? '' : 'none';
   document.getElementById('pageProfile').style.display   = profilePg ? '' : 'none';
+  document.getElementById('pageAI').style.display        = aiPg ? '' : 'none';
   document.getElementById('tabGrades').classList.toggle('sel', grades);
   document.getElementById('tabMaterials').classList.toggle('sel', materials);
   document.getElementById('tabProfile').classList.toggle('sel', profilePg);
+  document.getElementById('tabAI').classList.toggle('sel', aiPg);
   window.scrollTo(0,0);
   if(materials) renderMaterials();
   else if(profilePg) renderProfile();
+  else if(aiPg){ aiEnterList(); }
   else renderUpcoming();
 }
 
@@ -3796,6 +3889,268 @@ if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
   await loadProfile(); renderProfile();
 });
 
+/* ================= AI STUDIJNÍ PLÁN ================= */
+let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[] };
+const AI_CAS  = ['1 hodina','1 den','7 dní','30 dní'];
+const AI_STYL = ['kartičky','rychlé shrnutí','procvičování','otázky','cvičné testy'];
+const AI_ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></svg>';
+const AI_ICON_FOLDER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+
+function aiBody(){ return document.getElementById('aiBody'); }
+function aiEnterList(){ aiState.view='list'; aiState.soubory=[]; aiState.dotaznik={cas:'',hloubka:'',styl:''}; aiState.plan=null; aiState.planId=null; renderAI(); }
+function aiBackBtn(label,onClick){ const b=document.createElement('button'); b.className='btn btn-ghost'; b.style.cssText='margin:0 16px 12px'; b.textContent=label; b.onclick=onClick; return b; }
+function aiSourceBtn(iconSvg,title,sub,onClick){ const b=document.createElement('button'); b.className='ai-src'; b.innerHTML='<div class="ic">'+iconSvg+'</div><div class="grow"><div class="st">'+esc(title)+'</div><div class="ss">'+esc(sub)+'</div></div>'; b.onclick=onClick; return b; }
+function aiTypLabel(t){ return ({ cteni:'čtení', karticky:'kartičky', procvicovani:'procvičování', otazky:'otázky', test:'test', opakovani:'opakování', pauza:'pauza' })[t]||t; }
+
+function renderAI(){
+  const wrap=aiBody(); const h1=document.getElementById('aiH1'); if(!wrap) return;
+  wrap.innerHTML='';
+  if(!sbConfigured()){ h1.textContent='Studijní plán'; wrap.appendChild(matNotice('Zatím nedostupné','AI studijní plán potřebuje cloud (Supabase).')); return; }
+  if(!authUser){
+    h1.textContent='Studijní plán';
+    wrap.appendChild(matNotice('Přihlas se','AI studijní plán je jen pro přihlášené. Přihlaš se v záložce Profil.'));
+    const b=document.createElement('button'); b.className='btn btn-primary'; b.style.cssText='margin:14px 16px;width:calc(100% - 32px)'; b.textContent='Přejít do Profilu'; b.onclick=()=>setPage('profile'); wrap.appendChild(b);
+    return;
+  }
+  const v=aiState.view;
+  if(v==='source')      return renderAISource(wrap,h1);
+  if(v==='pickClass')   return renderAIPickClass(wrap,h1);
+  if(v==='pickFiles')   return renderAIPickFiles(wrap,h1);
+  if(v==='quiz')        return renderAIQuiz(wrap,h1);
+  if(v==='loading')     return renderAILoading(wrap,h1);
+  if(v==='result')      return renderAIResult(wrap,h1);
+  return renderAIList(wrap,h1);
+}
+
+async function renderAIList(wrap,h1){
+  h1.textContent='Moje plány';
+  const add=document.createElement('button'); add.className='btn btn-primary'; add.style.cssText='margin:6px 16px 16px;width:calc(100% - 32px)'; add.textContent='+ Nový plán';
+  add.onclick=()=>{ aiState.soubory=[]; aiState.dotaznik={cas:'',hloubka:'',styl:''}; aiState.view='source'; renderAI(); };
+  wrap.appendChild(add);
+  const sec=document.createElement('div'); sec.className='ai-sec'; sec.innerHTML='<div class="ai-empty">Načítám…</div>'; wrap.appendChild(sec);
+  const c=getSB(); let rows=[];
+  try{ const r=await c.from('plany').select('id,vystup,created_at').order('created_at',{ascending:false}); rows=r.error?[]:(r.data||[]); }catch(e){}
+  aiState.plany=rows;
+  if(!rows.length){
+    sec.innerHTML='<div class="ai-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5 10.1 7.6 12 3z"/></svg><div>Zatím tu nemáš žádný plán.<br>Vytvoř si první z materiálů, nebo nahraj soubor.</div></div>';
+    return;
+  }
+  sec.innerHTML='';
+  rows.forEach(row=>{
+    const it=document.createElement('div'); it.className='ai-plan-item';
+    const nad=(row.vystup&&row.vystup.nadpis)||'Studijní plán';
+    const d=row.created_at?new Date(row.created_at).toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'}):'';
+    it.innerHTML='<div class="grow"><div class="t">'+esc(nad)+'</div><div class="d">'+esc(d)+'</div></div>';
+    it.onclick=()=>{ aiState.plan=row.vystup; aiState.planId=row.id; aiState.soubory=[]; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); };
+    const del=document.createElement('button'); del.className='ai-del'; del.textContent='🗑'; del.setAttribute('aria-label','Smazat');
+    del.onclick=(ev)=>{ ev.stopPropagation(); aiDeletePlan(row.id,false); };
+    it.appendChild(del);
+    sec.appendChild(it);
+  });
+}
+
+function renderAISource(wrap,h1){
+  h1.textContent='Nový plán';
+  wrap.appendChild(aiBackBtn('‹ Moje plány', aiEnterList));
+  const sec=document.createElement('div'); sec.className='ai-sec';
+  const info=document.createElement('div'); info.className='ai-intro'; info.style.cssText='padding-left:0;padding-right:0'; info.textContent='Z čeho ti mám plán postavit? Můžeš nahrát vlastní soubor, nebo použít materiál ze třídy.'; sec.appendChild(info);
+  sec.appendChild(aiSourceBtn(AI_ICON_UP,'Nahrát soubor','PDF, obrázek, .docx, .txt — až 3 soubory', ()=>document.getElementById('aiFile').click()));
+  sec.appendChild(aiSourceBtn(AI_ICON_FOLDER,'Vybrat z materiálů třídy','Použij zápisky nasdílené ve tvé třídě', ()=>{ aiState.view='pickClass'; renderAI(); }));
+  wrap.appendChild(sec);
+}
+
+async function renderAIPickClass(wrap,h1){
+  h1.textContent='Vyber třídu';
+  wrap.appendChild(aiBackBtn('‹ Zpět', ()=>{ aiState.view='source'; renderAI(); }));
+  const sec=document.createElement('div'); sec.className='ai-sec'; sec.innerHTML='<div class="ai-empty">Načítám třídy…</div>'; wrap.appendChild(sec);
+  const list=await loadMyClasses();
+  if(!list.length){ sec.innerHTML=''; sec.appendChild(matNotice('Žádná třída','Nejsi v žádné třídě. Přidej se v záložce Třídy, nebo se vrať a nahraj vlastní soubor.')); return; }
+  sec.innerHTML='';
+  list.forEach(cl=>{ sec.appendChild(aiSourceBtn(AI_ICON_FOLDER, cl.name||cl.code, 'Kód '+cl.code, ()=>{ aiState.pickCode=cl.code; aiState.pickName=cl.name; aiState.view='pickFiles'; renderAI(); })); });
+}
+
+async function renderAIPickFiles(wrap,h1){
+  h1.textContent='Vyber materiály';
+  wrap.appendChild(aiBackBtn('‹ Třídy', ()=>{ aiState.view='pickClass'; renderAI(); }));
+  const sec=document.createElement('div'); sec.className='ai-sec'; sec.innerHTML='<div class="ai-empty">Načítám soubory…</div>'; wrap.appendChild(sec);
+  const c=getSB(); let rows=[];
+  try{ const r=await c.from('materialy').select('name,path,code').eq('code', aiState.pickCode); rows=r.error?[]:(r.data||[]); }catch(e){}
+  const ok=['pdf','png','jpg','jpeg','webp','gif','txt','md','csv','docx'];
+  rows=rows.filter(r=> ok.includes(((r.name||r.path||'').split('.').pop()||'').toLowerCase()));
+  if(!rows.length){ sec.innerHTML=''; sec.appendChild(matNotice('Žádné použitelné soubory','V téhle třídě nejsou soubory, ze kterých umím udělat plán (PDF, obrázek, .docx, .txt, .md, .csv).')); return; }
+  sec.innerHTML='';
+  const info=document.createElement('div'); info.className='ai-intro'; info.style.cssText='padding-left:0;padding-right:0'; info.textContent='Vyber až 3 soubory.'; sec.appendChild(info);
+  const sel=new Set();
+  const cont=document.createElement('button'); cont.className='btn btn-primary'; cont.style.cssText='width:100%;margin-top:6px'; cont.textContent='Pokračovat'; cont.disabled=true; cont.style.opacity='.5';
+  rows.forEach((r,i)=>{
+    const ex=((r.name||r.path||'').split('.').pop()||'').toUpperCase();
+    const el=document.createElement('div'); el.className='ai-file';
+    el.innerHTML='<div class="chk">✓</div><div class="nm">'+esc(r.name||r.path)+'</div><div class="ex">'+esc(ex)+'</div>';
+    el.onclick=()=>{
+      if(sel.has(i)){ sel.delete(i); el.classList.remove('sel'); }
+      else { if(sel.size>=3){ alertDialog('Moc souborů','Vyber prosím nejvýš 3 soubory.'); return; } sel.add(i); el.classList.add('sel'); }
+      cont.disabled=!sel.size; cont.style.opacity=sel.size?'1':'.5';
+    };
+    sec.appendChild(el);
+  });
+  cont.onclick=()=>{ aiState.soubory=[...sel].map(i=>({ typ:'class', path:rows[i].path, code:rows[i].code, name:rows[i].name })); aiState.view='quiz'; renderAI(); };
+  sec.appendChild(cont);
+}
+
+function aiQuestion(label,hint,opts,current,onPick){
+  const q=document.createElement('div'); q.className='ai-q';
+  q.innerHTML='<div class="ql">'+esc(label)+'</div>'+(hint?'<div class="qh">'+esc(hint)+'</div>':'');
+  const row=document.createElement('div'); row.className='ai-opts';
+  opts.forEach(o=>{ const b=document.createElement('button'); b.className='ai-opt'+(o===current?' sel':''); b.textContent=o; b.onclick=()=>{ onPick(o); row.querySelectorAll('.ai-opt').forEach(x=>x.classList.toggle('sel', x.textContent===o)); }; row.appendChild(b); });
+  q.appendChild(row); return q;
+}
+
+function renderAIQuiz(wrap,h1){
+  h1.textContent='Krátký dotazník';
+  wrap.appendChild(aiBackBtn('‹ Zpět', ()=>{ aiState.view='source'; renderAI(); }));
+  const sec=document.createElement('div'); sec.className='ai-sec';
+  sec.appendChild(aiQuestion('Kolik na to máš času?','', AI_CAS, aiState.dotaznik.cas, (v)=>{ aiState.dotaznik.cas=v; }));
+  const q2=document.createElement('div'); q2.className='ai-q';
+  q2.innerHTML='<div class="ql">Chceš se na něco ze zápisků zaměřit víc?</div><div class="qh">Nepovinné — klidně přeskoč.</div>';
+  const ta=document.createElement('textarea'); ta.className='ai-ta'; ta.placeholder='Např. „nejvíc mi nejde druhá světová válka"…'; ta.value=aiState.dotaznik.hloubka||''; ta.oninput=()=>{ aiState.dotaznik.hloubka=ta.value; };
+  q2.appendChild(ta); sec.appendChild(q2);
+  sec.appendChild(aiQuestion('Co ti při učení sedí nejvíc?','', AI_STYL, aiState.dotaznik.styl, (v)=>{ aiState.dotaznik.styl=v; }));
+  const go=document.createElement('button'); go.className='btn btn-primary'; go.style.cssText='width:100%'; go.textContent='Vygenerovat plán'; go.onclick=aiGenerate;
+  sec.appendChild(go);
+  wrap.appendChild(sec);
+}
+
+function renderAILoading(wrap,h1){
+  h1.textContent='Generuju plán';
+  const d=document.createElement('div'); d.className='ai-loading';
+  d.innerHTML='<div class="ai-spin"></div><div>Čtu tvoje materiály a stavím plán na míru…<br><span style="font-size:12.5px">Chvilku to potrvá.</span></div>';
+  wrap.appendChild(d);
+}
+
+function renderAIResult(wrap,h1){
+  const p=aiState.plan||{};
+  h1.textContent='Tvůj plán';
+  wrap.appendChild(aiBackBtn('‹ Moje plány', aiEnterList));
+  const sec=document.createElement('div'); sec.className='ai-sec';
+  const hero=document.createElement('div'); hero.className='ai-hero';
+  hero.innerHTML='<h2>'+esc(p.nadpis||'Studijní plán')+'</h2>'+(p.prehled?'<div class="prehled">'+esc(p.prehled)+'</div>':'')+(p.proc?'<div class="proc">'+esc(p.proc)+'</div>':'');
+  sec.appendChild(hero);
+  (p.rozvrh||[]).forEach(usek=>{
+    if(usek.nazev){ const t=document.createElement('div'); t.className='ai-daytitle'; t.textContent=usek.nazev; sec.appendChild(t); }
+    (usek.bloky||[]).forEach(b=>{
+      const isP=b.typ==='pauza';
+      const row=document.createElement('div'); row.className='ai-block'+(isP?' pauza':'');
+      const min=(b.minuty!=null)?b.minuty:'';
+      row.innerHTML='<div class="rail"><div class="min">'+esc(String(min))+'</div><div class="un">min</div></div>'+
+        '<div class="body">'+ (isP ? '<div class="bt">Pauza</div>' :
+          ('<div class="bt">'+esc(b.tema||'')+(b.typ?'<span class="typ">'+esc(aiTypLabel(b.typ))+'</span>':'')+'</div>'+(b.poznamka?'<div class="bn">'+esc(b.poznamka)+'</div>':'')) )+'</div>';
+      sec.appendChild(row);
+    });
+  });
+  const tabs=document.createElement('div'); tabs.className='ai-tabs';
+  const which=aiState.resultTab||'shrnuti';
+  [['shrnuti','Shrnutí'],['karticky','Kartičky'],['otazky','Otázky']].forEach(([k,l])=>{ const b=document.createElement('button'); b.textContent=l; if(k===which) b.classList.add('sel'); b.onclick=()=>{ aiState.resultTab=k; renderAI(); }; tabs.appendChild(b); });
+  sec.appendChild(tabs);
+  const panel=document.createElement('div');
+  if(which==='karticky') aiRenderKarticky(panel,p);
+  else if(which==='otazky') aiRenderOtazky(panel,p);
+  else aiRenderShrnuti(panel,p);
+  sec.appendChild(panel);
+  const act=document.createElement('div'); act.style.cssText='display:flex;gap:10px;margin-top:20px';
+  if(aiState.soubory.length){ const re=document.createElement('button'); re.className='btn btn-ghost'; re.style.flex='1'; re.textContent='Přegenerovat'; re.onclick=aiRegenerate; act.appendChild(re); }
+  const del=document.createElement('button'); del.className='btn btn-ghost'; del.style.flex='1'; del.textContent='Smazat'; del.onclick=()=>{ if(aiState.planId) aiDeletePlan(aiState.planId,true); };
+  act.appendChild(del); sec.appendChild(act);
+  wrap.appendChild(sec);
+}
+
+function aiRenderShrnuti(panel,p){
+  const arr=p.shrnuti||[]; if(!arr.length){ panel.innerHTML='<div class="ai-empty">Žádné shrnutí.</div>'; return; }
+  arr.forEach(s=>{ const d=document.createElement('div'); d.className='ai-sum'; let html='<div class="st">'+esc(s.tema||'')+'</div>'; if(Array.isArray(s.body)&&s.body.length){ html+='<ul>'+s.body.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>'; } d.innerHTML=html; panel.appendChild(d); });
+}
+function aiRenderKarticky(panel,p){
+  const arr=p.karticky||[]; if(!arr.length){ panel.innerHTML='<div class="ai-empty">Žádné kartičky.</div>'; return; }
+  arr.forEach(k=>{ const f=document.createElement('div'); f.className='ai-flip'; f.innerHTML='<div class="ai-flip-inner"><div class="ai-flip-face ai-flip-front">'+esc(k.predni||'')+'<div class="ai-flip-hint">klikni pro otočení</div></div><div class="ai-flip-face ai-flip-back">'+esc(k.zadni||'')+'</div></div>'; f.onclick=()=>f.classList.toggle('flipped'); panel.appendChild(f); });
+}
+function aiRenderOtazky(panel,p){
+  const arr=p.otazky||[]; if(!arr.length){ panel.innerHTML='<div class="ai-empty">Žádné otázky.</div>'; return; }
+  arr.forEach(q=>{ const d=document.createElement('div'); d.className='ai-qa'; d.innerHTML='<div class="qq">'+esc(q.otazka||'')+'</div><div class="qa">'+esc(q.odpoved||'')+'</div>'; panel.appendChild(d); });
+}
+
+function aiDeletePlan(id, back){
+  confirmDialog('Smazat plán?','Tenhle plán se nenávratně smaže.','Smazat', async()=>{
+    const c=getSB(); try{ await c.from('plany').delete().eq('id',id); }catch(e){}
+    if(back) aiEnterList(); else renderAI();
+  });
+}
+
+function aiFileToB64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>{ const s=String(r.result||''); res(s.split(',')[1]||''); }; r.onerror=()=>rej(r.error||new Error('read')); r.readAsDataURL(file); }); }
+
+async function aiCallGenerate(pregenerovat){
+  const c=getSB(); const sess=await c.auth.getSession(); const token=sess&&sess.data&&sess.data.session&&sess.data.session.access_token;
+  if(!token){ const e=new Error('auth'); e.code='auth'; throw e; }
+  const soubory=aiState.soubory.map(s=> s.typ==='class' ? { path:s.path, code:s.code, name:s.name } : { name:s.name, data:s.data });
+  const resp=await fetch(SB_URL+'/functions/v1/studijni-plan', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':'Bearer '+token },
+    body: JSON.stringify({ soubory, dotaznik:aiState.dotaznik, pregenerovat: !!pregenerovat })
+  });
+  let data={}; try{ data=await resp.json(); }catch(_){}
+  if(!resp.ok || !data.ok){ const e=new Error(data.error||('http '+resp.status)); e.code=data.error; e.status=resp.status; throw e; }
+  return data;
+}
+
+function aiErrMsg(e){
+  const code=e&&e.code;
+  const map={
+    text_too_long:'Materiál je moc dlouhý (přes 50 000 znaků). Vyber prosím míň nebo kratší soubory.',
+    too_many_files:'Vyber prosím nejvýš 3 soubory.',
+    file_too_big:'Některý soubor je moc velký (nad 12 MB).',
+    forbidden:'K tomuhle materiálu nemáš přístup.',
+    dotaznik:'Vyplň prosím dotazník.',
+    no_files:'Nejdřív vyber nebo nahraj materiál.',
+    download_failed:'Soubor se nepodařilo stáhnout ze třídy.',
+    parse:'Model vrátil něco divného. Zkus to prosím ještě jednou.',
+    model:'Generátor je chvíli zaneprázdněný. Zkus to prosím za chvíli.',
+    server:'Na serveru něco chybí (nejspíš API klíč). Zkus to prosím později.',
+    auth:'Musíš být přihlášený.'
+  };
+  if(code && map[code]) return map[code];
+  return errMsg(e);
+}
+
+async function aiGenerate(){
+  if(!aiState.dotaznik.cas){ alertDialog('Vyber čas','Řekni mi prosím, kolik máš na učení času.'); return; }
+  if(!aiState.dotaznik.styl){ alertDialog('Vyber styl','Řekni mi prosím, co ti při učení sedí nejvíc.'); return; }
+  if(!aiState.soubory.length){ alertDialog('Chybí materiál','Nejdřív vyber nebo nahraj soubor.'); aiState.view='source'; renderAI(); return; }
+  aiState.view='loading'; renderAI();
+  try{ const d=await aiCallGenerate(false); aiState.plan=d.plan; aiState.planId=d.id; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); }
+  catch(e){ aiState.view='quiz'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); }
+}
+
+async function aiRegenerate(){
+  if(!aiState.soubory.length){ alertDialog('Nelze přegenerovat','Přegenerovat jde jen hned po vytvoření. Vytvoř prosím nový plán z materiálů.'); return; }
+  aiState.view='loading'; renderAI();
+  try{ const d=await aiCallGenerate(true); aiState.plan=d.plan; aiState.planId=d.id; aiState.view='result'; renderAI(); }
+  catch(e){ aiState.view='result'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); }
+}
+
+(function(){
+  const el=document.getElementById('aiFile');
+  if(!el) return;
+  el.addEventListener('change', async function(e){
+    const files=Array.from(e.target.files||[]); e.target.value='';
+    if(!files.length) return;
+    if(files.length>3){ alertDialog('Moc souborů','Vyber prosím nejvýš 3 soubory.'); return; }
+    if(files.some(f=>f.size>12*1024*1024)){ alertDialog('Soubor je moc velký','Každý soubor musí být do 12 MB.'); return; }
+    try{
+      aiState.soubory=[];
+      for(const f of files){ aiState.soubory.push({ typ:'upload', name:f.name, data:await aiFileToB64(f) }); }
+      aiState.view='quiz'; renderAI();
+    }catch(err){ alertDialog('Chyba', errMsg(err)); }
+  });
+})();
+/* ================= /AI STUDIJNÍ PLÁN ================= */
+
 applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
 // calc režim: appka vložená na webu přes iframe (?calc) — schová třídy/profil, posílá výšku rodiči
 if(/[?&](calc|embed)/.test(location.search)){
@@ -3865,7 +4220,7 @@ window.addEventListener('load', ()=>{
 'Něco se nepovedlo. Zkus to prosím znovu — kdyby potíže trvaly, napiš nám na info@estudivo.cz.':'Something went wrong. Please try again — if it keeps happening, email us at info@estudivo.cz.',
 'Jste přátelé!':'You are friends now!','Žádost potvrzena, teď si můžete porovnat průměr.':'Request accepted, now you can compare averages.','Už jste přátelé':'Already friends','S tímhle člověkem už kamarádíte.':'You are already friends with this person.','Už odesláno':'Already sent','Žádost už čeká na potvrzení.':'The request is already pending.','Odesláno':'Sent','Žádost o přátelství je na cestě.':'Friend request sent.','Přátelé':'Friends','+ Pozvat přátele':'+ Invite friends','Načítám…':'Loading…','Žádosti o přátelství':'Friend requests','Někdo':'Someone','Přijmout':'Accept','Odmítnout':'Decline','Porovnání průměru':'Average comparison','Zatím nemáš přátele — pozvi je tlačítkem nahoře.':'No friends yet — invite them with the button above.','Beze jména':'No name','Přijmout žádost':'Accept request','Přidat do přátel':'Add friend','Žádost odeslána':'Request sent','Porovnání známek':'Grade comparison','kamarád':'friend','Zatím nejsou žádné předměty k porovnání.':'No subjects to compare yet.','Odebrat práva admina':'Remove admin','Udělat adminem':'Make admin','Udělat adminem?':'Make admin?','Člen bude moct spravovat třídu — mazat a přejmenovat obsah, a v režimu „jen prohlížení" i přidávat.':'The member will be able to manage the class — delete and rename content, and add in "view only" mode too.','Člen přijde o práva admina.':'The member will lose admin rights.','Profil se nepodařilo načíst.':'Could not load the profile.',
 'Profil potřebuje cloud':'Profile needs the cloud','Přihlášení běží přes Supabase. Na živé adrese (GitHub Pages) to poběží.':'Sign-in runs via Supabase. It works on the live site (GitHub Pages).','Přihlášení':'Sign in','Zadej kód z emailu':'Enter the code from your email','Přihlásit se':'Sign in','Změnit email':'Change email','Přihlas se emailem':'Sign in with email','Bez přihlášení se nedostaneš do třídy ani ji nevytvoříš. Stačí email — přijde ti kód.':'Without signing in you cannot join or create a class. Just an email — you will get a code.','Poslat kód':'Send code','Neplatný email':'Invalid email','Posílám…':'Sending…','Neúplný kód':'Incomplete code','Zadej celý kód z emailu.':'Enter the full code from your email.','Kód nesedí nebo vypršel.':'The code is wrong or expired.','. Mrkni i do spamu.':'. Check your spam too.','Odhlásit se':'Sign out','Odhlásit se?':'Sign out?','Tvoje známky i třída zůstanou uložené v účtu a vrátí se po přihlášení.':'Your grades and class stay saved in your account and return after signing in.','Odhlásit':'Sign out','Změnit fotku':'Change photo','Jméno':'Name','Kde studuješ':'Where you study','Bio':'Bio','Ukládám…':'Saving…','Uložení selhalo':'Save failed','Upravit profil':'Edit profile',
-'Vzhled':'Appearance','☀️ Světlý':'☀️ Light','🌙 Tmavý':'🌙 Dark','Barva aplikace':'App colour','Žlutá':'Yellow',
+'Vzhled':'Appearance','☀️ Světlý':'☀️ Light','🌙 Tmavý':'🌙 Dark','Barva aplikace':'App colour','Žlutá':'Yellow','Modrá':'Blue','Růžová':'Pink',
 'Zápisky':'Notes','Testy':'Tests','Materiály ještě nejsou nastavené':'Materials not set up yet','Načítám knihovnu…':'Loading library…','Nejdřív se přihlas':'Sign in first','Do třídy se dostaneš a třídu vytvoříš až po přihlášení. Otevři záložku Profil a přihlas se emailem.':'You can join or create a class only after signing in. Open the Profile tab and sign in with email.','Přejít na přihlášení':'Go to sign in','+ Přidat třídu':'+ Add class','Zatím v žádné třídě':'Not in any class yet','Třída':'Class','Opustit třídu?':'Leave class?','Přidat třídu':'Add class','‹ Moje třídy':'‹ My classes','Zadej kód třídy':'Enter class code','Spolužáci sdílí zápisky a materiály na jednom místě.':'Classmates share notes and materials in one place.','Připojit se':'Join','Vytvořit novou třídu':'Create a new class','Zadej všechny čtyři znaky kódu.':'Enter all four characters of the code.','Třída nenalezena':'Class not found','Chybí jméno':'Name missing','Zadej jméno třídy.':'Enter a class name.','Vytvoření třídy potřebuje cloud (Supabase).':'Creating a class needs the cloud (Supabase).','Zkus to prosím ještě jednou.':'Please try again.','Třída vytvořena':'Class created','Pošli ho spolužákům, ať se připojí.':'Send it to your classmates to join.','Je veřejná — najdou ji i v seznamu.':'It is public — it also shows in the list.','kód třídy':'class code','Sdílet':'Share','Kalendář':'Calendar','Lidi':'People','Vyber předmět':'Pick a subject','zatím prázdné':'empty','Jen prohlížení':'View only','V téhle třídě můžou přidávat jen admini.':'Only admins can add in this class.','Materiály potřebují cloud (Supabase).':'Materials need the cloud (Supabase).','Už existuje':'Already exists','Předmět s tímhle názvem už ve třídě je.':'A subject with this name is already in the class.','Předměty nejsou nastavené':'Subjects not set up',
 'Po':'Mo','Út':'Tu','St':'We','Čt':'Th','Pá':'Fr','So':'Sa','Ne':'Su','🔔 Zapnout připomínky testů':'🔔 Turn on test reminders','Blížící se testy':'Upcoming tests','zítra':'tomorrow','dnes':'today','Zítra':'Tomorrow','Předchozí týden':'Previous week','Další týden':'Next week','Přidat test v tento den':'Add a test on this day','Chybí datum':'Date missing','Vyber, kdy se test píše.':'Pick when the test is.','Smazat test může jen jeho autor nebo admin třídy.':'Only the author or a class admin can delete a test.','Mazání selhalo':'Delete failed',
 '‹ Předměty':'‹ Subjects','↑ Nahrát':'↑ Upload','+ Složka':'+ Folder','Řadit':'Sort','Podle data přidání':'By date added','Podle abecedy':'Alphabetically','Podle velikosti':'By size','🏠 Hlavní':'🏠 Home','Tady zatím nic není':'Nothing here yet','Tahle složka je prázdná.':'This folder is empty.','Nahraj první zápisky pro třídu.':'Upload the first notes for the class.','složka':'folder','Nová složka':'New folder','Složka s tímhle názvem tu už je.':'A folder with this name already exists.','Složky nejsou nastavené':'Folders not set up','Smazat složku může jen její autor nebo admin třídy.':'Only the author or a class admin can delete a folder.','Složka není prázdná':'Folder not empty','Nejdřív z ní smaž soubory a podsložky.':'Delete its files and subfolders first.','Smazat složku?':'Delete folder?','Nelze přejmenovat':'Cannot rename','Přejmenovat soubor může jen jeho autor nebo admin třídy.':'Only the author or a class admin can rename a file.','Přejmenovat soubor':'Rename file','Přejmenování se neuložilo':'Rename not saved','Přejmenování selhalo':'Rename failed','Nelze otevřít':'Cannot open','Odkaz se nepodařilo získat.':'Could not get the link.','Smazat soubor může jen jeho autor nebo admin třídy.':'Only the author or a class admin can delete a file.','Soubor je moc velký':'File too big','Nahrávej prosím soubory do 50 MB.':'Please upload files up to 50 MB.','Některé soubory přeskočeny':'Some files skipped','Část se nenahrála':'Some did not upload','Moc velká':'Too big','Profilová fotka může mít max 5 MB.':'Profile photo can be max 5 MB.','Nahrání selhalo':'Upload failed',
@@ -3881,6 +4236,42 @@ window.addEventListener('load', ()=>{
 'Vytvoř si účet':'Create an account','Vytvořit účet':'Create account',
 'Účet uloží tvoje známky napříč zařízeními a odemkne třídy.':'An account saves your grades across devices and unlocks classes.',
 'heslo (aspoň 6 znaků)':'password (at least 6 characters)',
+/* --- AI studijní plán --- */
+'Uč se chytře':'Study smart','Studijní plán':'Study plan','AI plán':'AI plan','Moje plány':'My plans','+ Nový plán':'+ New plan',
+'Zatím tu nemáš žádný plán.':"You don't have any plan yet.",'Vytvoř si první z materiálů, nebo nahraj soubor.':'Create your first one from materials, or upload a file.',
+'Nový plán':'New plan','‹ Moje plány':'‹ My plans','‹ Zpět':'‹ Back','‹ Třídy':'‹ Classes',
+'Z čeho ti mám plán postavit? Můžeš nahrát vlastní soubor, nebo použít materiál ze třídy.':'What should I build the plan from? Upload your own file, or use class materials.',
+'Nahrát soubor':'Upload a file','PDF, obrázek, .docx, .txt — až 3 soubory':'PDF, image, .docx, .txt — up to 3 files',
+'Vybrat z materiálů třídy':'Pick from class materials','Použij zápisky nasdílené ve tvé třídě':'Use notes shared in your class',
+'Vyber třídu':'Pick a class','Načítám třídy…':'Loading classes…','Žádná třída':'No class',
+'Nejsi v žádné třídě. Přidej se v záložce Třídy, nebo se vrať a nahraj vlastní soubor.':"You're not in any class. Join one in the Classes tab, or go back and upload your own file.",
+'Vyber materiály':'Pick materials','Načítám soubory…':'Loading files…','Žádné použitelné soubory':'No usable files',
+'V téhle třídě nejsou soubory, ze kterých umím udělat plán (PDF, obrázek, .docx, .txt, .md, .csv).':'This class has no files I can build a plan from (PDF, image, .docx, .txt, .md, .csv).',
+'Vyber až 3 soubory.':'Pick up to 3 files.','Pokračovat':'Continue','Moc souborů':'Too many files','Vyber prosím nejvýš 3 soubory.':'Please pick at most 3 files.',
+'Krátký dotazník':'Quick questions','Kolik na to máš času?':'How much time do you have?',
+'Chceš se na něco ze zápisků zaměřit víc?':'Want to focus more on something in the notes?','Nepovinné — klidně přeskoč.':'Optional — feel free to skip.',
+'Např. „nejvíc mi nejde druhá světová válka"…':'e.g. "the thing I struggle with most is World War II"…',
+'Co ti při učení sedí nejvíc?':'What works best for you when studying?','Vygenerovat plán':'Generate plan',
+'1 hodina':'1 hour','1 den':'1 day','7 dní':'7 days','30 dní':'30 days',
+'kartičky':'flashcards','rychlé shrnutí':'quick summary','procvičování':'practice','otázky':'questions','cvičné testy':'practice tests',
+'Vyber čas':'Pick a time','Řekni mi prosím, kolik máš na učení času.':'Please tell me how much time you have to study.',
+'Vyber styl':'Pick a style','Řekni mi prosím, co ti při učení sedí nejvíc.':'Please tell me what works best for you when studying.',
+'Chybí materiál':'No material','Nejdřív vyber nebo nahraj soubor.':'First pick or upload a file.',
+'Generuju plán':'Generating plan','Čtu tvoje materiály a stavím plán na míru…':'Reading your materials and building a tailored plan…','Chvilku to potrvá.':'This will take a moment.',
+'Tvůj plán':'Your plan','Shrnutí':'Summary','Kartičky':'Flashcards','Otázky':'Questions','Pauza':'Break',
+'Žádné shrnutí.':'No summary.','Žádné kartičky.':'No flashcards.','klikni pro otočení':'tap to flip','Žádné otázky.':'No questions.',
+'čtení':'reading','opakování':'revision',
+'Přegenerovat':'Regenerate','Smazat plán?':'Delete plan?','Tenhle plán se nenávratně smaže.':'This plan will be permanently deleted.',
+'Nelze přegenerovat':'Cannot regenerate','Přegenerovat jde jen hned po vytvoření. Vytvoř prosím nový plán z materiálů.':'You can only regenerate right after creating. Please create a new plan from materials.',
+'Nepovedlo se':'It failed','Každý soubor musí být do 12 MB.':'Each file must be under 12 MB.','Chyba':'Error',
+'Zatím nedostupné':'Not available yet','AI studijní plán potřebuje cloud (Supabase).':'The AI study plan needs the cloud (Supabase).',
+'AI studijní plán je jen pro přihlášené. Přihlaš se v záložce Profil.':'The AI study plan is for signed-in users only. Sign in on the Profile tab.','Přejít do Profilu':'Go to Profile',
+'Materiál je moc dlouhý (přes 50 000 znaků). Vyber prosím míň nebo kratší soubory.':'The material is too long (over 50,000 characters). Please pick fewer or shorter files.',
+'Některý soubor je moc velký (nad 12 MB).':'One of the files is too big (over 12 MB).','K tomuhle materiálu nemáš přístup.':"You don't have access to this material.",
+'Vyplň prosím dotazník.':'Please fill in the questions.','Nejdřív vyber nebo nahraj materiál.':'First pick or upload a material.',
+'Soubor se nepodařilo stáhnout ze třídy.':'The file could not be downloaded from the class.','Model vrátil něco divného. Zkus to prosím ještě jednou.':'The model returned something odd. Please try again.',
+'Generátor je chvíli zaneprázdněný. Zkus to prosím za chvíli.':'The generator is busy for a moment. Please try again shortly.',
+'Na serveru něco chybí (nejspíš API klíč). Zkus to prosím později.':'Something is missing on the server (probably the API key). Please try later.','Musíš být přihlášený.':'You must be signed in.',
 'Už mám účet — přihlásit se':'I already have an account — sign in',
 'Pokračovat přes Google':'Continue with Google','Pokračovat přes Apple':'Continue with Apple',
 'Zapomenuté heslo':'Forgot password',
