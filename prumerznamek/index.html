@@ -83,15 +83,17 @@
   .brand-logo { width: 34px; height: 34px; flex: none; display: block; }
   .brand-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 21px; letter-spacing: -0.01em; }
   .brand-name b { color: var(--accent-deep); font-weight: 800; }
-  .top-actions { display: flex; align-items: center; gap: 8px; }
-  .top-link { font-size: 13.5px; font-weight: 600; color: var(--ink-dim); text-decoration: none; padding: 8px 6px; }
-  .top-link:hover { color: var(--ink); }
+  .top-nav { display: flex; gap: 4px; flex: 1; }
+  .top-nav a { font-size: 13.5px; font-weight: 600; color: var(--ink-dim); text-decoration: none; padding: 8px 12px; border-radius: 10px; white-space: nowrap; }
+  .top-nav a:hover { color: var(--ink); background: var(--bg-elev); }
+  .top-nav a.active { color: var(--accent-deep); background: var(--accent-soft); }
   .icon-btn {
     width: 40px; height: 40px; border-radius: 12px; cursor: pointer;
     background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink);
-    display: grid; place-items: center; font-size: 17px;
+    display: grid; place-items: center; font-size: 17px; flex: none;
   }
   .icon-btn:active { background: var(--bg-elev2); }
+  @media (max-width: 560px){ .brand-name { display: none; } .top-nav a { padding: 8px 9px; } }
 
   /* ---------- layout ---------- */
   .wrap { max-width: 1060px; margin: 0 auto; padding: 30px 22px 90px; }
@@ -149,6 +151,13 @@
   .sol-tt { display: block; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; }
   .sol-ss { display: block; color: var(--ink-dim); font-size: 13px; margin-top: 2px; }
   .sol-status { font-size: 12px; color: var(--ink-faint); line-height: 1.5; margin: -6px 2px 0; }
+
+  /* ---------- cross-link card ---------- */
+  .link-card { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 18px; border-radius: var(--radius); text-decoration: none; background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .link-card:hover { border-color: var(--accent); }
+  .lc-ic { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; background: var(--accent-soft); color: var(--accent-deep); }
+  .lc-t { display: block; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; }
+  .lc-s { display: block; color: var(--ink-dim); font-size: 13px; margin-top: 2px; }
 
   /* ---------- calculator ---------- */
   .calc { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
@@ -266,17 +275,18 @@
     </svg>
     <span class="brand-name">Estudivo</span>
   </a>
-  <div class="top-actions">
-    <a class="top-link" href="/">Domů</a>
-    <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">🌙</button>
-  </div>
+  <nav class="top-nav">
+    <a href="/prumerznamek/" class="active" aria-current="page">Průměr známek</a>
+    <a href="/bodyprocenta/">Body a procenta</a>
+  </nav>
+  <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">🌙</button>
 </header>
 
 <main class="wrap">
   <div class="page-head">
     <div class="eyebrow">Kalkulačka průměru</div>
     <h1 class="page-title">Průměr známek</h1>
-    <p class="page-lead">Zadej si předměty a známky — vážený průměr se spočítá sám. Můžeš si i naimportovat známky přímo ze Škola OnLine a přepočítat body na procenta. Zdarma a bez registrace.</p>
+    <p class="page-lead">Zadej si předměty a známky — vážený průměr se spočítá sám. Známky si můžeš i naimportovat přímo ze Škola OnLine. Zdarma a bez registrace.</p>
   </div>
 
   <div class="top-grid">
@@ -319,32 +329,14 @@
       </button>
       <div id="solStatus" class="sol-status"></div>
 
-      <div class="calc">
-        <div class="calc-head">
-          <div class="calc-icon">%</div>
-          <div style="flex:1">
-            <div class="calc-title">Kalkulačka bodů a procent</div>
-            <div class="calc-sub">body ↔ procenta u testu</div>
-          </div>
-        </div>
-        <div class="calc-body">
-          <div class="calc-toggle">
-            <button class="calc-mode sel" id="modePct" data-mode="pct">Spočítat procenta</button>
-            <button class="calc-mode" id="modePts" data-mode="pts">Spočítat body</button>
-          </div>
-          <label class="fld"><span>Maximum bodů</span>
-            <input type="number" inputmode="decimal" id="calcMax" placeholder="např. 40">
-          </label>
-          <label class="fld" id="fldPoints"><span>Získané body</span>
-            <input type="number" inputmode="decimal" id="calcPoints" placeholder="body">
-          </label>
-          <label class="fld" id="fldPercent" style="display:none"><span>Procenta</span>
-            <input type="number" inputmode="decimal" id="calcPercent" placeholder="%">
-          </label>
-          <button class="btn btn-primary" id="calcBtn" style="width:100%">Vypočítat</button>
-          <div class="calc-result" id="calcResult" style="display:none"></div>
-        </div>
-      </div>
+      <a class="link-card" href="/bodyprocenta/">
+        <span class="lc-ic">%</span>
+        <span style="flex:1;min-width:0">
+          <span class="lc-t">Kalkulačka bodů a procent</span>
+          <span class="lc-s">Přepočítej body z testu na procenta a naopak</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" style="flex-shrink:0"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
     </div>
   </div>
 
@@ -753,46 +745,6 @@ function showDialog(title, msg, isInput, okLabel, onOk, value, opts){
   cancel.onclick=close;
   bd.onclick=(e)=>{ if(e.target===bd) close(); };
 }
-
-/* ===================== points & percent calculator ===================== */
-(function(){
-  const max=document.getElementById('calcMax');
-  const pts=document.getElementById('calcPoints');
-  const pct=document.getElementById('calcPercent');
-  const fldPts=document.getElementById('fldPoints');
-  const fldPct=document.getElementById('fldPercent');
-  const modePct=document.getElementById('modePct');
-  const modePts=document.getElementById('modePts');
-  const btn=document.getElementById('calcBtn');
-  const res=document.getElementById('calcResult');
-  const num=el=>{ const v=parseFloat((el.value||'').replace(',','.')); return isNaN(v)?null:v; };
-  const f=n=>n.toFixed(2).replace(/\.?0+$/,'').replace('.',',');
-  let mode='pct';
-  function setMode(m){
-    mode=m;
-    modePct.classList.toggle('sel',m==='pct');
-    modePts.classList.toggle('sel',m==='pts');
-    fldPts.style.display=m==='pct'?'block':'none';
-    fldPct.style.display=m==='pts'?'block':'none';
-    res.style.display='none';
-  }
-  modePct.onclick=()=>setMode('pct');
-  modePts.onclick=()=>setMode('pts');
-  function show(txt,err){ res.style.display='block'; res.className='calc-result'+(err?' err':''); res.textContent=txt; }
-  btn.onclick=()=>{
-    const m=num(max);
-    if(m==null||m<=0){ show('Zadej platné maximum bodů.',true); return; }
-    if(mode==='pct'){
-      const p=num(pts);
-      if(p==null){ show('Zadej získané body.',true); return; }
-      show(p+' z '+m+' bodů = '+f(p/m*100)+' %');
-    } else {
-      const pc=num(pct);
-      if(pc==null){ show('Zadej procenta.',true); return; }
-      show(f(pc)+' % z '+m+' bodů = '+f(m*pc/100)+' bodů');
-    }
-  };
-})();
 
 /* ===================== Škola OnLine ===================== */
 const SOL_API = 'https://aplikace.skolaonline.cz';

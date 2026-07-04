@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f7f5ef">
+<title>Kalkulačka bodů a procent – přepočet z testu online | Estudivo</title>
+<meta name="description" content="Přepočítej body z testu na procenta a naopak. Zadáš maximum bodů a získané body – hned vidíš, na kolik procent test máš. Zdarma, bez registrace.">
+<link rel="canonical" href="https://estudivo.cz/bodyprocenta/">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Estudivo">
+<meta property="og:title" content="Kalkulačka bodů a procent – přepočet z testu online">
+<meta property="og:description" content="Přepočítej body z testu na procenta a naopak. Zdarma a bez registrace.">
+<meta property="og:url" content="https://estudivo.cz/bodyprocenta/">
+<meta property="og:image" content="https://estudivo.cz/og.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="cs_CZ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kalkulačka bodů a procent – přepočet z testu online">
+<meta name="twitter:description" content="Přepočítej body z testu na procenta a naopak. Zdarma a bez registrace.">
+<meta name="twitter:image" content="https://estudivo.cz/og.png?v=2">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap">
+<script>(function(){function sys(){try{return(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}catch(e){return'light';}}try{var s=localStorage.getItem('pz_theme');var t=(s==='light'||s==='dark')?s:sys();document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme',sys());}})();</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Kalkulačka bodů a procent – Estudivo","url":"https://estudivo.cz/bodyprocenta/","applicationCategory":"EducationalApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"CZK"},"description":"Přepočet bodů z testu na procenta a naopak."}
+</script>
+<style>
+  :root {
+    --bg: #0f1115; --bg-elev: #181b22; --bg-elev2: #20242e; --line: #2a2f3a;
+    --ink: #f2f4f8; --ink-dim: #99a0ae; --ink-faint: #7e8595;
+    --accent-rgb: 232,184,75; --accent: rgb(var(--accent-rgb)); --accent-soft: rgba(var(--accent-rgb),0.12); --accent-deep: #b8860f;
+    --hero-a: #f2c759; --hero-b: #e3a52c; --hero-ink: #23170a; --hero-sub: #7a5410;
+    --good: #5ec77a; --bad: #e25c5c; --radius: 16px; --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f5ef; --bg-elev:#ffffff; --bg-elev2:#efece2; --line:#e7e3d8;
+    --ink:#1a1f30; --ink-dim:#6b7280; --ink-faint:#9aa0b0;
+    --accent-soft:rgba(var(--accent-rgb),0.16); --shadow-sm:0 1px 2px rgba(26,31,48,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scrollbar-gutter: stable; }
+  html, body { background: var(--bg); color: var(--ink); font-family: 'Hanken Grotesk', sans-serif; -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; background: radial-gradient(1200px 560px at 82% -12%, rgba(var(--accent-rgb),0.07), transparent 60%), var(--bg); }
+  a { color: var(--accent-deep); }
+
+  /* top bar (shared look) */
+  .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; padding: 12px 22px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); flex: none; }
+  .brand-logo { width: 32px; height: 32px; display: block; }
+  .brand-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.01em; }
+  .top-nav { display: flex; gap: 4px; flex: 1; }
+  .top-nav a { font-size: 13.5px; font-weight: 600; color: var(--ink-dim); text-decoration: none; padding: 8px 12px; border-radius: 10px; white-space: nowrap; }
+  .top-nav a:hover { color: var(--ink); background: var(--bg-elev); }
+  .top-nav a.active { color: var(--accent-deep); background: var(--accent-soft); }
+  .icon-btn { width: 40px; height: 40px; border-radius: 12px; cursor: pointer; background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink); display: grid; place-items: center; font-size: 17px; flex: none; }
+  .icon-btn:active { background: var(--bg-elev2); }
+  @media (max-width: 560px){ .brand-name { display: none; } .top-nav a { padding: 8px 9px; } }
+
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 22px 80px; }
+  .page-head { text-align: center; margin-bottom: 26px; }
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+  .page-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 42px; line-height: 1.03; letter-spacing: -0.01em; margin-top: 10px; }
+  .page-lead { color: var(--ink-dim); font-size: 15.5px; line-height: 1.55; margin: 12px auto 0; max-width: 52ch; }
+  @media (max-width: 560px){ .page-title { font-size: 32px; } }
+
+  /* calculator card */
+  .calc { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 14px 40px rgba(0,0,0,0.10); overflow: hidden; }
+  .calc-head { display: flex; align-items: center; gap: 14px; padding: 20px 22px 6px; }
+  .calc-icon { width: 48px; height: 48px; border-radius: 13px; display: grid; place-items: center; font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(var(--accent-rgb),0.3); }
+  .calc-title { font-size: 17px; font-weight: 600; }
+  .calc-sub { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
+  .calc-body { padding: 14px 22px 24px; display: flex; flex-direction: column; gap: 15px; }
+  .calc-toggle { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+  .calc-mode { flex: 1; padding: 11px; border: none; border-radius: 9px; background: none; color: var(--ink-dim); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .calc-mode.sel { background: var(--accent); color: #1a1407; }
+  .calc-result { background: linear-gradient(160deg, var(--hero-a), var(--hero-b)); border-radius: 14px; padding: 20px; text-align: center; }
+  .calc-result .rv { font-family: 'Fraunces', serif; font-size: 44px; font-weight: 600; line-height: 1; color: var(--hero-ink); }
+  .calc-result .rl { font-size: 13px; color: var(--hero-sub); margin-top: 8px; font-weight: 600; }
+  .calc-result.err { background: rgba(226,92,92,0.12); border: 1px solid rgba(226,92,92,0.3); padding: 14px; }
+  .calc-result.err .rv { font-size: 15px; color: var(--bad); font-family: inherit; font-weight: 600; }
+  .calc-result.err .rl { display: none; }
+
+  input { font-family: inherit; font-size: 16px; background: var(--bg); border: 1px solid var(--line); color: var(--ink); border-radius: 11px; padding: 13px 14px; width: 100%; appearance: none; }
+  input:focus { outline: none; border-color: var(--accent); }
+  label.fld { display: block; }
+  label.fld span { display: block; font-size: 12.5px; color: var(--ink-dim); margin-bottom: 6px; letter-spacing: 0.02em; }
+  .btn { width: 100%; padding: 15px; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 700; border: none; cursor: pointer; background: var(--accent); color: #1a1407; }
+
+  /* quick reference */
+  .ref { margin-top: 24px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow-sm); }
+  .ref h2 { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; margin-bottom: 12px; }
+  .ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .ref-item { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .ref-item .rp { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 15px; }
+  .ref-item .rq { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
+
+  /* cross-link */
+  .link-card { display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 16px; padding: 16px 18px; border-radius: var(--radius); text-decoration: none; background: var(--bg-elev); border: 1px solid var(--line); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .link-card:hover { border-color: var(--accent); }
+  .lc-ic { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-deep); }
+  .lc-t { display: block; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; }
+  .lc-s { display: block; color: var(--ink-dim); font-size: 13px; margin-top: 2px; }
+
+  footer { border-top: 1px solid var(--line); margin-top: 50px; padding: 22px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+  footer a { color: var(--ink-dim); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Estudivo">
+    <svg class="brand-logo" viewBox="0 0 28 22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M14 2 27 8 14 14 1 8Z" fill="var(--accent)"/>
+      <path d="M6 10.3V15c0 0 3 3 8 3s8-3 8-3v-4.7L14 14 6 10.3Z" fill="var(--accent)"/>
+      <path d="M25 8.6V15" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <span class="brand-name">Estudivo</span>
+  </a>
+  <nav class="top-nav">
+    <a href="/prumerznamek/">Průměr známek</a>
+    <a href="/bodyprocenta/" class="active" aria-current="page">Body a procenta</a>
+  </nav>
+  <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">🌙</button>
+</header>
+
+<main class="wrap">
+  <div class="page-head">
+    <div class="eyebrow">Kalkulačka</div>
+    <h1 class="page-title">Body a procenta</h1>
+    <p class="page-lead">Přepočítej body z testu na procenta a naopak. Zadej maximum bodů a hned uvidíš, na kolik procent test máš. Zdarma a bez registrace.</p>
+  </div>
+
+  <div class="calc">
+    <div class="calc-head">
+      <div class="calc-icon">%</div>
+      <div style="flex:1">
+        <div class="calc-title">Kalkulačka bodů a procent</div>
+        <div class="calc-sub">body ↔ procenta u testu</div>
+      </div>
+    </div>
+    <div class="calc-body">
+      <div class="calc-toggle">
+        <button class="calc-mode sel" id="modePct" data-mode="pct">Spočítat procenta</button>
+        <button class="calc-mode" id="modePts" data-mode="pts">Spočítat body</button>
+      </div>
+      <label class="fld"><span>Maximum bodů</span>
+        <input type="number" inputmode="decimal" id="calcMax" placeholder="např. 40">
+      </label>
+      <label class="fld" id="fldPoints"><span>Získané body</span>
+        <input type="number" inputmode="decimal" id="calcPoints" placeholder="body">
+      </label>
+      <label class="fld" id="fldPercent" style="display:none"><span>Procenta</span>
+        <input type="number" inputmode="decimal" id="calcPercent" placeholder="%">
+      </label>
+      <button class="btn" id="calcBtn">Vypočítat</button>
+      <div class="calc-result" id="calcResult" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="ref">
+    <h2>Časté hranice známek (kolik %)</h2>
+    <div class="ref-grid">
+      <div class="ref-item"><div class="rp">90–100 %</div><div class="rq">obvykle 1</div></div>
+      <div class="ref-item"><div class="rp">75–89 %</div><div class="rq">obvykle 2</div></div>
+      <div class="ref-item"><div class="rp">50–74 %</div><div class="rq">obvykle 3</div></div>
+      <div class="ref-item"><div class="rp">30–49 %</div><div class="rq">obvykle 4</div></div>
+      <div class="ref-item"><div class="rp">0–29 %</div><div class="rq">obvykle 5</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--ink-faint);line-height:1.5;margin-top:12px">Orientační stupnice — přesné hranice si určuje každý učitel/škola sám.</p>
+  </div>
+
+  <a class="link-card" href="/prumerznamek/">
+    <span class="lc-ic">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </span>
+    <span style="flex:1;min-width:0">
+      <span class="lc-t">Spočítat studijní průměr</span>
+      <span class="lc-s">Vážený průměr známek + import ze Škola OnLine</span>
+    </span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" style="flex-shrink:0"><path d="M9 6l6 6-6 6"/></svg>
+  </a>
+</main>
+
+<footer>
+  <a href="/">estudivo.cz</a> · <a href="/soukromi.html">Ochrana soukromí</a> · <a href="/podminky.html">Podmínky</a>
+</footer>
+
+<script>
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur==='light' ? 'dark' : 'light';
+  try { localStorage.setItem('pz_theme', next); } catch(e) {}
+  document.documentElement.setAttribute('data-theme', next);
+  const meta = document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', next==='light' ? '#f7f5ef' : '#0f1115');
+  document.getElementById('themeToggle').textContent = next==='light' ? '🌙' : '☀️';
+}
+(function(){
+  document.getElementById('themeToggle').textContent = (document.documentElement.getAttribute('data-theme')==='light') ? '🌙' : '☀️';
+  const max=document.getElementById('calcMax');
+  const pts=document.getElementById('calcPoints');
+  const pct=document.getElementById('calcPercent');
+  const fldPts=document.getElementById('fldPoints');
+  const fldPct=document.getElementById('fldPercent');
+  const modePct=document.getElementById('modePct');
+  const modePts=document.getElementById('modePts');
+  const btn=document.getElementById('calcBtn');
+  const res=document.getElementById('calcResult');
+  const num=el=>{ const v=parseFloat((el.value||'').replace(',','.')); return isNaN(v)?null:v; };
+  const f=n=>n.toFixed(2).replace(/\.?0+$/,'').replace('.',',');
+  let mode='pct';
+  function setMode(m){
+    mode=m;
+    modePct.classList.toggle('sel',m==='pct');
+    modePts.classList.toggle('sel',m==='pts');
+    fldPts.style.display=m==='pct'?'block':'none';
+    fldPct.style.display=m==='pts'?'block':'none';
+    res.style.display='none';
+  }
+  modePct.onclick=()=>setMode('pct');
+  modePts.onclick=()=>setMode('pts');
+  function showErr(txt){ res.style.display='block'; res.className='calc-result err'; res.innerHTML='<div class="rv"></div>'; res.querySelector('.rv').textContent=txt; }
+  function showRes(big,label){ res.style.display='block'; res.className='calc-result'; res.innerHTML='<div class="rv"></div><div class="rl"></div>'; res.querySelector('.rv').textContent=big; res.querySelector('.rl').textContent=label; }
+  btn.onclick=()=>{
+    const m=num(max);
+    if(m==null||m<=0){ showErr('Zadej platné maximum bodů.'); return; }
+    if(mode==='pct'){
+      const p=num(pts);
+      if(p==null){ showErr('Zadej získané body.'); return; }
+      showRes(f(p/m*100)+' %', p+' z '+m+' bodů');
+    } else {
+      const pc=num(pct);
+      if(pc==null){ showErr('Zadej procenta.'); return; }
+      showRes(f(m*pc/100)+' b', f(pc)+' % z '+m+' bodů');
+    }
+  };
+  // Enter kdekoli v kalkulačce spustí výpočet
+  [max,pts,pct].forEach(el=> el.addEventListener('keydown', e=>{ if(e.key==='Enter') btn.click(); }));
+})();
+</script>
+</body>
+</html>
