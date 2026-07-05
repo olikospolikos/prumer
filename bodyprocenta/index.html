@@ -129,6 +129,7 @@
     <a href="/prumerznamek/">Průměr známek</a>
     <a href="/bodyprocenta/" class="active" aria-current="page">Body a procenta</a>
   </nav>
+  <button class="icon-btn" id="langTgl" aria-label="Language / Jazyk" style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px">EN</button>
   <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">🌙</button>
 </header>
 
@@ -244,6 +245,107 @@ function toggleTheme(){
   };
   // Enter kdekoli v kalkulačce spustí výpočet
   [max,pts,pct].forEach(el=> el.addEventListener('keydown', e=>{ if(e.key==='Enter') btn.click(); }));
+})();
+</script>
+
+<script>
+/* ===== CS/EN překlad (reload-based, CS = zdroj; sdílí klíč prumer_lang s landingem/appkou) ===== */
+(function(){
+  var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
+  window.LANG=LANG;
+  var EN={
+    'Průměr známek':'Grade average','Body a procenta':'Points & percent',
+    'Kalkulačka průměru':'Average calculator','Kalkulačka':'Calculator',
+    'Zadej si předměty a známky — vážený průměr se spočítá sám. Známky si můžeš i naimportovat přímo ze Škola OnLine. Zdarma a bez registrace.':'Add your subjects and grades — the weighted average is calculated for you. You can also import your grades straight from Škola OnLine. Free and no sign-up.',
+    'Přepočítej body z testu na procenta a naopak. Zadej maximum bodů a hned uvidíš, na kolik procent test máš. Zdarma a bez registrace.':'Convert test points to percent and back. Enter the max points and instantly see your percentage. Free and no sign-up.',
+    '1. pololetí':'1st semester','2. pololetí':'2nd semester',
+    'Celkový průměr':'Overall average','žádné známky':'no grades','zatím bez známek':'no grades yet',
+    'Načíst známky ze Škola OnLine':'Import grades from Škola OnLine',
+    'Stáhne známky i s váhami — nemusíš nic přepisovat':'Downloads grades with weights — nothing to retype',
+    'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.':'Downloads your grades straight from Škola OnLine. Your password is never stored.',
+    'Aktualizuji známky…':'Updating grades…','odhlásit':'sign out','Načíst ze Škola OnLine':'Import from Škola OnLine',
+    'Přihlašovací jméno':'Username','Heslo':'Password','Server (většinou neměnit)':'Server (usually leave as is)',
+    'Heslo se použije jen pro stažení a nikam se neukládá. Stažení přepíše naimportované známky (ručně přidané zůstanou).':'The password is used only to download and is never stored. Importing overwrites imported grades (manually added ones stay).',
+    'Stáhnout':'Download','Přihlašuji…':'Signing in…','Stahuji…':'Downloading…',
+    'Předměty':'Subjects','+ Přidat předmět':'+ Add subject','+ Přidat známku':'+ Add grade',
+    'Přejmenovat':'Rename','Smazat předmět':'Delete subject','Spočítej si svůj průměr':'Calculate your average',
+    'Přidej svůj první předmět a do něj známky — vážený průměr se spočítá sám. Známky si můžeš i naimportovat ze Škola OnLine tlačítkem nahoře.':'Add your first subject and its grades — the weighted average is calculated for you. You can also import grades from Škola OnLine with the button above.',
+    '+ Přidat první předmět':'+ Add first subject',
+    'Známka':'Grade','Váha':'Weight','Velká (1)':'High (1)','0,8':'0.8','0,6':'0.6','0,4':'0.4','Malá (0,2)':'Low (0.2)','Vlastní':'Custom',
+    'Popis (nepovinné)':'Description (optional)','Datum':'Date','Nový předmět':'New subject','Název předmětu':'Subject name',
+    'Zrušit':'Cancel','Uložit':'Save','Přidat':'Add',
+    'Smazat známku?':'Delete grade?','Tuto akci nelze vrátit.':'This cannot be undone.','Smazat':'Delete',
+    'Přejmenovat předmět':'Rename subject','Předmět zatím nemá žádné známky.':'The subject has no grades yet.',
+    'Chybí údaje':'Missing info','Vyplň přihlašovací jméno i heslo.':'Enter both username and password.',
+    'Nepovedlo se':'Something went wrong','Špatné přihlašovací jméno nebo heslo.':'Wrong username or password.',
+    'Nepodařilo se načíst účet nebo známky.':"Couldn't load the account or grades.",
+    'Žádné známky':'No grades','Načíst známky?':'Import grades?','Načíst':'Import','Hotovo':'Done',
+    'Známky jsou načtené. Od teď se aktualizují samy pokaždé, když stránku otevřeš.':'Your grades are loaded. From now on they update automatically every time you open the page.',
+    'Vypnout automatickou aktualizaci?':'Turn off automatic updates?','Vypnout':'Turn off',
+    'Smaže se uložené přihlášení. Známky zůstanou, ale dál se nebudou aktualizovat samy.':'Your saved sign-in will be removed. Your grades stay, but will no longer update automatically.',
+    'Chyba spojení':'Connection error',
+    'Vypadá to, že nejsi online. Zkontroluj připojení k internetu a zkus to prosím znovu.':"It looks like you're offline. Check your internet connection and try again.",
+    'Nepodařilo se spojit se serverem. Zkontroluj připojení a zkus to prosím znovu.':"Couldn't reach the server. Check your connection and try again.",
+    'Něco se nepovedlo. Zkus to prosím znovu.':'Something went wrong. Please try again.',
+    'Ochrana soukromí':'Privacy','Podmínky':'Terms',
+    'Kalkulačka bodů a procent':'Points & percent calculator','body ↔ procenta u testu':'points ↔ percent on a test',
+    'Spočítat procenta':'Calculate percent','Spočítat body':'Calculate points',
+    'Maximum bodů':'Max points','Získané body':'Points scored','Procenta':'Percent','Vypočítat':'Calculate',
+    'Zadej platné maximum bodů.':'Enter a valid max points.','Zadej získané body.':'Enter the points scored.','Zadej procenta.':'Enter the percent.',
+    'Časté hranice známek (kolik %)':'Common grade thresholds (percent)',
+    'obvykle 1':'usually 1','obvykle 2':'usually 2','obvykle 3':'usually 3','obvykle 4':'usually 4','obvykle 5':'usually 5',
+    'Orientační stupnice — přesné hranice si určuje každý učitel/škola sám.':'Approximate scale — exact thresholds are set by each teacher/school.',
+    'Spočítat studijní průměr':'Calculate your grade average','Vážený průměr známek + import ze Škola OnLine':'Weighted grade average + Škola OnLine import',
+    'např. 1,5':'e.g. 1.5','např. čtvrtletní práce, aktivita…':'e.g. term test, class activity…','např. Dějepis':'e.g. History',
+    'jméno do Škola OnLine':'your Škola OnLine username','heslo':'password','např. 40':'e.g. 40','body':'points'
+  };
+  function norm(s){ return s.replace(/[„“”"]/g,'"').replace(/[‚‘’']/g,"'"); }
+  var ENn={}; Object.keys(EN).forEach(function(k){ ENn[norm(k)]=EN[k]; });
+  function dyn(t){
+    var m;
+    if(m=t.match(/^Pro (.+?) se stáhlo (\d+) (?:předmět|předměty|předmětů) a (\d+) (?:známka|známky|známek) \(obě pololetí\)\. Naimportované známky se přepíšou a od teď se budou aktualizovat samy\.$/))
+      return 'For '+m[1]+', '+m[2]+' subjects and '+m[3]+' grades were downloaded (both semesters). Imported grades will be overwritten and update automatically from now on.';
+    if(m=t.match(/^Pro (.+?) se nepodařilo načíst žádné číselné známky\.$/))
+      return 'No numeric grades could be loaded for '+m[1]+'.';
+    if(m=t.match(/^Smaže se předmět včetně (\d+) (?:známky|známek) \(obě pololetí\)\.$/))
+      return 'The subject and its '+m[1]+' '+(m[1]==='1'?'grade':'grades')+' will be deleted (both semesters).';
+    if(m=t.match(/^Smazat [„"](.+?)["”“]\?$/)) return 'Delete "'+m[1]+'"?';
+    if(m=t.match(/^Přihlášení selhalo \((\d+)\)\.$/)) return 'Sign-in failed ('+m[1]+').';
+    var s=t;
+    s=s.replace(/(\d+) (?:známka|známky|známek)/g,function(_,n){return n+' '+(n==='1'?'grade':'grades');});
+    s=s.replace(/(\d+) (?:předmětů|předměty|předmět)/g,function(_,n){return n+' '+(n==='1'?'subject':'subjects');});
+    s=s.replace(/1\. pololetí/g,'1st semester').replace(/2\. pololetí/g,'2nd semester');
+    s=s.replace(/^Nová známka/,'New grade');
+    s=s.replace(/^váha /,'weight ').replace(/^weight (\d+),(\d+)/,'weight $1.$2');
+    s=s.replace('✓ Aktualizuje se samo','✓ Updates automatically').replace('naposledy','last');
+    s=s.replace(/(\d[\d.,]*) % z (\d+) bodů/g,'$1 % of $2 points');
+    s=s.replace(/(\d[\d.,]*) z (\d+) bodů/g,'$1 of $2 points');
+    s=s.replace(/^(\d[\d.,]*) b$/,'$1 pts');
+    return s!==t ? s : null;
+  }
+  function trNode(n){
+    var cs=n.nodeValue; if(!cs) return; var t=cs.trim(); if(!t) return;
+    var e=ENn[norm(t)];
+    if(e!=null){ if(cs.indexOf(e)<0) n.nodeValue=cs.replace(t,e); return; }
+    var d=dyn(t); if(d!=null) n.nodeValue=cs.replace(t,d);
+  }
+  function trTreeText(root){ var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),n; while(n=w.nextNode()) trNode(n); }
+  function trPlaceholders(){ var els=document.querySelectorAll('[placeholder]'); for(var i=0;i<els.length;i++){ var v=els[i].getAttribute('placeholder'); if(!v) continue; var e=ENn[norm(v.trim())]; if(e!=null) els[i].setAttribute('placeholder',e); } }
+  function activate(){
+    trTreeText(document.body); trPlaceholders();
+    var mo=new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        if(m.type==='characterData') trNode(m.target);
+        else if(m.addedNodes) for(var i=0;i<m.addedNodes.length;i++){ var nd=m.addedNodes[i]; if(nd.nodeType===3) trNode(nd); else if(nd.nodeType===1) trTreeText(nd); }
+      });
+    });
+    mo.observe(document.body,{childList:true,subtree:true,characterData:true});
+    document.documentElement.setAttribute('lang','en');
+  }
+  window.estSetLang=function(l){ try{ localStorage.setItem('prumer_lang', l); }catch(e){} location.reload(); };
+  var b=document.getElementById('langTgl');
+  if(b){ b.textContent = LANG==='en'?'CZ':'EN'; b.onclick=function(){ window.estSetLang(LANG==='en'?'cs':'en'); }; }
+  if(LANG==='en') activate();
 })();
 </script>
 </body>
