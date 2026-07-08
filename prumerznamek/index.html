@@ -117,25 +117,6 @@
   }
   .sem-btn.sel { background: var(--accent); color: #1a1407; }
 
-  /* ---------- overall average card ---------- */
-  .overall {
-    background: linear-gradient(160deg, var(--hero-a), var(--hero-b));
-    border-radius: var(--radius); padding: 26px 28px; margin-top: 26px;
-    position: relative; overflow: hidden; min-height: 190px;
-    display: flex; flex-direction: column; justify-content: center;
-    box-shadow: 0 14px 34px rgba(var(--accent-rgb),0.22);
-  }
-  .hero-texture{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
-  .hero-texture span{ position:absolute; font-family:'Outfit',sans-serif; font-weight:800; color:rgba(255,255,255,0.22); }
-  .hero-head{ display:flex; align-items:center; gap:9px; position:relative; }
-  .hero-cap{ width:26px; height:20px; flex-shrink:0; }
-  .hero-lbl{ font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--hero-sub); }
-  .overall .num {
-    font-family: 'Fraunces', serif; font-size: 72px; font-weight: 600;
-    line-height: 1; letter-spacing: -0.02em; color: var(--hero-ink); margin-top: 8px; position: relative;
-  }
-  .overall .sub { font-size: 13px; color: var(--hero-sub); margin-top: 8px; font-weight: 600; position: relative; }
-
   /* ---------- SOL import ---------- */
   .sol-card {
     display: flex; align-items: center; gap: 14px; width: 100%;
@@ -236,6 +217,8 @@
   footer { border-top: 1px solid var(--line); margin-top: 50px; padding: 22px; text-align: center; color: var(--ink-faint); font-size: 13px; }
   footer a { color: var(--ink-dim); text-decoration: none; }
   footer a:hover { color: var(--ink); }
+  .foot-lang { background: none; border: none; padding: 0; font: inherit; color: var(--ink-dim); cursor: pointer; text-decoration: underline; }
+  .foot-lang:hover { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -251,9 +234,8 @@
   </a>
   <nav class="top-nav">
     <a href="/prumerznamek/" class="active" aria-current="page">Průměr známek</a>
-    <a href="/bodyprocenta/">Body a procenta</a>
+    <a href="/bodyprocenta/">Kalkulačka procent</a>
   </nav>
-  <button class="icon-btn" id="langTgl" aria-label="Language / Jazyk" style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px">EN</button>
   <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Přepnout světlý/tmavý režim">🌙</button>
 </header>
 
@@ -285,30 +267,10 @@
     <button class="add-subject-btn" id="addSubjBlock" onclick="openSubjectSheet()">+ Přidat předmět</button>
   </div>
   <div class="subjects" id="subjects"></div>
-
-  <div class="overall">
-    <div class="hero-texture" aria-hidden="true">
-      <span style="top:-10px;right:16px;font-size:70px;transform:rotate(-14deg)">2</span>
-      <span style="bottom:-22px;right:34%;font-size:52px;transform:rotate(8deg)">1</span>
-      <span style="top:36px;right:46%;font-size:34px;transform:rotate(-6deg)">3</span>
-    </div>
-    <div class="hero-head">
-      <svg class="hero-cap" viewBox="0 0 28 22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M14 2 27 8 14 14 1 8Z" fill="#fff"/>
-        <path d="M6 10.3V15c0 0 3 3 8 3s8-3 8-3v-4.7L14 14 6 10.3Z" fill="#fff"/>
-        <circle cx="14" cy="8" r="1.6" style="fill:var(--hero-b)"/>
-        <path d="M25 8.6V15" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
-        <circle cx="25" cy="16.4" r="1.5" fill="#fff"/>
-      </svg>
-      <span class="hero-lbl">Celkový průměr</span>
-    </div>
-    <div class="num" id="overallNum">—</div>
-    <div class="sub" id="overallSub">žádné známky</div>
-  </div>
 </main>
 
 <footer>
-  <a href="/">estudivo.cz</a> · <a href="/soukromi.html">Ochrana soukromí</a> · <a href="/podminky.html">Podmínky</a>
+  <a href="/">estudivo.cz</a> · <a href="/soukromi.html">Ochrana soukromí</a> · <a href="/podminky.html">Podmínky</a> · <button class="foot-lang" id="langTgl">English</button>
 </footer>
 
 <!-- grade sheet -->
@@ -489,13 +451,6 @@ function updateSemUI(){
 }
 function render() {
   updateSemUI();
-  const subjAvgs = data.subjects.map(s => weightedAvg(gradesOf(s))).filter(a => a != null);
-  const overall = subjAvgs.length ? subjAvgs.reduce((a,b)=>a+b,0)/subjAvgs.length : null;
-  document.getElementById('overallNum').textContent = fmt(overall);
-  const gc = data.subjects.reduce((a,s)=>a+gradesOf(s).length,0);
-  document.getElementById('overallSub').textContent =
-    gc ? gc + ' ' + plur(gc,'známka','známky','známek') + ' · ' + subjAvgs.length + ' ' + plur(subjAvgs.length,'předmět','předměty','předmětů') : 'žádné známky';
-
   const wrap = document.getElementById('subjects');
   wrap.innerHTML = '';
   const hasSubj = data.subjects.length > 0;
@@ -943,8 +898,8 @@ window.addEventListener('focus', ()=> solAutoSync());
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;
   var EN={
-    'Průměr známek':'Grade average','Body a procenta':'Points & percent',
-    'Kalkulačka průměru':'Average calculator','Kalkulačka':'Calculator',
+    'Průměr známek':'Grade average','Body a procenta':'Points & percent','Kalkulačka procent':'Percent calculator',
+    'Kalkulačka průměru':'Average calculator','Kalkulačka':'Calculator','Přepočet bodů':'Points to percent',
     'Zadej si předměty a známky — vážený průměr se spočítá sám. Známky si můžeš i naimportovat přímo ze Škola OnLine. Zdarma a bez registrace.':'Add your subjects and grades — the weighted average is calculated for you. You can also import your grades straight from Škola OnLine. Free and no sign-up.',
     'Přepočítej body z testu na procenta a naopak. Zadej maximum bodů a hned uvidíš, na kolik procent test máš. Zdarma a bez registrace.':'Convert test points to percent and back. Enter the max points and instantly see your percentage. Free and no sign-up.',
     '1. pololetí':'1st semester','2. pololetí':'2nd semester',
@@ -1033,7 +988,7 @@ window.addEventListener('focus', ()=> solAutoSync());
   }
   window.estSetLang=function(l){ try{ localStorage.setItem('prumer_lang', l); }catch(e){} location.reload(); };
   var b=document.getElementById('langTgl');
-  if(b){ b.textContent = LANG==='en'?'CZ':'EN'; b.onclick=function(){ window.estSetLang(LANG==='en'?'cs':'en'); }; }
+  if(b){ b.textContent = LANG==='en'?'Čeština':'English'; b.onclick=function(){ window.estSetLang(LANG==='en'?'cs':'en'); }; }
   if(LANG==='en') activate();
 })();
 </script>
