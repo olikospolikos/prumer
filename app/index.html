@@ -2833,7 +2833,7 @@ function setPage(p){
   window.scrollTo(0,0);
   if(materials) renderMaterials();
   else if(profilePg) renderProfile();
-  else if(aiPg){ aiEnterList(); }
+  else if(aiPg){ aiEnter(); }
   else renderUpcoming();
 }
 
@@ -4298,7 +4298,17 @@ async function obRunSol(){
 }
 
 /* ================= AI STUDIJNÍ PLÁN ================= */
-let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[] };
+let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[], pending:false };
+function aiOnScreen(){ const p=document.getElementById('pageAI'); return !!(p && p.style.display!=='none'); }
+function aiEnter(){   // generování přežije přepnutí tabu; po dokončení mimo obrazovku otevři hotový plán
+  if(aiState.pending){ aiState.view='loading'; renderAI(); return; }
+  if(aiState.done){ const dd=aiState.done; aiState.done=null; aiState.plan=dd.plan; aiState.planId=dd.id; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); return; }
+  aiEnterList();
+}
+function aiNotifyDone(ok){
+  if(typeof Notification==='undefined' || Notification.permission!=='granted') return;
+  try{ new Notification('Estudivo', { body: ok?'Tvůj studijní plán je hotový 🎉':'Plán se teď nepovedlo vytvořit', icon:'/icon-192.png' }); }catch(e){}
+}
 const AI_CAS  = ['1 hodina','1 den','7 dní','30 dní'];
 const AI_STYL = ['kartičky','rychlé shrnutí','procvičování','otázky','cvičné testy'];
 const AI_ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></svg>';
@@ -4340,7 +4350,7 @@ async function renderAIList(wrap,h1){
   try{ const r=await c.from('plany').select('id,vystup,created_at').order('created_at',{ascending:false}); rows=r.error?[]:(r.data||[]); }catch(e){}
   aiState.plany=rows;
   if(!rows.length){
-    sec.innerHTML='<div class="ai-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5 10.1 7.6 12 3z"/></svg><div>Zatím tu nemáš žádný plán.<br>Vytvoř si první z materiálů, nebo nahraj soubor.</div></div>';
+    sec.innerHTML='<div class="ai-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5 10.1 7.6 12 3z"/></svg><div>Zatím tu nic není.<br>Vytvoř si první plán tlačítkem nahoře.</div></div>';
     return;
   }
   sec.innerHTML='';
@@ -4358,12 +4368,11 @@ async function renderAIList(wrap,h1){
 }
 
 function renderAISource(wrap,h1){
-  h1.textContent='Nový plán';
+  h1.textContent='Z čeho plán?';
   wrap.appendChild(aiBackBtn('‹ Moje plány', aiEnterList));
   const sec=document.createElement('div'); sec.className='ai-sec';
-  const info=document.createElement('div'); info.className='ai-intro'; info.style.cssText='padding-left:0;padding-right:0'; info.textContent='Z čeho ti mám plán postavit? Můžeš nahrát vlastní soubor, nebo použít materiál ze třídy.'; sec.appendChild(info);
-  sec.appendChild(aiSourceBtn(AI_ICON_UP,'Nahrát soubor','PDF, obrázek, .docx, .txt — až 3 soubory', ()=>document.getElementById('aiFile').click()));
-  sec.appendChild(aiSourceBtn(AI_ICON_FOLDER,'Vybrat z materiálů třídy','Použij zápisky nasdílené ve tvé třídě', ()=>{ aiState.view='pickClass'; renderAI(); }));
+  sec.appendChild(aiSourceBtn(AI_ICON_UP,'Nahrát soubor','PDF, obrázek, .docx, .txt', ()=>document.getElementById('aiFile').click()));
+  sec.appendChild(aiSourceBtn(AI_ICON_FOLDER,'Z materiálů třídy','Zápisky nasdílené ve třídě', ()=>{ aiState.view='pickClass'; renderAI(); }));
   wrap.appendChild(sec);
 }
 
@@ -4414,25 +4423,33 @@ function aiQuestion(label,hint,opts,current,onPick){
 }
 
 function renderAIQuiz(wrap,h1){
-  h1.textContent='Krátký dotazník';
+  h1.textContent='Pár otázek';
   wrap.appendChild(aiBackBtn('‹ Zpět', ()=>{ aiState.view='source'; renderAI(); }));
   const sec=document.createElement('div'); sec.className='ai-sec';
-  sec.appendChild(aiQuestion('Kolik na to máš času?','', AI_CAS, aiState.dotaznik.cas, (v)=>{ aiState.dotaznik.cas=v; }));
+  sec.appendChild(aiQuestion('Kolik máš času?','', AI_CAS, aiState.dotaznik.cas, (v)=>{ aiState.dotaznik.cas=v; }));
+  sec.appendChild(aiQuestion('Co ti sedí nejvíc?','', AI_STYL, aiState.dotaznik.styl, (v)=>{ aiState.dotaznik.styl=v; }));
   const q2=document.createElement('div'); q2.className='ai-q';
-  q2.innerHTML='<div class="ql">Chceš se na něco ze zápisků zaměřit víc?</div><div class="qh">Nepovinné — klidně přeskoč.</div>';
-  const ta=document.createElement('textarea'); ta.className='ai-ta'; ta.placeholder='Např. „nejvíc mi nejde druhá světová válka"…'; ta.value=aiState.dotaznik.hloubka||''; ta.oninput=()=>{ aiState.dotaznik.hloubka=ta.value; };
+  q2.innerHTML='<div class="ql">Zaměřit se na něco víc?</div><div class="qh">Nepovinné</div>';
+  const ta=document.createElement('textarea'); ta.className='ai-ta'; ta.placeholder='např. druhá světová válka…'; ta.value=aiState.dotaznik.hloubka||''; ta.oninput=()=>{ aiState.dotaznik.hloubka=ta.value; };
   q2.appendChild(ta); sec.appendChild(q2);
-  sec.appendChild(aiQuestion('Co ti při učení sedí nejvíc?','', AI_STYL, aiState.dotaznik.styl, (v)=>{ aiState.dotaznik.styl=v; }));
-  const go=document.createElement('button'); go.className='btn btn-primary'; go.style.cssText='width:100%'; go.textContent='Vygenerovat plán'; go.onclick=aiGenerate;
+  const go=document.createElement('button'); go.className='btn btn-primary'; go.style.cssText='width:100%'; go.textContent='Vytvořit plán'; go.onclick=aiGenerate;
   sec.appendChild(go);
   wrap.appendChild(sec);
 }
 
 function renderAILoading(wrap,h1){
-  h1.textContent='Generuju plán';
+  h1.textContent='Studijní plán';
   const d=document.createElement('div'); d.className='ai-loading';
-  d.innerHTML='<div class="ai-spin"></div><div>Čtu tvoje materiály a stavím plán na míru…<br><span style="font-size:12.5px">Chvilku to potrvá.</span></div>';
+  d.innerHTML='<div class="ai-spin"></div>'
+    +'<div style="font-weight:600;font-size:16px;color:var(--ink)">Stavím tvůj plán…</div>'
+    +'<div style="margin-top:6px">Může to pár minut trvat. Klidně zavři appku — plán tu na tebe počká.</div>';
   wrap.appendChild(d);
+  // NotebookLM styl: nabídni upozornění, ať uživatel nemusí čekat u obrazovky
+  if(typeof Notification!=='undefined' && Notification.permission==='default'){
+    const b=document.createElement('button'); b.className='btn btn-ghost'; b.style.cssText='display:block;margin:20px auto 0;max-width:240px'; b.textContent='🔔 Dej mi vědět, až bude hotový';
+    b.onclick=()=>{ try{ Notification.requestPermission().then(()=>{ if(aiState.view==='loading') renderAI(); }); }catch(e){} };
+    wrap.appendChild(b);
+  }
 }
 
 function renderAIResult(wrap,h1){
@@ -4530,16 +4547,26 @@ async function aiGenerate(){
   if(!aiState.dotaznik.cas){ alertDialog('Vyber čas','Řekni mi prosím, kolik máš na učení času.'); return; }
   if(!aiState.dotaznik.styl){ alertDialog('Vyber styl','Řekni mi prosím, co ti při učení sedí nejvíc.'); return; }
   if(!aiState.soubory.length){ alertDialog('Chybí materiál','Nejdřív vyber nebo nahraj soubor.'); aiState.view='source'; renderAI(); return; }
-  aiState.view='loading'; renderAI();
-  try{ const d=await aiCallGenerate(false); aiState.plan=d.plan; aiState.planId=d.id; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); }
-  catch(e){ aiState.view='quiz'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); }
+  aiState.pending=true; aiState.view='loading'; renderAI();
+  try{
+    const d=await aiCallGenerate(false);
+    aiState.pending=false; aiState.resultTab='shrnuti';
+    if(aiOnScreen()){ aiState.plan=d.plan; aiState.planId=d.id; aiState.view='result'; renderAI(); }
+    else { aiState.done={ plan:d.plan, id:d.id }; aiNotifyDone(true); }   // uživatel odešel — počká na něj + oznámení
+  }
+  catch(e){ aiState.pending=false; if(aiOnScreen()){ aiState.view='quiz'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); } else aiNotifyDone(false); }
 }
 
 async function aiRegenerate(){
   if(!aiState.soubory.length){ alertDialog('Nelze přegenerovat','Přegenerovat jde jen hned po vytvoření. Vytvoř prosím nový plán z materiálů.'); return; }
-  aiState.view='loading'; renderAI();
-  try{ const d=await aiCallGenerate(true); aiState.plan=d.plan; aiState.planId=d.id; aiState.view='result'; renderAI(); }
-  catch(e){ aiState.view='result'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); }
+  aiState.pending=true; aiState.view='loading'; renderAI();
+  try{
+    const d=await aiCallGenerate(true);
+    aiState.pending=false;
+    if(aiOnScreen()){ aiState.plan=d.plan; aiState.planId=d.id; aiState.view='result'; renderAI(); }
+    else { aiState.done={ plan:d.plan, id:d.id }; aiNotifyDone(true); }
+  }
+  catch(e){ aiState.pending=false; if(aiOnScreen()){ aiState.view='result'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); } else aiNotifyDone(false); }
 }
 
 (function(){
@@ -4650,6 +4677,11 @@ window.addEventListener('load', ()=>{
 'Nový plán':'New plan','‹ Moje plány':'‹ My plans','‹ Zpět':'‹ Back','‹ Třídy':'‹ Classes',
 'Z čeho ti mám plán postavit? Můžeš nahrát vlastní soubor, nebo použít materiál ze třídy.':'What should I build the plan from? Upload your own file, or use class materials.',
 'Nahrát soubor':'Upload a file','PDF, obrázek, .docx, .txt — až 3 soubory':'PDF, image, .docx, .txt — up to 3 files',
+'Z čeho plán?':'What from?','PDF, obrázek, .docx, .txt':'PDF, image, .docx, .txt','Z materiálů třídy':'From class materials','Zápisky nasdílené ve třídě':'Notes shared in your class',
+'Pár otázek':'A few questions','Kolik máš času?':'How much time?','Co ti sedí nejvíc?':'What suits you best?','Zaměřit se na něco víc?':'Focus on something more?','Nepovinné':'Optional','např. druhá světová válka…':'e.g. World War II…','Vytvořit plán':'Create plan',
+'Stavím tvůj plán…':'Building your plan…','Může to pár minut trvat. Klidně zavři appku — plán tu na tebe počká.':'It may take a few minutes. Feel free to close the app — your plan will be waiting.','🔔 Dej mi vědět, až bude hotový':'🔔 Notify me when it is ready',
+'Zatím tu nic není.':'Nothing here yet.','Vytvoř si první plán tlačítkem nahoře.':'Create your first plan with the button above.',
+'Tvůj studijní plán je hotový 🎉':'Your study plan is ready 🎉','Plán se teď nepovedlo vytvořit':'The plan could not be created right now',
 'Vybrat z materiálů třídy':'Pick from class materials','Použij zápisky nasdílené ve tvé třídě':'Use notes shared in your class',
 'Vyber třídu':'Pick a class','Načítám třídy…':'Loading classes…','Žádná třída':'No class',
 'Nejsi v žádné třídě. Přidej se v záložce Třídy, nebo se vrať a nahraj vlastní soubor.':"You're not in any class. Join one in the Classes tab, or go back and upload your own file.",
