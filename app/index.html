@@ -4298,7 +4298,7 @@ async function obRunSol(){
 }
 
 /* ================= AI STUDIJNÍ PLÁN ================= */
-let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[], pending:false, vystup:null };
+let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[], pending:false, vystup:null, tabLoading:null };
 // typy výstupu (jako NotebookLM): styl mapuje na to, co backend zdůrazní; cas necháváme fixní
 const AI_VYSTUPY = [
   { id:'karticky', styl:'kartičky',       emoji:'🃏', t:'Kartičky', s:'Otázka a odpověď na procvičení' },
@@ -4307,7 +4307,32 @@ const AI_VYSTUPY = [
   { id:'plan',     styl:'procvičování',   emoji:'📅', t:'Plán učení', s:'Rozvrh, co a kdy se učit' },
 ];
 function aiOnScreen(){ const p=document.getElementById('pageAI'); return !!(p && p.style.display!=='none'); }
-function aiTabForVystup(){ return (aiState.vystup && aiState.vystup!=='plan') ? aiState.vystup : 'shrnuti'; }
+function aiTabForVystup(){ return aiState.vystup || 'plan'; }
+// které typy má aktuální plán vygenerované (funguje pro nový per-typ výstup i starý celý balík)
+function aiLoadedTypes(p){
+  const s={};
+  if(p){
+    if(Array.isArray(p.karticky)&&p.karticky.length) s.karticky=1;
+    if(Array.isArray(p.shrnuti)&&p.shrnuti.length) s.shrnuti=1;
+    if(Array.isArray(p.otazky)&&p.otazky.length) s.otazky=1;
+    if(Array.isArray(p.rozvrh)&&p.rozvrh.length) s.plan=1;
+  }
+  return s;
+}
+// klik na záložku typu: když je hotový, jen přepni; jinak ho dogeneruj (jen ten jeden)
+async function aiShowTab(id){
+  if(aiState.tabLoading) return;
+  const loaded=aiLoadedTypes(aiState.plan);
+  if(loaded[id]){ aiState.resultTab=id; aiState.vystup=id; renderAI(); return; }
+  if(!aiState.soubory.length){ alertDialog('Nelze dogenerovat','Tenhle typ nejde doplnit — vytvoř ho jako nový z materiálu.'); return; }
+  aiState.vystup=id; aiState.resultTab=id; aiState.tabLoading=id; renderAI();
+  try{
+    const d=await aiCallGenerate(false);
+    aiState.plan=Object.assign({}, aiState.plan||{}, d.plan);   // přimerguj nový typ ke stávajícím
+    if(d.id) aiState.planId=d.id;
+    aiState.tabLoading=null; renderAI();
+  }catch(e){ aiState.tabLoading=null; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); }
+}
 function aiEnter(){   // generování přežije přepnutí tabu; po dokončení mimo obrazovku otevři hotový plán
   if(aiState.pending){ aiState.view='loading'; renderAI(); return; }
   if(aiState.done){ const dd=aiState.done; aiState.done=null; aiState.plan=dd.plan; aiState.planId=dd.id; aiState.resultTab=aiTabForVystup(); aiState.view='result'; renderAI(); return; }
@@ -4323,7 +4348,7 @@ const AI_ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const AI_ICON_FOLDER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
 
 function aiBody(){ return document.getElementById('aiBody'); }
-function aiEnterList(){ aiState.view='list'; aiState.soubory=[]; aiState.dotaznik={cas:'',hloubka:'',styl:''}; aiState.plan=null; aiState.planId=null; renderAI(); }
+function aiEnterList(){ aiState.view='list'; aiState.soubory=[]; aiState.dotaznik={cas:'',hloubka:'',styl:''}; aiState.plan=null; aiState.planId=null; aiState.vystup=null; aiState.tabLoading=null; renderAI(); }
 function aiBackBtn(label,onClick){ const b=document.createElement('button'); b.className='btn btn-ghost'; b.style.cssText='margin:0 16px 12px'; b.textContent=label; b.onclick=onClick; return b; }
 function aiSourceBtn(iconSvg,title,sub,onClick){ const b=document.createElement('button'); b.className='ai-src'; b.innerHTML='<div class="ic">'+iconSvg+'</div><div class="grow"><div class="st">'+esc(title)+'</div><div class="ss">'+esc(sub)+'</div></div>'; b.onclick=onClick; return b; }
 function aiTypLabel(t){ return ({ cteni:'čtení', karticky:'kartičky', procvicovani:'procvičování', otazky:'otázky', test:'test', opakovani:'opakování', pauza:'pauza' })[t]||t; }
@@ -4365,9 +4390,12 @@ async function renderAIList(wrap,h1){
   rows.forEach(row=>{
     const it=document.createElement('div'); it.className='ai-plan-item';
     const nad=(row.vystup&&row.vystup.nadpis)||'Studijní plán';
+    const typ=row.vystup&&row.vystup.typ;
+    const typLabel=typ?((AI_VYSTUPY.find(x=>x.id===typ)||{}).t||''):'';
     const d=row.created_at?new Date(row.created_at).toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'}):'';
-    it.innerHTML='<div class="grow"><div class="t">'+esc(nad)+'</div><div class="d">'+esc(d)+'</div></div>';
-    it.onclick=()=>{ aiState.plan=row.vystup; aiState.planId=row.id; aiState.soubory=[]; aiState.vystup=null; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); };
+    const dline=[typLabel,d].filter(Boolean).join(' · ');
+    it.innerHTML='<div class="grow"><div class="t">'+esc(nad)+'</div><div class="d">'+esc(dline)+'</div></div>';
+    it.onclick=()=>{ aiState.plan=row.vystup; aiState.planId=row.id; aiState.soubory=[]; aiState.vystup=(row.vystup&&row.vystup.typ)||null; aiState.resultTab=aiState.vystup||'shrnuti'; aiState.view='result'; renderAI(); };
     const del=document.createElement('button'); del.className='ai-del'; del.textContent='🗑'; del.setAttribute('aria-label','Smazat');
     del.onclick=(ev)=>{ ev.stopPropagation(); aiDeletePlan(row.id,false); };
     it.appendChild(del);
@@ -4461,15 +4489,45 @@ function renderAILoading(wrap,h1){
 
 function renderAIResult(wrap,h1){
   const p=aiState.plan||{};
-  const single = !!(aiState.vystup && aiState.vystup!=='plan');   // jednotlivý výstup (kartičky/shrnutí/test) → bez rozvrhu
-  h1.textContent = single ? ((AI_VYSTUPY.find(x=>x.id===aiState.vystup)||{}).t || 'Hotovo') : 'Tvůj plán';
+  h1.textContent='Tvůj plán';
   wrap.appendChild(aiBackBtn('‹ Moje plány', aiEnterList));
   const sec=document.createElement('div'); sec.className='ai-sec';
-  const hero=document.createElement('div'); hero.className='ai-hero';
-  hero.innerHTML='<h2>'+esc(p.nadpis||'Studijní plán')+'</h2>'+ (single ? '' : ((p.prehled?'<div class="prehled">'+esc(p.prehled)+'</div>':'')+(p.proc?'<div class="proc">'+esc(p.proc)+'</div>':'')));
-  sec.appendChild(hero);
-  if(!single) (p.rozvrh||[]).forEach(usek=>{
-    if(usek.nazev){ const t=document.createElement('div'); t.className='ai-daytitle'; t.textContent=usek.nazev; sec.appendChild(t); }
+  const hero=document.createElement('div'); hero.className='ai-hero'; hero.innerHTML='<h2>'+esc(p.nadpis||'Studijní plán')+'</h2>'; sec.appendChild(hero);
+
+  const loaded=aiLoadedTypes(p);
+  const canGen=aiState.soubory.length>0;
+  const which=aiState.resultTab||aiTabForVystup();
+  // záložky typů: hotové vždy; ostatní jen když je z čeho dogenerovat (máme zdroj)
+  const tabs=document.createElement('div'); tabs.className='ai-tabs';
+  AI_VYSTUPY.forEach(o=>{
+    if(!loaded[o.id] && !canGen) return;
+    const b=document.createElement('button'); b.textContent=o.t; if(o.id===which) b.classList.add('sel');
+    b.onclick=()=>aiShowTab(o.id);
+    tabs.appendChild(b);
+  });
+  sec.appendChild(tabs);
+
+  const panel=document.createElement('div');
+  if(aiState.tabLoading){
+    panel.className='ai-loading'; panel.style.padding='34px 0';
+    panel.innerHTML='<div class="ai-spin"></div><div>Generuju '+esc(((AI_VYSTUPY.find(x=>x.id===aiState.tabLoading)||{}).t||'').toLowerCase())+'…<br><span style="font-size:12.5px">Chvilku to potrvá.</span></div>';
+  } else if(which==='karticky') aiRenderKarticky(panel,p);
+  else if(which==='otazky') aiRenderOtazky(panel,p);
+  else if(which==='plan') aiRenderPlan(panel,p);
+  else aiRenderShrnuti(panel,p);
+  sec.appendChild(panel);
+
+  const del=document.createElement('button'); del.className='btn btn-ghost'; del.style.cssText='width:100%;margin-top:20px'; del.textContent='Smazat'; del.onclick=()=>{ if(aiState.planId) aiDeletePlan(aiState.planId,true); };
+  sec.appendChild(del);
+  wrap.appendChild(sec);
+}
+
+function aiRenderPlan(panel,p){
+  if(p.prehled){ const d=document.createElement('div'); d.className='ai-sum'; d.innerHTML='<div class="st">Přehled</div><div style="font-size:14px;line-height:1.5">'+esc(p.prehled)+'</div>'+(p.proc?'<div style="font-size:13px;color:var(--ink-dim);margin-top:6px;font-style:italic">'+esc(p.proc)+'</div>':''); panel.appendChild(d); }
+  const arr=p.rozvrh||[];
+  if(!arr.length){ const e=document.createElement('div'); e.className='ai-empty'; e.textContent='Žádný rozvrh.'; panel.appendChild(e); return; }
+  arr.forEach(usek=>{
+    if(usek.nazev){ const t=document.createElement('div'); t.className='ai-daytitle'; t.textContent=usek.nazev; panel.appendChild(t); }
     (usek.bloky||[]).forEach(b=>{
       const isP=b.typ==='pauza';
       const row=document.createElement('div'); row.className='ai-block'+(isP?' pauza':'');
@@ -4477,23 +4535,9 @@ function renderAIResult(wrap,h1){
       row.innerHTML='<div class="rail"><div class="min">'+esc(String(min))+'</div><div class="un">min</div></div>'+
         '<div class="body">'+ (isP ? '<div class="bt">Pauza</div>' :
           ('<div class="bt">'+esc(b.tema||'')+(b.typ?'<span class="typ">'+esc(aiTypLabel(b.typ))+'</span>':'')+'</div>'+(b.poznamka?'<div class="bn">'+esc(b.poznamka)+'</div>':'')) )+'</div>';
-      sec.appendChild(row);
+      panel.appendChild(row);
     });
   });
-  const tabs=document.createElement('div'); tabs.className='ai-tabs';
-  const which=aiState.resultTab||'shrnuti';
-  [['shrnuti','Shrnutí'],['karticky','Kartičky'],['otazky','Otázky']].forEach(([k,l])=>{ const b=document.createElement('button'); b.textContent=l; if(k===which) b.classList.add('sel'); b.onclick=()=>{ aiState.resultTab=k; renderAI(); }; tabs.appendChild(b); });
-  sec.appendChild(tabs);
-  const panel=document.createElement('div');
-  if(which==='karticky') aiRenderKarticky(panel,p);
-  else if(which==='otazky') aiRenderOtazky(panel,p);
-  else aiRenderShrnuti(panel,p);
-  sec.appendChild(panel);
-  const act=document.createElement('div'); act.style.cssText='display:flex;gap:10px;margin-top:20px';
-  if(aiState.soubory.length){ const re=document.createElement('button'); re.className='btn btn-ghost'; re.style.flex='1'; re.textContent='Přegenerovat'; re.onclick=aiRegenerate; act.appendChild(re); }
-  const del=document.createElement('button'); del.className='btn btn-ghost'; del.style.flex='1'; del.textContent='Smazat'; del.onclick=()=>{ if(aiState.planId) aiDeletePlan(aiState.planId,true); };
-  act.appendChild(del); sec.appendChild(act);
-  wrap.appendChild(sec);
 }
 
 function aiRenderShrnuti(panel,p){
@@ -4525,7 +4569,7 @@ async function aiCallGenerate(pregenerovat){
   const resp=await fetch(SB_URL+'/functions/v1/studijni-plan', {
     method:'POST',
     headers:{ 'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':'Bearer '+token },
-    body: JSON.stringify({ soubory, dotaznik:aiState.dotaznik, pregenerovat: !!pregenerovat })
+    body: JSON.stringify({ soubory, vystup:aiState.vystup||'plan', dotaznik:aiState.dotaznik, pregenerovat: !!pregenerovat })
   });
   let data={}; try{ data=await resp.json(); }catch(_){}
   if(!resp.ok || !data.ok){ const e=new Error(data.error||('http '+resp.status)); e.code=data.error; e.status=resp.status; throw e; }
