@@ -913,6 +913,31 @@
     *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
   }
   .cal-chip.pending{ opacity:0.5; }
+  /* ===== onboarding (první spuštění, otázka po otázce) =====
+     z-index 55: nad obsahem a sheety (50), ale POD dialogy (60), ať alertDialog funguje i během onboardingu */
+  #onboard{ position:fixed; inset:0; z-index:55; background:var(--bg); display:none; flex-direction:column; overflow:auto; }
+  #onboard.show{ display:flex; }
+  .ob-wrap{ width:100%; max-width:420px; margin:0 auto; padding:calc(env(safe-area-inset-top) + 26px) 24px calc(env(safe-area-inset-bottom) + 28px); display:flex; flex-direction:column; flex:1; }
+  .ob-top{ display:flex; align-items:center; gap:10px; min-height:38px; }
+  .ob-back{ width:38px; height:38px; border-radius:12px; border:1px solid var(--line); background:var(--bg-elev); color:var(--ink); font-size:19px; line-height:1; cursor:pointer; font-family:inherit; }
+  .ob-back:active{ background:var(--bg-elev2); }
+  .ob-dots{ display:flex; gap:6px; margin-left:auto; }
+  .ob-dot{ width:8px; height:8px; border-radius:50%; background:var(--line); }
+  .ob-dot.on{ background:var(--accent); }
+  .ob-body{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:22px 0; }
+  .ob-emoji{ font-size:44px; line-height:1; }
+  .ob-h{ font-family:'Fraunces',serif; font-weight:600; font-size:30px; line-height:1.15; margin-top:14px; }
+  .ob-p{ color:var(--ink-dim); font-size:15px; line-height:1.55; margin-top:10px; }
+  .ob-fields{ margin-top:22px; display:flex; flex-direction:column; gap:12px; }
+  .ob-fields input{ font-size:17px; padding:14px 15px; border-radius:13px; }
+  .ob-code{ text-align:center; letter-spacing:0.3em; font-size:24px !important; font-family:'Fraunces',serif !important; }
+  .ob-opts{ display:flex; flex-wrap:wrap; gap:9px; margin-top:22px; }
+  .ob-opt{ padding:12px 16px; border-radius:999px; border:1px solid var(--line); background:var(--bg-elev); color:var(--ink); font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; }
+  .ob-opt:active{ background:var(--accent-soft); }
+  .ob-actions{ display:flex; flex-direction:column; gap:9px; margin-top:26px; }
+  .ob-note{ font-size:12.5px; color:var(--ink-faint); line-height:1.5; margin-top:14px; }
+  .ob-link{ background:none; border:none; color:var(--accent-deep); font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; padding:6px; align-self:center; margin-top:4px; }
+  body.embed #onboard{ display:none !important; }
   /* sdílení karty průměru */
   .hero-share{ position:absolute; bottom:14px; right:14px; z-index:2; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:grid; place-items:center; background:rgba(0,0,0,0.14); color:var(--hero-ink); }
   .hero-share:active{ background:rgba(0,0,0,0.22); }
@@ -1361,6 +1386,14 @@
 <div class="sheet" id="memberSheet">
   <div class="sheet-grab"></div>
   <div id="memberBody"></div>
+</div>
+
+<!-- onboarding první spuštění (otázka po otázce) -->
+<div id="onboard">
+  <div class="ob-wrap">
+    <div class="ob-top" id="obTop"></div>
+    <div class="ob-body" id="obBody"></div>
+  </div>
 </div>
 
 <nav class="tabbar">
@@ -2462,6 +2495,7 @@ async function updateSharedAvg(){
 let pendingFriendId = (function(){ try{ return new URLSearchParams(location.search).get('friend')||null; }catch(e){ return null; } })();
 function maybeFriendFromLink(){
   if(!pendingFriendId || !authUser) return;
+  if(typeof onboardActive==='function' && onboardActive()) return;   // počkej, až doběhne onboarding (zavolá se znovu v obFinish)
   const id=pendingFriendId; pendingFriendId=null;
   try{ history.replaceState(null,'',location.pathname); }catch(e){}
   if(id && id!==authUser.id && isUuid(id)){ setPage('profile'); sendFriendRequest(id); }
@@ -2714,6 +2748,7 @@ function renderProfileView(wrap){
     '<div class="prof-card">' + av +
       '<div class="prof-name">'+esc(p.name || (authUser.email||'').split('@')[0])+'</div>' +
       (p.school ? '<div class="prof-school">'+esc(p.school)+'</div>' : '') +
+      (p.rocnik ? '<div class="prof-school">'+esc(p.rocnik)+'</div>' : '') +
       (p.bio ? '<div class="prof-bio">'+esc(p.bio)+'</div>' : '') +
       '<div class="prof-email">'+esc(authUser.email||'')+'</div>' +
     '</div>' +
@@ -2752,12 +2787,14 @@ function renderProfileEdit(wrap){
     '<div class="fields" style="margin-top:14px">' +
       '<label class="fld"><span>Jméno</span><input id="pfName" type="text" placeholder="Tvoje jméno"></label>' +
       '<label class="fld"><span>Kde studuješ</span><input id="pfSchool" type="text" placeholder="např. Gymnázium…"></label>' +
+      '<label class="fld"><span>Ročník</span><select id="pfRocnik"><option value="">—</option>'+OB_ROCNIK.map(r=>'<option>'+esc(r)+'</option>').join('')+'</select></label>' +
       '<label class="fld"><span>Bio</span><textarea id="pfBio" rows="3" placeholder="Pár slov o tobě…" style="resize:vertical;line-height:1.4"></textarea></label>' +
     '</div>' +
     '<button class="btn btn-primary" id="pfSave" style="width:100%;margin-top:16px">Uložit</button>' +
     '<button class="btn btn-ghost" id="pfCancel" style="width:100%;margin-top:8px">Zrušit</button>';
   wrap.querySelector('#pfName').value = p.name || '';
   wrap.querySelector('#pfSchool').value = p.school || '';
+  try{ wrap.querySelector('#pfRocnik').value = p.rocnik || ''; }catch(e){}
   wrap.querySelector('#pfBio').value = p.bio || '';
   wrap.querySelector('#avatarBtn').onclick = ()=> document.getElementById('avatarFile').click();
   wrap.querySelector('#pfCancel').onclick = ()=>{ profileEditing = false; renderProfile(); };
@@ -2769,6 +2806,8 @@ function renderProfileEdit(wrap){
       school: wrap.querySelector('#pfSchool').value.trim(),
       bio: wrap.querySelector('#pfBio').value.trim()
     });
+    // ročník zvlášť: když sloupec rocnik v DB ještě není, nerozbije to uložení jména/školy/bia
+    try{ const rv=(wrap.querySelector('#pfRocnik')||{}).value||''; localStorage.setItem('prumer_rocnik', rv); saveProfile({ rocnik: rv }); }catch(e){}
     btn.disabled = false; btn.textContent = lab;
     if(!r.ok){ alertDialog('Uložení selhalo', r.msg || 'Zkus to znovu.'); return; }
     profileEditing = false; renderProfile();
@@ -3892,6 +3931,7 @@ function notifyUpcoming(rows){
 let pendingJoinCode = (function(){ try{ var j=new URLSearchParams(location.search).get('join'); return j ? j.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4) : null; }catch(e){ return null; } })();
 function maybeJoinFromLink(){
   if(!pendingJoinCode || !authUser) return;
+  if(typeof onboardActive==='function' && onboardActive()) return;   // počkej, až doběhne onboarding (zavolá se znovu v obFinish)
   const code=pendingJoinCode; pendingJoinCode=null;
   try{ history.replaceState(null,'',location.pathname); }catch(e){}
   setPage('materials');
@@ -4043,6 +4083,145 @@ if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
   if(!r.ok){ alertDialog('Nahrání selhalo', r.msg || 'Zkus to znovu.'); return; }
   await loadProfile(); renderProfile();
 });
+
+/* ===================== Onboarding (první spuštění) =====================
+   Otázka po otázce: jméno → email → kód z emailu (OTP, založí účet) → ročník → nabídka importu.
+   Jen pro nové uživatele (bez účtu a bez známek), nikdy v embed režimu. Flag: prumer_onboarded. */
+const OB_STEPS = ['name','email','code','rocnik','import'];
+const OB_ROCNIK = ['Základka','1. ročník SŠ','2. ročník SŠ','3. ročník SŠ','4. ročník SŠ','Jiné'];
+let ob = { step:'name', name:'', email:'', rocnik:'', sending:false };
+function onboardActive(){ const el=document.getElementById('onboard'); return !!(el && el.classList.contains('show')); }
+function maybeOnboard(){
+  try{
+    if(document.body.classList.contains('embed')) return;
+    if(localStorage.getItem('prumer_onboarded')) return;
+    if(authUser || (data.subjects && data.subjects.length)){ localStorage.setItem('prumer_onboarded','1'); return; }   // stávající uživatel — nic nevyskakuj
+    if(!sbConfigured() || !window.supabase || !getSB()) return;   // bez cloudu nejde poslat kód; appka jede normálně, zkusí se to příště
+    ob = { step:'name', name:'', email:'', rocnik:'', sending:false };
+    document.getElementById('onboard').classList.add('show');
+    renderOnboard();
+  }catch(e){}
+}
+function obFinish(action){
+  try{ localStorage.setItem('prumer_onboarded','1'); }catch(e){}
+  document.getElementById('onboard').classList.remove('show');
+  render(); renderUpcoming(); updateNotifBadge(); refreshAuthUI();
+  maybeJoinFromLink(); maybeFriendFromLink();
+  if(action==='import') setTimeout(openImportSheet, 250);
+  else if(action==='manual') setTimeout(openSubjectSheet, 250);
+}
+function obDots(){
+  const i = OB_STEPS.indexOf(ob.step);
+  return '<div class="ob-dots">'+OB_STEPS.map((s,j)=>'<span class="ob-dot'+(j<=i?' on':'')+'"></span>').join('')+'</div>';
+}
+function obBack(step){ ob.step=step; renderOnboard(); }
+function obEnter(inputId, fn){ const el=document.getElementById(inputId); if(el){ el.onkeydown=(e)=>{ if(e.key==='Enter') fn(); }; setTimeout(()=>{ try{ el.focus(); }catch(e){} }, 80); } }
+function renderOnboard(){
+  const top=document.getElementById('obTop'), body=document.getElementById('obBody');
+  if(!top||!body) return;
+  const backTo = { email:'name', code:'email' }[ob.step] || null;   // po ověření kódu už zpět nejde
+  top.innerHTML = (backTo ? '<button class="ob-back" aria-label="Zpět" onclick="obBack(\''+backTo+'\')">‹</button>' : '') + obDots();
+  if(ob.step==='name'){
+    body.innerHTML =
+      '<div class="ob-emoji">👋</div>'
+      +'<div class="ob-h">Ahoj! Jak ti máme říkat?</div>'
+      +'<div class="ob-p">Estudivo ti spočítá vážený průměr, ohlídá testy a propojí tě se třídou.</div>'
+      +'<div class="ob-fields"><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="Tvoje jméno nebo přezdívka"></div>'
+      +'<div class="ob-actions"><button class="btn btn-primary" onclick="obName()">Pokračovat</button></div>';
+    document.getElementById('obName').value = ob.name;
+    obEnter('obName', obName);
+  } else if(ob.step==='email'){
+    body.innerHTML =
+      '<div class="ob-emoji">✉️</div>'
+      +'<div class="ob-h">Na jaký email ti pošleme potvrzovací kód?</div>'
+      +'<div class="ob-p">Založíme ti účet — známky se zálohují a budeš se moct připojit do třídy.</div>'
+      +'<div class="ob-fields"><input id="obEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz"></div>'
+      +'<div class="ob-actions"><button class="btn btn-primary" id="obSendBtn" onclick="obSendCode(false)">Poslat kód</button></div>'
+      +'<div class="ob-note">Žádný spam — email slouží jen na přihlášení a obnovu účtu.</div>';
+    document.getElementById('obEmail').value = ob.email || (localStorage.getItem('prumer_auth_email')||'');
+    obEnter('obEmail', ()=>obSendCode(false));
+  } else if(ob.step==='code'){
+    body.innerHTML =
+      '<div class="ob-emoji">🔑</div>'
+      +'<div class="ob-h">Zadej kód z emailu</div>'
+      +'<div class="ob-p">Poslali jsme ho na <b>'+esc(ob.email)+'</b>. Mrkni i do spamu.</div>'
+      +'<div class="ob-fields"><input id="obCode" class="ob-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="······"></div>'
+      +'<div class="ob-actions"><button class="btn btn-primary" id="obVerifyBtn" onclick="obVerifyCode()">Ověřit</button>'
+      +'<button class="ob-link" id="obResendBtn" onclick="obSendCode(true)">Poslat kód znovu</button></div>';
+    obEnter('obCode', obVerifyCode);
+  } else if(ob.step==='rocnik'){
+    body.innerHTML =
+      '<div class="ob-emoji">🎓</div>'
+      +'<div class="ob-h">V jakém jsi ročníku?</div>'
+      +'<div class="ob-p">Pomůže nám to appku vylepšovat pro tebe.</div>'
+      +'<div class="ob-opts">'+OB_ROCNIK.map(r=>'<button class="ob-opt" onclick="obPickRocnik(this.textContent)">'+esc(r)+'</button>').join('')+'</div>'
+      +'<div class="ob-actions"><button class="ob-link" onclick="obSkipRocnik()">Přeskočit</button></div>';
+  } else if(ob.step==='import'){
+    body.innerHTML =
+      '<div class="ob-emoji">⚡</div>'
+      +'<div class="ob-h">Chceš načíst známky ze školního systému?</div>'
+      +'<div class="ob-p">Škola OnLine funguje hned — známky se stáhnou i s váhami. Bakaláře a EduPage připravujeme.</div>'
+      +'<div class="ob-actions">'
+      +'<button class="btn btn-primary" onclick="obFinish(\'import\')">Jo, načíst automaticky</button>'
+      +'<button class="btn btn-ghost" onclick="obFinish(\'manual\')">Ne, zadám je ručně</button>'
+      +'</div>';
+  }
+}
+function obName(){
+  const v=(document.getElementById('obName').value||'').trim();
+  if(!v){ alertDialog('Chybí jméno','Napiš, jak ti máme říkat.'); return; }
+  ob.name=v; ob.step='email'; renderOnboard();
+}
+async function obSendCode(resend){
+  const inp=document.getElementById('obEmail');
+  const email = resend ? ob.email : ((inp && inp.value || '').trim());
+  if(!email || email.indexOf('@')<1){ alertDialog('Neplatný email','Zadej platnou emailovou adresu.'); return; }
+  const c=getSB(); if(!c){ alertDialog('Není připojení','Založení účtu potřebuje cloud (Supabase).'); return; }
+  if(ob.sending) return; ob.sending=true;
+  const btn=document.getElementById(resend?'obResendBtn':'obSendBtn'); let lab=null;
+  if(btn){ lab=btn.textContent; btn.disabled=true; btn.textContent='Posílám…'; }
+  try{
+    const { error } = await c.auth.signInWithOtp({ email, options:{ shouldCreateUser:true } });
+    if(error) throw error;
+    ob.email=email; try{ localStorage.setItem('prumer_auth_email', email); }catch(e){}
+    if(resend){ alertDialog('Odesláno','Nový kód je na cestě. Mrkni i do spamu.'); }
+    else { ob.step='code'; renderOnboard(); }
+  }catch(e){
+    const m=String(e&&e.message||e);
+    alertDialog('Nepovedlo se', /rate|seconds|too many/i.test(m) ? 'Kód jsme posílali před chvílí — počkej minutku a zkus to znovu.' : errMsg(e));
+  }
+  finally{ ob.sending=false; if(btn && lab!=null){ btn.disabled=false; btn.textContent=lab; } }
+}
+async function obVerifyCode(){
+  const code=(document.getElementById('obCode').value||'').replace(/\s/g,'');
+  if(code.length<6){ alertDialog('Neúplný kód','Zadej celý kód z emailu.'); return; }
+  const c=getSB(); if(!c) return;
+  const btn=document.getElementById('obVerifyBtn'); const lab=btn.textContent; btn.disabled=true; btn.textContent='Ověřuji…';
+  try{
+    const { data:vd, error } = await c.auth.verifyOtp({ email:ob.email, token:code, type:'email' });
+    if(error) throw error;
+    authUser = (vd && vd.user) || authUser;
+    await ensureProfile();
+    try{ await loadProfile(); }catch(e){}
+    // jméno z onboardingu ulož jen, když profil žádné nemá (nepřepisuj vracejícího se uživatele)
+    const defName=(ob.email||'').split('@')[0];
+    if(ob.name && (!profile || !profile.name || profile.name===defName)){ try{ await saveProfile({ name: ob.name }); }catch(e){} }
+    await pullGradesCloud();
+    ob.step='rocnik'; renderOnboard();
+  }catch(e){
+    const m=String(e&&e.message||e);
+    alertDialog('Nepovedlo se', /expired|invalid|token|otp/i.test(m) ? 'Kód nesedí nebo vypršel — pošli si nový.' : errMsg(e));
+  }
+  finally{ btn.disabled=false; btn.textContent=lab; }
+}
+function obPickRocnik(v){
+  v=(v||'').trim();
+  ob.rocnik=v;
+  try{ localStorage.setItem('prumer_rocnik', v); }catch(e){}
+  try{ saveProfile({ rocnik:v }); }catch(e){}   // samostatný zápis: když sloupec rocnik neexistuje, nic jiného se nerozbije
+  ob.step='import'; renderOnboard();
+}
+function obSkipRocnik(){ ob.step='import'; renderOnboard(); }
 
 /* ================= AI STUDIJNÍ PLÁN ================= */
 let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[] };
@@ -4340,7 +4519,7 @@ setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
 
 // Supabase i ikony/fonty se načítají až po tomto skriptu → dořeš po 'load'
 window.addEventListener('load', ()=>{
-  initAuth();          // přihlášení / účet (Supabase Auth)
+  Promise.resolve(initAuth()).then(maybeOnboard, maybeOnboard);   // po zjištění session ukaž onboarding novým uživatelům
   renderUpcoming();   // blížící se testy (potřebuje načtený Supabase)
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});   // PWA offline
@@ -4452,7 +4631,29 @@ window.addEventListener('load', ()=>{
 '+ Přidat předmět ručně':'+ Add a subject manually',
 'Píšete si testy ve třídě?':'Do you track tests as a class?',
 'Založ třídu nebo se připoj kódem — celá třída pak sdílí kalendář testů a materiály. Zabere to 10 vteřin.':'Create a class or join with a code — the whole class then shares a test calendar and materials. It takes 10 seconds.',
-'Vyzkoušet':'Try it'
+'Vyzkoušet':'Try it',
+/* --- onboarding --- */
+'Ahoj! Jak ti máme říkat?':'Hi! What should we call you?',
+'Estudivo ti spočítá vážený průměr, ohlídá testy a propojí tě se třídou.':'Estudivo calculates your weighted average, keeps an eye on tests and connects you with your class.',
+'Tvoje jméno nebo přezdívka':'Your name or nickname',
+'Napiš, jak ti máme říkat.':'Tell us what we should call you.',
+'Na jaký email ti pošleme potvrzovací kód?':'Which email should we send the confirmation code to?',
+'Založíme ti účet — známky se zálohují a budeš se moct připojit do třídy.':'We will create your account — your grades get backed up and you can join a class.',
+'Žádný spam — email slouží jen na přihlášení a obnovu účtu.':'No spam — the email is used only for signing in and account recovery.',
+'Založení účtu potřebuje cloud (Supabase).':'Creating an account needs the cloud (Supabase).',
+'Poslali jsme ho na':'We sent it to',
+'Ověřit':'Verify','Ověřuji…':'Verifying…','Poslat kód znovu':'Send the code again',
+'Nový kód je na cestě. Mrkni i do spamu.':'A new code is on its way. Check your spam too.',
+'Kód jsme posílali před chvílí — počkej minutku a zkus to znovu.':'We sent a code a moment ago — wait a minute and try again.',
+'Kód nesedí nebo vypršel — pošli si nový.':'The code is wrong or expired — send yourself a new one.',
+'V jakém jsi ročníku?':'What year are you in?',
+'Pomůže nám to appku vylepšovat pro tebe.':'It helps us improve the app for you.',
+'Základka':'Primary school','1. ročník SŠ':'1st year of high school','2. ročník SŠ':'2nd year of high school','3. ročník SŠ':'3rd year of high school','4. ročník SŠ':'4th year of high school','Jiné':'Other',
+'Ročník':'Year','Přeskočit':'Skip',
+'Chceš načíst známky ze školního systému?':'Want to import grades from your school system?',
+'Škola OnLine funguje hned — známky se stáhnou i s váhami. Bakaláře a EduPage připravujeme.':'Škola OnLine works right away — grades download with weights. Bakaláři and EduPage are coming soon.',
+'Jo, načíst automaticky':'Yes, import automatically',
+'Ne, zadám je ručně':'No, I will enter them manually'
   };
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;
