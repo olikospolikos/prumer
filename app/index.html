@@ -938,6 +938,9 @@
   .ob-note{ font-size:12.5px; color:var(--ink-faint); line-height:1.5; margin-top:14px; }
   .ob-link{ background:none; border:none; color:var(--accent-deep); font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; padding:6px; align-self:center; margin-top:4px; }
   body.embed #onboard{ display:none !important; }
+  #onboard .imp-sys{ background:var(--bg-elev); }
+  .ob-loading{ text-align:center; padding:40px 0; color:var(--ink-dim); }
+  .ob-loading .ai-spin{ margin:0 auto 18px; }
   /* sdílení karty průměru */
   .hero-share{ position:absolute; bottom:14px; right:14px; z-index:2; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; display:grid; place-items:center; background:rgba(0,0,0,0.14); color:var(--hero-ink); }
   .hero-share:active{ background:rgba(0,0,0,0.22); }
@@ -4111,7 +4114,8 @@ function obFinish(action){
   else if(action==='manual') setTimeout(openSubjectSheet, 250);
 }
 function obDots(){
-  const i = OB_STEPS.indexOf(ob.step);
+  const map={ system:'import', sol:'import', importing:'import' };   // pod-kroky importu svítí na posledním puntíku
+  const i = OB_STEPS.indexOf(map[ob.step]||ob.step);
   return '<div class="ob-dots">'+OB_STEPS.map((s,j)=>'<span class="ob-dot'+(j<=i?' on':'')+'"></span>').join('')+'</div>';
 }
 function obBack(step){ ob.step=step; renderOnboard(); }
@@ -4119,7 +4123,7 @@ function obEnter(inputId, fn){ const el=document.getElementById(inputId); if(el)
 function renderOnboard(){
   const top=document.getElementById('obTop'), body=document.getElementById('obBody');
   if(!top||!body) return;
-  const backTo = { email:'name', code:'email' }[ob.step] || null;   // po ověření kódu už zpět nejde
+  const backTo = { email:'name', code:'email', system:'import', sol:'system' }[ob.step] || null;   // po ověření kódu už zpět nejde (na účet), ale krok importu ano
   top.innerHTML = (backTo ? '<button class="ob-back" aria-label="Zpět" onclick="obBack(\''+backTo+'\')">‹</button>' : '') + obDots();
   if(ob.step==='name'){
     body.innerHTML =
@@ -4162,9 +4166,39 @@ function renderOnboard(){
       +'<div class="ob-h">Chceš načíst známky ze školního systému?</div>'
       +'<div class="ob-p">Škola OnLine funguje hned — známky se stáhnou i s váhami. Bakaláře a EduPage připravujeme.</div>'
       +'<div class="ob-actions">'
-      +'<button class="btn btn-primary" onclick="obFinish(\'import\')">Jo, načíst automaticky</button>'
+      +'<button class="btn btn-primary" onclick="ob.step=\'system\';renderOnboard()">Jo, načíst automaticky</button>'
       +'<button class="btn btn-ghost" onclick="obFinish(\'manual\')">Ne, zadám je ručně</button>'
       +'</div>';
+  } else if(ob.step==='system'){
+    const chev='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" style="flex-shrink:0"><path d="M9 6l6 6-6 6"/></svg>';
+    body.innerHTML =
+      '<div class="ob-emoji">🏫</div>'
+      +'<div class="ob-h">Jaký školní systém máš?</div>'
+      +'<div class="ob-p">Přihlášení jde přímo z tvého prohlížeče — heslo se k nám nikdy nedostane.</div>'
+      +'<div class="ob-fields" style="gap:10px">'
+      +  '<button class="imp-sys" onclick="ob.step=\'sol\';renderOnboard()"><span class="imp-ic">S</span><span class="grow"><span class="imp-t">Škola OnLine</span><span class="imp-s">známky i s váhami, po pololetích</span></span>'+chev+'</button>'
+      +  '<button class="imp-sys" onclick="obSysSoon(\'Bakaláři\')"><span class="imp-ic">B</span><span class="grow"><span class="imp-t">Bakaláři</span><span class="imp-s">připravujeme</span></span><span class="imp-soon">Brzy</span></button>'
+      +  '<button class="imp-sys" onclick="obSysSoon(\'EduPage\')"><span class="imp-ic">E</span><span class="grow"><span class="imp-t">EduPage</span><span class="imp-s">připravujeme</span></span><span class="imp-soon">Brzy</span></button>'
+      +'</div>'
+      +'<div class="ob-actions"><button class="ob-link" onclick="obFinish(\'manual\')">Zadám známky ručně</button></div>';
+  } else if(ob.step==='sol'){
+    body.innerHTML =
+      '<div class="ob-emoji">🔐</div>'
+      +'<div class="ob-h">Přihlas se do Škola OnLine</div>'
+      +'<div class="ob-p">Heslo se použije jen pro stažení a nikam se neuloží.</div>'
+      +'<div class="ob-fields">'
+      +  '<input id="obSolUser" type="text" autocomplete="username" placeholder="přihlašovací jméno">'
+      +  '<input id="obSolPass" type="password" autocomplete="current-password" placeholder="heslo">'
+      +'</div>'
+      +'<div class="ob-actions">'
+      +  '<button class="btn btn-primary" id="obSolBtn" onclick="obRunSol()">Stáhnout známky</button>'
+      +  '<button class="ob-link" onclick="obFinish(\'manual\')">Radši zadám ručně</button>'
+      +'</div>';
+    document.getElementById('obSolUser').value = localStorage.getItem('prumer_sol_user')||'';
+    const p=document.getElementById('obSolPass'); if(p) p.onkeydown=(e)=>{ if(e.key==='Enter') obRunSol(); };
+    setTimeout(()=>{ const u=document.getElementById('obSolUser'); if(u){ try{ u.focus(); }catch(e){} } }, 80);
+  } else if(ob.step==='importing'){
+    body.innerHTML = '<div class="ob-loading"><div class="ai-spin"></div><div>Stahuji tvoje známky…<br><span style="font-size:12.5px">Chvilku to potrvá.</span></div></div>';
   }
 }
 function obName(){
@@ -4222,6 +4256,40 @@ function obPickRocnik(v){
   ob.step='import'; renderOnboard();
 }
 function obSkipRocnik(){ ob.step='import'; renderOnboard(); }
+function obSysSoon(sys){
+  // v onboardingu neotvíráme spodní feedback sheet (byl by pod overlayem) — jen hláška
+  alertDialog('Už brzy', 'Import z '+sys+' připravujeme. Zatím zkus Škola OnLine, nebo zadej známky ručně.');
+}
+async function obRunSol(){
+  const user=(document.getElementById('obSolUser').value||'').trim();
+  const pass=(document.getElementById('obSolPass')||{}).value||'';
+  if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
+  const base=solApiBase('https://aplikace.skolaonline.cz');
+  ob.step='importing'; renderOnboard();
+  try{
+    const tk=await solTokenPassword(base, user, pass);
+    if(!tk.ok){
+      ob.step='sol'; renderOnboard();
+      const msg=(tk.j&&tk.j.error==='invalid_credentials')?'Špatné přihlašovací jméno nebo heslo.'
+              :(tk.j&&tk.j.error_description?tk.j.error_description:('Přihlášení selhalo ('+tk.status+').'));
+      alertDialog('Nepovedlo se', msg); return;
+    }
+    const auth={ 'Authorization':'Bearer '+tk.j.access_token };
+    const dl=await solDownloadData(base, auth);
+    if(!dl){ ob.step='sol'; renderOnboard(); alertDialog('Nepovedlo se','Nepodařilo se načíst účet nebo známky.'); return; }
+    const gradeN=dl.out.subjects.reduce((a,s)=>a+s.grades.length,0);
+    try{ localStorage.setItem('prumer_sol_user', user); }catch(e){}
+    if(!gradeN){ ob.step='sol'; renderOnboard(); alertDialog('Žádné známky','Nenašli jsme žádné číselné známky. Zkus to prosím ručně.'); return; }
+    if(tk.j.refresh_token){ try{ localStorage.setItem('prumer_sol_refresh', tk.j.refresh_token); localStorage.setItem('prumer_sol_auto','1'); }catch(e){} }
+    dl.out.sem=solCurrentSem();
+    solApplyData(dl.out, false);           // zapíše známky + vykreslí
+    obFinish();                            // zavře onboarding, jsme na Známkách s načtenými daty
+    alertDialog('Hotovo','Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
+  }catch(e){
+    ob.step='sol'; renderOnboard();
+    alertDialog('Chyba spojení', errMsg(e));
+  }
+}
 
 /* ================= AI STUDIJNÍ PLÁN ================= */
 let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[] };
@@ -4653,7 +4721,18 @@ window.addEventListener('load', ()=>{
 'Chceš načíst známky ze školního systému?':'Want to import grades from your school system?',
 'Škola OnLine funguje hned — známky se stáhnou i s váhami. Bakaláře a EduPage připravujeme.':'Škola OnLine works right away — grades download with weights. Bakaláři and EduPage are coming soon.',
 'Jo, načíst automaticky':'Yes, import automatically',
-'Ne, zadám je ručně':'No, I will enter them manually'
+'Ne, zadám je ručně':'No, I will enter them manually',
+'Jaký školní systém máš?':'Which school system do you have?',
+'Přihlášení jde přímo z tvého prohlížeče — heslo se k nám nikdy nedostane.':'Sign-in goes straight from your browser — your password never reaches us.',
+'Zadám známky ručně':'I will enter grades manually',
+'Přihlas se do Škola OnLine':'Sign in to Škola OnLine',
+'Heslo se použije jen pro stažení a nikam se neuloží.':'Your password is used only for the download and is never stored.',
+'přihlašovací jméno':'username',
+'Stáhnout známky':'Download grades','Radši zadám ručně':'I would rather enter them manually',
+'Stahuji tvoje známky…':'Downloading your grades…',
+'Už brzy':'Coming soon','Import z':'Import from',
+'Nenašli jsme žádné číselné známky. Zkus to prosím ručně.':'We found no numeric grades. Please try entering them manually.',
+'Hotovo':'Done'
   };
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;
@@ -4674,6 +4753,7 @@ window.addEventListener('load', ()=>{
       .replace(/▼ zlepšení o /g,'▼ improved by ')
       .replace(/▲ zhoršení o /g,'▲ worse by ')
       .replace(/Import z (.+?) připravujeme\. Chceš vědět, až bude hotový\? Napiš nám a dáme ti vědět\./g,'We are working on the $1 import. Want to know when it is ready? Write to us and we will let you know.')
+      .replace(/Import z (.+?) připravujeme\. Zatím zkus Škola OnLine, nebo zadej známky ručně\./g,'We are working on the $1 import. For now try Škola OnLine, or enter grades manually.')
       .replace(/ ti poslal žádost o přátelství/g,' sent you a friend request')
       .replace(/Moje třídy/g,'My classes').replace(/Ve třídě/g,'In class')
       .replace(/Hypotetická známka/g,'Hypothetical grade').replace(/za váhu/g,'at weight')
