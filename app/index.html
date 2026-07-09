@@ -4092,7 +4092,7 @@ if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
    Jen pro nové uživatele (bez účtu a bez známek), nikdy v embed režimu. Flag: prumer_onboarded. */
 const OB_STEPS = ['name','email','code','rocnik','import'];
 const OB_ROCNIK = ['Základka','1. ročník SŠ','2. ročník SŠ','3. ročník SŠ','4. ročník SŠ','Jiné'];
-let ob = { step:'name', name:'', email:'', rocnik:'', sending:false };
+let ob = { step:'name', name:'', email:'', rocnik:'', sending:false, returning:false };
 function onboardActive(){ const el=document.getElementById('onboard'); return !!(el && el.classList.contains('show')); }
 function maybeOnboard(){
   try{
@@ -4100,7 +4100,7 @@ function maybeOnboard(){
     if(localStorage.getItem('prumer_onboarded')) return;
     if(authUser || (data.subjects && data.subjects.length)){ localStorage.setItem('prumer_onboarded','1'); return; }   // stávající uživatel — nic nevyskakuj
     if(!sbConfigured() || !window.supabase || !getSB()) return;   // bez cloudu nejde poslat kód; appka jede normálně, zkusí se to příště
-    ob = { step:'name', name:'', email:'', rocnik:'', sending:false };
+    ob = { step:'name', name:'', email:'', rocnik:'', sending:false, returning:false };
     document.getElementById('onboard').classList.add('show');
     renderOnboard();
   }catch(e){}
@@ -4131,14 +4131,17 @@ function renderOnboard(){
       +'<div class="ob-h">Ahoj! Jak ti máme říkat?</div>'
       +'<div class="ob-p">Estudivo ti spočítá vážený průměr, ohlídá testy a propojí tě se třídou.</div>'
       +'<div class="ob-fields"><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="Tvoje jméno nebo přezdívka"></div>'
-      +'<div class="ob-actions"><button class="btn btn-primary" onclick="obName()">Pokračovat</button></div>';
+      +'<div class="ob-actions"><button class="btn btn-primary" onclick="obName()">Pokračovat</button>'
+      +'<button class="ob-link" onclick="obHasAccount()">Už mám účet — přihlásit se</button></div>';
     document.getElementById('obName').value = ob.name;
     obEnter('obName', obName);
   } else if(ob.step==='email'){
+    const eh = ob.returning ? 'Přihlas se do účtu' : 'Na jaký email ti pošleme potvrzovací kód?';
+    const ep = ob.returning ? 'Zadej email svého účtu — pošleme ti přihlašovací kód.' : 'Založíme ti účet — známky se zálohují a budeš se moct připojit do třídy.';
     body.innerHTML =
       '<div class="ob-emoji">✉️</div>'
-      +'<div class="ob-h">Na jaký email ti pošleme potvrzovací kód?</div>'
-      +'<div class="ob-p">Založíme ti účet — známky se zálohují a budeš se moct připojit do třídy.</div>'
+      +'<div class="ob-h">'+eh+'</div>'
+      +'<div class="ob-p">'+ep+'</div>'
       +'<div class="ob-fields"><input id="obEmail" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz"></div>'
       +'<div class="ob-actions"><button class="btn btn-primary" id="obSendBtn" onclick="obSendCode(false)">Poslat kód</button></div>'
       +'<div class="ob-note">Žádný spam — email slouží jen na přihlášení a obnovu účtu.</div>';
@@ -4204,8 +4207,9 @@ function renderOnboard(){
 function obName(){
   const v=(document.getElementById('obName').value||'').trim();
   if(!v){ alertDialog('Chybí jméno','Napiš, jak ti máme říkat.'); return; }
-  ob.name=v; ob.step='email'; renderOnboard();
+  ob.name=v; ob.returning=false; ob.step='email'; renderOnboard();
 }
+function obHasAccount(){ ob.returning=true; ob.step='email'; renderOnboard(); }   // vracející se uživatel: email → kód → rovnou do appky
 async function obSendCode(resend){
   const inp=document.getElementById('obEmail');
   const email = resend ? ob.email : ((inp && inp.value || '').trim());
@@ -4241,6 +4245,8 @@ async function obVerifyCode(){
     const defName=(ob.email||'').split('@')[0];
     if(ob.name && (!profile || !profile.name || profile.name===defName)){ try{ await saveProfile({ name: ob.name }); }catch(e){} }
     await pullGradesCloud();
+    await restoreUserClass();
+    if(ob.returning){ obFinish(); return; }   // vracející se uživatel: hotovo, jsme v appce s daty z účtu
     ob.step='rocnik'; renderOnboard();
   }catch(e){
     const m=String(e&&e.message||e);
@@ -4705,6 +4711,9 @@ window.addEventListener('load', ()=>{
 'Estudivo ti spočítá vážený průměr, ohlídá testy a propojí tě se třídou.':'Estudivo calculates your weighted average, keeps an eye on tests and connects you with your class.',
 'Tvoje jméno nebo přezdívka':'Your name or nickname',
 'Napiš, jak ti máme říkat.':'Tell us what we should call you.',
+'Už mám účet — přihlásit se':'I already have an account — sign in',
+'Přihlas se do účtu':'Sign in to your account',
+'Zadej email svého účtu — pošleme ti přihlašovací kód.':'Enter your account email — we will send you a sign-in code.',
 'Na jaký email ti pošleme potvrzovací kód?':'Which email should we send the confirmation code to?',
 'Založíme ti účet — známky se zálohují a budeš se moct připojit do třídy.':'We will create your account — your grades get backed up and you can join a class.',
 'Žádný spam — email slouží jen na přihlášení a obnovu účtu.':'No spam — the email is used only for signing in and account recovery.',
