@@ -58,7 +58,8 @@
     { "@type": "Question", "name": "Jak se počítá vážený průměr?", "acceptedAnswer": { "@type": "Answer", "text": "Každou známku vynásobíš její váhou, výsledky sečteš a vydělíš součtem vah. Estudivo to dělá automaticky – stačí zadat známku a její váhu a průměr se přepočítá sám." } },
     { "@type": "Question", "name": "Musím se registrovat?", "acceptedAnswer": { "@type": "Answer", "text": "Na počítání průměru ne – otevřeš appku a hned počítáš. Účet potřebuješ jen pro sdílení materiálů ve třídě a synchronizaci známek mezi více zařízeními." } },
     { "@type": "Question", "name": "Funguje Estudivo na mobilu?", "acceptedAnswer": { "@type": "Answer", "text": "Ano. Je to webová aplikace (PWA) – otevřeš ji v prohlížeči a můžeš si ji přidat na plochu telefonu jako appku. Funguje i offline." } },
-    { "@type": "Question", "name": "Jsou moje známky v bezpečí?", "acceptedAnswer": { "@type": "Answer", "text": "Známky máš uložené přímo ve svém zařízení. Když se přihlásíš, zálohují se na tvůj účet, takže o ně nepřijdeš. Sdílení ve třídě je dobrovolné a chráněné kódem třídy." } }
+    { "@type": "Question", "name": "Jsou moje známky v bezpečí?", "acceptedAnswer": { "@type": "Answer", "text": "Známky máš uložené přímo ve svém zařízení. Když se přihlásíš, zálohují se na tvůj účet, takže o ně nepřijdeš. Sdílení ve třídě je dobrovolné a chráněné kódem třídy." } },
+    { "@type": "Question", "name": "Funguje import z Bakalářů nebo EduPage?", "acceptedAnswer": { "@type": "Answer", "text": "Zatím umíme automatický import ze Škola OnLine. Import z Bakalářů a EduPage připravujeme — do té doby si známky můžeš zadat ručně a průměr se počítá úplně stejně." } }
   ]
 }
 </script>
@@ -235,6 +236,32 @@
   .fb-status.ok{ color:var(--good); }
   .fb-status.err{ color:#e25c5c; }
 
+  /* ukázka appky (CSS mockupy telefonu) */
+  .peek{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  @media(max-width:860px){ .peek{ grid-template-columns:1fr; max-width:340px; margin:0 auto; } }
+  .phone{ margin:0; }
+  .phone .p-scr{ border:1px solid var(--line); background:var(--bg-elev); border-radius:26px; padding:16px 14px; box-shadow:var(--shadow); min-height:296px; display:flex; flex-direction:column; gap:9px; }
+  .phone figcaption{ text-align:center; font-weight:600; color:var(--ink-dim); font-size:14.5px; margin-top:12px; }
+  .p-hero{ background:var(--hero-grad); border-radius:16px; padding:13px 14px; color:#241a02; }
+  .p-hero .l{ font-family:'Outfit',sans-serif; font-weight:700; font-size:10px; letter-spacing:.1em; color:#5a440c; }
+  .p-hero .n{ font-family:'Fraunces',serif; font-weight:600; font-size:34px; line-height:1.1; }
+  .p-hero .s{ font-size:11px; font-weight:600; color:#6b5212; }
+  .p-row{ display:flex; align-items:center; gap:10px; border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:var(--bg); }
+  .p-pill{ min-width:34px; height:34px; border-radius:9px; display:grid; place-items:center; font-family:'Fraunces',serif; font-weight:600; font-size:14px; flex-shrink:0; }
+  .p-t{ flex:1; min-width:0; }
+  .p-t .a{ font-weight:600; font-size:13px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .p-t .b{ font-size:10.5px; color:var(--ink-faint); }
+  .p-chip{ flex-shrink:0; font-family:'Outfit',sans-serif; font-weight:800; font-size:10px; color:var(--accent-deep); background:var(--accent-soft); border-radius:7px; padding:5px 8px; }
+
+  /* import — karta soukromí */
+  .priv-card{ background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:26px; box-shadow:var(--shadow); }
+  .priv-card h3{ font-family:'Outfit',sans-serif; font-weight:700; font-size:18px; display:flex; align-items:center; gap:9px; }
+  .priv-card p{ color:var(--ink-dim); font-size:15px; margin-top:9px; }
+  .priv-card .btn{ margin-top:18px; }
+  .sys-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .sys-tag{ font-family:'Outfit',sans-serif; font-weight:700; font-size:13px; padding:7px 12px; border-radius:100px; border:1px solid var(--line); color:var(--ink-dim); background:var(--bg); }
+  .sys-tag.on{ color:var(--accent-deep); border-color:color-mix(in srgb, var(--accent) 55%, var(--line)); background:var(--accent-soft); }
+
   /* reveal */
   .rev{ opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
   .rev.in{ opacity:1; transform:none; }
@@ -256,6 +283,7 @@
     </a>
     <nav class="nav-links">
       <a href="#funkce">Funkce</a>
+      <a href="#import">Import známek</a>
       <a href="#jak">Jak to funguje</a>
       <a href="#faq">Časté dotazy</a>
     </nav>
@@ -278,7 +306,7 @@
       <p class="lead rev">Estudivo je studentská aplikace na výpočet <b>váženého průměru známek</b>. Přidáš známky i s váhami, vidíš průměr v reálném čase a vyzkoušíš si „co kdyby“. Materiály a termíny testů sdílíš s celou třídou.</p>
       <div class="cta-row rev">
         <a class="btn btn-primary btn-lg" href="/prumerznamek/">Spočítat průměr známek →</a>
-        <a class="btn btn-ghost btn-lg" href="/prumerznamek/">Import ze Škola OnLine →</a>
+        <a class="btn btn-ghost btn-lg" href="#import">Import ze školního systému →</a>
       </div>
       <div class="trust rev"><span>✦</span> <b>Zdarma a bez reklam</b> · funguje na mobilu i v počítači · žádná registrace na počítání</div>
     </div>
@@ -336,13 +364,84 @@
       </div>
       <div class="card rev">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
-        <h3>Import ze Škola OnLine</h3>
-        <p>Známky si natáhneš přímo ze Škola OnLine – i s váhami a po pololetích. Nemusíš nic přepisovat ručně.</p>
+        <h3>Import ze školního systému</h3>
+        <p>Známky si natáhneš přímo ze Škola OnLine – i s váhami a po pololetích. Import z Bakalářů a EduPage připravujeme.</p>
       </div>
       <div class="card rev">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg></div>
         <h3>Funguje offline</h3>
         <p>Přidej si Estudivo na plochu jako appku (PWA). Běží i bez internetu a tvoje data zůstávají u tebe.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- UKÁZKA APPKY -->
+  <section id="ukazka">
+    <div class="sec-head rev">
+      <span class="sec-tag">Podívej se dovnitř</span>
+      <h2>Jak Estudivo vypadá</h2>
+      <p>Známky, sdílená třída i AI studijní plán — všechno v jedné appce v telefonu.</p>
+    </div>
+    <div class="peek">
+      <figure class="phone rev">
+        <div class="p-scr">
+          <div class="p-hero">
+            <div class="l">CELKOVÝ PRŮMĚR</div>
+            <div class="n">1,42</div>
+            <div class="s">24 známek · 7 předmětů</div>
+          </div>
+          <div class="p-row"><span class="p-pill" style="color:#1f8b4a;background:rgba(31,139,74,.13)">1,25</span><span class="p-t"><span class="a">Matematika</span><br><span class="b">8 známek · ▼ 0,05</span></span></div>
+          <div class="p-row"><span class="p-pill" style="color:#b8860f;background:rgba(184,134,15,.13)">2,10</span><span class="p-t"><span class="a">Fyzika</span><br><span class="b">6 známek</span></span></div>
+          <div class="p-row"><span class="p-pill" style="color:#6f8a1e;background:rgba(111,138,30,.13)">1,80</span><span class="p-t"><span class="a">Dějepis</span><br><span class="b">5 známek</span></span></div>
+        </div>
+        <figcaption>Známky a vážený průměr</figcaption>
+      </figure>
+      <figure class="phone rev">
+        <div class="p-scr">
+          <div class="p-row"><span class="p-chip">zítra</span><span class="p-t"><span class="a">Matematika</span><br><span class="b">kvadratické rovnice</span></span></div>
+          <div class="p-row"><span class="p-chip">za 3 dny</span><span class="p-t"><span class="a">Chemie</span><br><span class="b">halogeny</span></span></div>
+          <div class="p-row"><span class="p-chip">za 5 dní</span><span class="p-t"><span class="a">Anglický jazyk</span><br><span class="b">irregular verbs</span></span></div>
+          <div class="p-row"><span class="p-chip">za týden</span><span class="p-t"><span class="a">Dějepis</span><br><span class="b">první světová válka</span></span></div>
+        </div>
+        <figcaption>Kalendář testů pro celou třídu</figcaption>
+      </figure>
+      <figure class="phone rev">
+        <div class="p-scr">
+          <div class="p-hero">
+            <div class="l">STUDIJNÍ PLÁN</div>
+            <div class="n" style="font-size:19px;margin-top:2px">Fotosyntéza za 1 hodinu</div>
+          </div>
+          <div class="p-row"><span class="p-chip">25 min</span><span class="p-t"><span class="a">Kartičky — pojmy</span><br><span class="b">z tvých zápisků</span></span></div>
+          <div class="p-row"><span class="p-chip">10 min</span><span class="p-t"><span class="a">Pauza</span></span></div>
+          <div class="p-row"><span class="p-chip">20 min</span><span class="p-t"><span class="a">Otázky k opakování</span><br><span class="b">s odpověďmi</span></span></div>
+        </div>
+        <figcaption>AI studijní plán z tvých zápisků</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- IMPORT ZNÁMEK -->
+  <section id="import">
+    <div class="sec-head rev">
+      <span class="sec-tag">Import známek</span>
+      <h2>Známky se načtou samy — i s váhami</h2>
+      <p>Propoj Estudivo se svým školním systémem a nemusíš nic přepisovat ručně.</p>
+    </div>
+    <div class="how">
+      <ul class="how-list">
+        <li class="rev"><span class="n">1</span><div><h4>Vyber svůj školní systém</h4><p>Škola OnLine funguje už teď. Import z Bakalářů a EduPage připravujeme.</p></div></li>
+        <li class="rev"><span class="n">2</span><div><h4>Přihlas se školními údaji</h4><p>Přihlášení jde přímo z tvého prohlížeče do školního systému — heslo se k nám nikdy nedostane a nikam se neukládá.</p></div></li>
+        <li class="rev"><span class="n">3</span><div><h4>Hotovo za pár vteřin</h4><p>Známky se načtou i s váhami a po pololetích. Pak už se aktualizují samy pokaždé, když appku otevřeš.</p></div></li>
+      </ul>
+      <div class="priv-card rev">
+        <h3>🔒 Tvoje heslo zůstává u tebe</h3>
+        <p>Estudivo nemá žádný server, přes který by tvoje přihlášení šlo. Prohlížeč se spojí přímo se školním systémem, stáhne známky a heslo hned zapomene.</p>
+        <div class="sys-row">
+          <span class="sys-tag on">✓ Škola OnLine</span>
+          <span class="sys-tag">Bakaláři · brzy</span>
+          <span class="sys-tag">EduPage · brzy</span>
+        </div>
+        <a class="btn btn-primary" href="/prumerznamek/">Vyzkoušet import →</a>
       </div>
     </div>
   </section>
@@ -388,6 +487,7 @@
       <details class="rev"><summary>Musím se registrovat?<span class="pm">+</span></summary><p>Na počítání průměru ne – otevřeš appku a hned počítáš. Účet potřebuješ jen pro sdílení materiálů ve třídě a synchronizaci známek mezi více zařízeními.</p></details>
       <details class="rev"><summary>Funguje Estudivo na mobilu?<span class="pm">+</span></summary><p>Ano. Je to webová aplikace (PWA) – otevřeš ji v prohlížeči a můžeš si ji přidat na plochu telefonu jako appku. Funguje i offline.</p></details>
       <details class="rev"><summary>Jsou moje známky v bezpečí?<span class="pm">+</span></summary><p>Známky máš uložené přímo ve svém zařízení. Když se přihlásíš, zálohují se na tvůj účet, takže o ně nepřijdeš. Sdílení ve třídě je dobrovolné a chráněné kódem třídy.</p></details>
+      <details class="rev"><summary>Funguje import z Bakalářů nebo EduPage?<span class="pm">+</span></summary><p>Zatím umíme automatický import ze Škola OnLine. Import z Bakalářů a EduPage připravujeme — do té doby si známky můžeš zadat ručně, zabere to pár minut a průměr se počítá úplně stejně.</p></details>
     </div>
   </section>
 
@@ -571,7 +671,34 @@
 'Každý nápad i nahlášená chyba pomáhá Estudivo zlepšit. Zpráva je soukromá – uvidí ji jen autor.':'Every idea or bug report helps make Estudivo better. Your message is private – only the author sees it.',
 'Nápad, co zlepšit, nebo chyba…':'An idea, something to improve, or a bug…','tvuj@email.cz':'you@email.com',
 'Odeslat zpětnou vazbu':'Send feedback','Aplikace':'App','Zpětná vazba':'Feedback',
-'Estudivo · Studijní průměr, materiály a kalendář testů pro studenty. Vážený průměr známek online, zdarma.':'Estudivo · Grade average, materials and a test calendar for students. Weighted grade average online, free.'
+'Estudivo · Studijní průměr, materiály a kalendář testů pro studenty. Vážený průměr známek online, zdarma.':'Estudivo · Grade average, materials and a test calendar for students. Weighted grade average online, free.',
+'Import známek':'Grade import','Import ze školního systému →':'Import from your school system →',
+'Import ze školního systému':'Import from your school system',
+'Známky si natáhneš přímo ze Škola OnLine – i s váhami a po pololetích. Import z Bakalářů a EduPage připravujeme.':'Pull your grades straight from Škola OnLine – with weights and by semester. Bakaláři and EduPage import is coming soon.',
+'Podívej se dovnitř':'Take a look inside','Jak Estudivo vypadá':'What Estudivo looks like',
+'Známky, sdílená třída i AI studijní plán — všechno v jedné appce v telefonu.':'Grades, a shared class and an AI study plan — all in one app on your phone.',
+'CELKOVÝ PRŮMĚR':'OVERALL AVERAGE','24 známek · 7 předmětů':'24 grades · 7 subjects',
+'8 známek · ▼ 0,05':'8 grades · ▼ 0.05','6 známek':'6 grades','5 známek':'5 grades',
+'Matematika':'Maths','Fyzika':'Physics','Dějepis':'History','Chemie':'Chemistry','Anglický jazyk':'English',
+'kvadratické rovnice':'quadratic equations','halogeny':'halogens','první světová válka':'World War I',
+'zítra':'tomorrow','za 3 dny':'in 3 days','za 5 dní':'in 5 days','za týden':'in a week',
+'Známky a vážený průměr':'Grades and weighted average','Kalendář testů pro celou třídu':'A test calendar for the whole class','AI studijní plán z tvých zápisků':'An AI study plan from your notes',
+'STUDIJNÍ PLÁN':'STUDY PLAN','Fotosyntéza za 1 hodinu':'Photosynthesis in 1 hour',
+'Kartičky — pojmy':'Flashcards — terms','z tvých zápisků':'from your notes','Pauza':'Break','Otázky k opakování':'Revision questions','s odpověďmi':'with answers',
+'Známky se načtou samy — i s váhami':'Grades import themselves — weights included',
+'Propoj Estudivo se svým školním systémem a nemusíš nic přepisovat ručně.':'Connect Estudivo to your school system and skip all manual retyping.',
+'Vyber svůj školní systém':'Pick your school system',
+'Škola OnLine funguje už teď. Import z Bakalářů a EduPage připravujeme.':'Škola OnLine works today. Bakaláři and EduPage import is coming soon.',
+'Přihlas se školními údaji':'Sign in with your school login',
+'Přihlášení jde přímo z tvého prohlížeče do školního systému — heslo se k nám nikdy nedostane a nikam se neukládá.':'Sign-in goes straight from your browser to the school system — your password never reaches us and is never stored.',
+'Hotovo za pár vteřin':'Done in seconds',
+'Známky se načtou i s váhami a po pololetích. Pak už se aktualizují samy pokaždé, když appku otevřeš.':'Grades import with weights and by semester. From then on they update automatically every time you open the app.',
+'🔒 Tvoje heslo zůstává u tebe':'🔒 Your password stays with you',
+'Estudivo nemá žádný server, přes který by tvoje přihlášení šlo. Prohlížeč se spojí přímo se školním systémem, stáhne známky a heslo hned zapomene.':'Estudivo has no server your login passes through. Your browser connects directly to the school system, downloads the grades and forgets the password immediately.',
+'✓ Škola OnLine':'✓ Škola OnLine','Bakaláři · brzy':'Bakaláři · soon','EduPage · brzy':'EduPage · soon',
+'Vyzkoušet import →':'Try the import →',
+'Funguje import z Bakalářů nebo EduPage?':'Does Bakaláři or EduPage import work?',
+'Zatím umíme automatický import ze Škola OnLine. Import z Bakalářů a EduPage připravujeme — do té doby si známky můžeš zadat ručně, zabere to pár minut a průměr se počítá úplně stejně.':'For now we support automatic import from Škola OnLine. Bakaláři and EduPage import is in the works — until then you can enter grades manually, it takes a few minutes and the average works exactly the same.'
   };
   function norm(s){ return s.replace(/[„“”"]/g,'"').replace(/[‚‘’']/g,"'"); }
   var ENn={}; Object.keys(EN).forEach(function(k){ ENn[norm(k)]=EN[k]; });
