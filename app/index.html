@@ -4298,11 +4298,19 @@ async function obRunSol(){
 }
 
 /* ================= AI STUDIJNÍ PLÁN ================= */
-let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[], pending:false };
+let aiState = { view:'list', soubory:[], dotaznik:{cas:'',hloubka:'',styl:''}, plan:null, planId:null, resultTab:'shrnuti', pickCode:null, pickName:null, plany:[], pending:false, vystup:null };
+// typy výstupu (jako NotebookLM): styl mapuje na to, co backend zdůrazní; cas necháváme fixní
+const AI_VYSTUPY = [
+  { id:'karticky', styl:'kartičky',       emoji:'🃏', t:'Kartičky', s:'Otázka a odpověď na procvičení' },
+  { id:'shrnuti',  styl:'rychlé shrnutí', emoji:'📝', t:'Shrnutí',  s:'Nejdůležitější body látky' },
+  { id:'otazky',   styl:'cvičné testy',   emoji:'❓', t:'Test',      s:'Otázky s odpověďmi' },
+  { id:'plan',     styl:'procvičování',   emoji:'📅', t:'Plán učení', s:'Rozvrh, co a kdy se učit' },
+];
 function aiOnScreen(){ const p=document.getElementById('pageAI'); return !!(p && p.style.display!=='none'); }
+function aiTabForVystup(){ return (aiState.vystup && aiState.vystup!=='plan') ? aiState.vystup : 'shrnuti'; }
 function aiEnter(){   // generování přežije přepnutí tabu; po dokončení mimo obrazovku otevři hotový plán
   if(aiState.pending){ aiState.view='loading'; renderAI(); return; }
-  if(aiState.done){ const dd=aiState.done; aiState.done=null; aiState.plan=dd.plan; aiState.planId=dd.id; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); return; }
+  if(aiState.done){ const dd=aiState.done; aiState.done=null; aiState.plan=dd.plan; aiState.planId=dd.id; aiState.resultTab=aiTabForVystup(); aiState.view='result'; renderAI(); return; }
   aiEnterList();
 }
 function aiNotifyDone(ok){
@@ -4334,7 +4342,7 @@ function renderAI(){
   if(v==='source')      return renderAISource(wrap,h1);
   if(v==='pickClass')   return renderAIPickClass(wrap,h1);
   if(v==='pickFiles')   return renderAIPickFiles(wrap,h1);
-  if(v==='quiz')        return renderAIQuiz(wrap,h1);
+  if(v==='type')        return renderAIType(wrap,h1);
   if(v==='loading')     return renderAILoading(wrap,h1);
   if(v==='result')      return renderAIResult(wrap,h1);
   return renderAIList(wrap,h1);
@@ -4359,7 +4367,7 @@ async function renderAIList(wrap,h1){
     const nad=(row.vystup&&row.vystup.nadpis)||'Studijní plán';
     const d=row.created_at?new Date(row.created_at).toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'}):'';
     it.innerHTML='<div class="grow"><div class="t">'+esc(nad)+'</div><div class="d">'+esc(d)+'</div></div>';
-    it.onclick=()=>{ aiState.plan=row.vystup; aiState.planId=row.id; aiState.soubory=[]; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); };
+    it.onclick=()=>{ aiState.plan=row.vystup; aiState.planId=row.id; aiState.soubory=[]; aiState.vystup=null; aiState.resultTab='shrnuti'; aiState.view='result'; renderAI(); };
     const del=document.createElement('button'); del.className='ai-del'; del.textContent='🗑'; del.setAttribute('aria-label','Smazat');
     del.onclick=(ev)=>{ ev.stopPropagation(); aiDeletePlan(row.id,false); };
     it.appendChild(del);
@@ -4410,7 +4418,7 @@ async function renderAIPickFiles(wrap,h1){
     };
     sec.appendChild(el);
   });
-  cont.onclick=()=>{ aiState.soubory=[...sel].map(i=>({ typ:'class', path:rows[i].path, code:rows[i].code, name:rows[i].name })); aiState.view='quiz'; renderAI(); };
+  cont.onclick=()=>{ aiState.soubory=[...sel].map(i=>({ typ:'class', path:rows[i].path, code:rows[i].code, name:rows[i].name })); aiState.view='type'; renderAI(); };
   sec.appendChild(cont);
 }
 
@@ -4422,18 +4430,17 @@ function aiQuestion(label,hint,opts,current,onPick){
   q.appendChild(row); return q;
 }
 
-function renderAIQuiz(wrap,h1){
-  h1.textContent='Pár otázek';
+function renderAIType(wrap,h1){
+  h1.textContent='Co vytvořit?';
   wrap.appendChild(aiBackBtn('‹ Zpět', ()=>{ aiState.view='source'; renderAI(); }));
   const sec=document.createElement('div'); sec.className='ai-sec';
-  sec.appendChild(aiQuestion('Kolik máš času?','', AI_CAS, aiState.dotaznik.cas, (v)=>{ aiState.dotaznik.cas=v; }));
-  sec.appendChild(aiQuestion('Co ti sedí nejvíc?','', AI_STYL, aiState.dotaznik.styl, (v)=>{ aiState.dotaznik.styl=v; }));
-  const q2=document.createElement('div'); q2.className='ai-q';
-  q2.innerHTML='<div class="ql">Zaměřit se na něco víc?</div><div class="qh">Nepovinné</div>';
-  const ta=document.createElement('textarea'); ta.className='ai-ta'; ta.placeholder='např. druhá světová válka…'; ta.value=aiState.dotaznik.hloubka||''; ta.oninput=()=>{ aiState.dotaznik.hloubka=ta.value; };
-  q2.appendChild(ta); sec.appendChild(q2);
-  const go=document.createElement('button'); go.className='btn btn-primary'; go.style.cssText='width:100%'; go.textContent='Vytvořit plán'; go.onclick=aiGenerate;
-  sec.appendChild(go);
+  AI_VYSTUPY.forEach(o=>{
+    sec.appendChild(aiSourceBtn('<span style="font-size:22px;line-height:1">'+o.emoji+'</span>', o.t, o.s, ()=>{
+      aiState.vystup=o.id;
+      aiState.dotaznik={ cas:'1 den', styl:o.styl, hloubka:'' };   // dotazník zrušen — pošleme rozumný default
+      aiGenerate();
+    }));
+  });
   wrap.appendChild(sec);
 }
 
@@ -4454,13 +4461,14 @@ function renderAILoading(wrap,h1){
 
 function renderAIResult(wrap,h1){
   const p=aiState.plan||{};
-  h1.textContent='Tvůj plán';
+  const single = !!(aiState.vystup && aiState.vystup!=='plan');   // jednotlivý výstup (kartičky/shrnutí/test) → bez rozvrhu
+  h1.textContent = single ? ((AI_VYSTUPY.find(x=>x.id===aiState.vystup)||{}).t || 'Hotovo') : 'Tvůj plán';
   wrap.appendChild(aiBackBtn('‹ Moje plány', aiEnterList));
   const sec=document.createElement('div'); sec.className='ai-sec';
   const hero=document.createElement('div'); hero.className='ai-hero';
-  hero.innerHTML='<h2>'+esc(p.nadpis||'Studijní plán')+'</h2>'+(p.prehled?'<div class="prehled">'+esc(p.prehled)+'</div>':'')+(p.proc?'<div class="proc">'+esc(p.proc)+'</div>':'');
+  hero.innerHTML='<h2>'+esc(p.nadpis||'Studijní plán')+'</h2>'+ (single ? '' : ((p.prehled?'<div class="prehled">'+esc(p.prehled)+'</div>':'')+(p.proc?'<div class="proc">'+esc(p.proc)+'</div>':'')));
   sec.appendChild(hero);
-  (p.rozvrh||[]).forEach(usek=>{
+  if(!single) (p.rozvrh||[]).forEach(usek=>{
     if(usek.nazev){ const t=document.createElement('div'); t.className='ai-daytitle'; t.textContent=usek.nazev; sec.appendChild(t); }
     (usek.bloky||[]).forEach(b=>{
       const isP=b.typ==='pauza';
@@ -4550,11 +4558,11 @@ async function aiGenerate(){
   aiState.pending=true; aiState.view='loading'; renderAI();
   try{
     const d=await aiCallGenerate(false);
-    aiState.pending=false; aiState.resultTab='shrnuti';
+    aiState.pending=false; aiState.resultTab=aiTabForVystup();
     if(aiOnScreen()){ aiState.plan=d.plan; aiState.planId=d.id; aiState.view='result'; renderAI(); }
     else { aiState.done={ plan:d.plan, id:d.id }; aiNotifyDone(true); }   // uživatel odešel — počká na něj + oznámení
   }
-  catch(e){ aiState.pending=false; if(aiOnScreen()){ aiState.view='quiz'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); } else aiNotifyDone(false); }
+  catch(e){ aiState.pending=false; if(aiOnScreen()){ aiState.view='type'; renderAI(); alertDialog('Nepovedlo se', aiErrMsg(e)); } else aiNotifyDone(false); }
 }
 
 async function aiRegenerate(){
@@ -4580,7 +4588,7 @@ async function aiRegenerate(){
     try{
       aiState.soubory=[];
       for(const f of files){ aiState.soubory.push({ typ:'upload', name:f.name, data:await aiFileToB64(f) }); }
-      aiState.view='quiz'; renderAI();
+      aiState.view='type'; renderAI();
     }catch(err){ alertDialog('Chyba', errMsg(err)); }
   });
 })();
@@ -4678,6 +4686,7 @@ window.addEventListener('load', ()=>{
 'Z čeho ti mám plán postavit? Můžeš nahrát vlastní soubor, nebo použít materiál ze třídy.':'What should I build the plan from? Upload your own file, or use class materials.',
 'Nahrát soubor':'Upload a file','PDF, obrázek, .docx, .txt — až 3 soubory':'PDF, image, .docx, .txt — up to 3 files',
 'Z čeho plán?':'What from?','PDF, obrázek, .docx, .txt':'PDF, image, .docx, .txt','Z materiálů třídy':'From class materials','Zápisky nasdílené ve třídě':'Notes shared in your class',
+'Co vytvořit?':'What to create?','Otázka a odpověď na procvičení':'Question and answer to practise','Nejdůležitější body látky':'The key points','Otázky s odpověďmi':'Questions with answers','Plán učení':'Study plan','Rozvrh, co a kdy se učit':'A schedule of what and when to study',
 'Pár otázek':'A few questions','Kolik máš času?':'How much time?','Co ti sedí nejvíc?':'What suits you best?','Zaměřit se na něco víc?':'Focus on something more?','Nepovinné':'Optional','např. druhá světová válka…':'e.g. World War II…','Vytvořit plán':'Create plan',
 'Stavím tvůj plán…':'Building your plan…','Může to pár minut trvat. Klidně zavři appku — plán tu na tebe počká.':'It may take a few minutes. Feel free to close the app — your plan will be waiting.','🔔 Dej mi vědět, až bude hotový':'🔔 Notify me when it is ready',
 'Zatím tu nic není.':'Nothing here yet.','Vytvoř si první plán tlačítkem nahoře.':'Create your first plan with the button above.',
