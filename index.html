@@ -237,7 +237,7 @@
   .fb-status.err{ color:#e25c5c; }
 
   /* ukázka appky (CSS mockupy telefonu) */
-  .peek{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  .peek{ display:grid; grid-template-columns:repeat(2,1fr); gap:22px; max-width:720px; margin:0 auto; }
   @media(max-width:860px){ .peek{ grid-template-columns:1fr; max-width:340px; margin:0 auto; } }
   .phone{ margin:0; }
   .phone .p-scr{ border:1px solid var(--line); background:var(--bg-elev); border-radius:26px; padding:16px 14px; box-shadow:var(--shadow); min-height:296px; display:flex; flex-direction:column; gap:9px; }
@@ -380,7 +380,7 @@
     <div class="sec-head rev">
       <span class="sec-tag">Podívej se dovnitř</span>
       <h2>Jak Estudivo vypadá</h2>
-      <p>Známky, sdílená třída i AI studijní plán — všechno v jedné appce v telefonu.</p>
+      <p>Známky, vážený průměr i sdílená třída — všechno v jedné appce v telefonu.</p>
     </div>
     <div class="peek">
       <figure class="phone rev">
@@ -404,18 +404,6 @@
           <div class="p-row"><span class="p-chip">za týden</span><span class="p-t"><span class="a">Dějepis</span><br><span class="b">první světová válka</span></span></div>
         </div>
         <figcaption>Kalendář testů pro celou třídu</figcaption>
-      </figure>
-      <figure class="phone rev">
-        <div class="p-scr">
-          <div class="p-hero">
-            <div class="l">STUDIJNÍ PLÁN</div>
-            <div class="n" style="font-size:19px;margin-top:2px">Fotosyntéza za 1 hodinu</div>
-          </div>
-          <div class="p-row"><span class="p-chip">25 min</span><span class="p-t"><span class="a">Kartičky — pojmy</span><br><span class="b">z tvých zápisků</span></span></div>
-          <div class="p-row"><span class="p-chip">10 min</span><span class="p-t"><span class="a">Pauza</span></span></div>
-          <div class="p-row"><span class="p-chip">20 min</span><span class="p-t"><span class="a">Otázky k opakování</span><br><span class="b">s odpověďmi</span></span></div>
-        </div>
-        <figcaption>AI studijní plán z tvých zápisků</figcaption>
       </figure>
     </div>
   </section>
@@ -676,7 +664,7 @@
 'Import ze školního systému':'Import from your school system',
 'Známky si natáhneš přímo ze Škola OnLine – i s váhami a po pololetích. Import z Bakalářů a EduPage připravujeme.':'Pull your grades straight from Škola OnLine – with weights and by semester. Bakaláři and EduPage import is coming soon.',
 'Podívej se dovnitř':'Take a look inside','Jak Estudivo vypadá':'What Estudivo looks like',
-'Známky, sdílená třída i AI studijní plán — všechno v jedné appce v telefonu.':'Grades, a shared class and an AI study plan — all in one app on your phone.',
+'Známky, vážený průměr i sdílená třída — všechno v jedné appce v telefonu.':'Grades, a weighted average and a shared class — all in one app on your phone.',
 'CELKOVÝ PRŮMĚR':'OVERALL AVERAGE','24 známek · 7 předmětů':'24 grades · 7 subjects',
 '8 známek · ▼ 0,05':'8 grades · ▼ 0.05','6 známek':'6 grades','5 známek':'5 grades',
 'Matematika':'Maths','Fyzika':'Physics','Dějepis':'History','Chemie':'Chemistry','Anglický jazyk':'English',
