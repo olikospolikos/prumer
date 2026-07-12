@@ -408,8 +408,28 @@
     transform: translateY(100%);
     transition: transform .3s cubic-bezier(.32,.72,0,1);
     z-index: 50;
+    /* dlouhý obsah (např. porovnání s přítelem) musí jít odscrollovat uvnitř sheetu,
+       jinak přeteče přes horní okraj obrazovky a nejde vidět celý */
+    max-height: 92vh;
+    max-height: 92dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .sheet.show { transform: translateY(0); }
+  /* lišta se zavřením nahoře ve scrollovatelném sheetu (sticky, ať je vidět i po odscrollování) */
+  .sheet-close-bar {
+    position: sticky; top: 0; z-index: 2;
+    display: flex; align-items: center; justify-content: flex-end;
+    margin: -8px -20px 4px; padding: 6px 12px 4px;
+    background: var(--bg-elev);
+  }
+  .sheet-close {
+    width: 36px; height: 36px; border-radius: 11px; cursor: pointer;
+    background: var(--bg-elev2); border: 1px solid var(--line); color: var(--ink);
+    font-size: 17px; line-height: 1; font-family: inherit; display: grid; place-items: center;
+  }
+  .sheet-close:active { background: var(--bg); }
   .sheet-grab {
     width: 38px; height: 4px; border-radius: 2px;
     background: var(--line); margin: 8px auto 18px;
@@ -1443,7 +1463,7 @@
 <!-- profil člena třídy -->
 <div class="sheet-backdrop" id="memberBackdrop" onclick="closeMemberSheet()"></div>
 <div class="sheet" id="memberSheet">
-  <div class="sheet-grab"></div>
+  <div class="sheet-close-bar"><button class="sheet-close" onclick="closeMemberSheet()" aria-label="Zavřít">✕</button></div>
   <div id="memberBody"></div>
 </div>
 
@@ -4499,8 +4519,7 @@ function renderOnboard(){
       +  '<button class="imp-sys" onclick="ob.step=\'sol\';renderOnboard()"><span class="imp-ic">S</span><span class="grow"><span class="imp-t">Škola OnLine</span><span class="imp-s">známky i s váhami, po pololetích</span></span>'+chev+'</button>'
       +  '<button class="imp-sys" onclick="obSysSoon(\'Bakaláři\')"><span class="imp-ic">B</span><span class="grow"><span class="imp-t">Bakaláři</span><span class="imp-s">připravujeme</span></span><span class="imp-soon">Brzy</span></button>'
       +  '<button class="imp-sys" onclick="obSysSoon(\'EduPage\')"><span class="imp-ic">E</span><span class="grow"><span class="imp-t">EduPage</span><span class="imp-s">připravujeme</span></span><span class="imp-soon">Brzy</span></button>'
-      +'</div>'
-      +'<div class="ob-actions"><button class="ob-link" onclick="obFinish(\'manual\')">Zadám známky ručně</button></div>';
+      +'</div>';
   } else if(ob.step==='sol'){
     body.innerHTML =
       '<div class="ob-emoji">🔐</div>'
@@ -4512,7 +4531,6 @@ function renderOnboard(){
       +'</div>'
       +'<div class="ob-actions">'
       +  '<button class="btn btn-primary" id="obSolBtn" onclick="obRunSol()">Stáhnout známky</button>'
-      +  '<button class="ob-link" onclick="obFinish(\'manual\')">Radši zadám ručně</button>'
       +'</div>';
     document.getElementById('obSolUser').value = localStorage.getItem('prumer_sol_user')||'';
     const p=document.getElementById('obSolPass'); if(p) p.onkeydown=(e)=>{ if(e.key==='Enter') obRunSol(); };
