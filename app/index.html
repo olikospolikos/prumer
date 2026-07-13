@@ -1366,10 +1366,10 @@
       <span class="grow"><span class="imp-t">Škola OnLine</span><span class="imp-s">známky i s váhami, po pololetích</span></span>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" style="flex-shrink:0"><path d="M9 6l6 6-6 6"/></svg>
     </button>
-    <button class="imp-sys" onclick="importSoon('Bakaláři')">
+    <button class="imp-sys" onclick="closeImportSheet();openBakSheet()">
       <span class="imp-ic">B</span>
-      <span class="grow"><span class="imp-t">Bakaláři</span><span class="imp-s">připravujeme</span></span>
-      <span class="imp-soon">Brzy</span>
+      <span class="grow"><span class="imp-t">Bakaláři</span><span class="imp-s">známky i s váhami</span></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" style="flex-shrink:0"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <button class="imp-sys" onclick="importSoon('EduPage')">
       <span class="imp-ic">E</span>
@@ -1411,6 +1411,29 @@
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeSolSheet()">Zrušit</button>
     <button class="btn btn-primary" id="solBtn" onclick="runSolImport()">Stáhnout</button>
+  </div>
+</div>
+
+<!-- bakaláři sheet -->
+<div class="sheet-backdrop" id="bakBackdrop" onclick="closeBakSheet()"></div>
+<div class="sheet" id="bakSheet">
+  <div class="sheet-grab"></div>
+  <h3>Načíst z Bakalářů</h3>
+  <div class="fields">
+    <label class="fld"><span>Adresa Bakalářů tvojí školy</span>
+      <input type="text" id="bakUrl" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://bakalari.tvojeskola.cz">
+    </label>
+    <label class="fld"><span>Přihlašovací jméno</span>
+      <input type="text" id="bakUser" autocomplete="username" placeholder="jméno do Bakalářů">
+    </label>
+    <label class="fld"><span>Heslo</span>
+      <input type="password" id="bakPass" autocomplete="current-password" placeholder="heslo">
+    </label>
+  </div>
+  <p class="backup-note" style="margin:12px 2px 0">Adresu najdeš v prohlížeči, když se přihlašuješ do Bakalářů (např. bakalari.tvojeskola.cz). Přihlášení jde z tvého prohlížeče přímo do školy — heslo nikdy neprojde přes naše servery a nikam se neukládá. Stažení přepíše současné známky.</p>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" onclick="closeBakSheet()">Zrušit</button>
+    <button class="btn btn-primary" id="bakBtn" onclick="runBakImport()">Stáhnout</button>
   </div>
 </div>
 
@@ -2222,16 +2245,24 @@ function solAttachHypo(out){
 }
 
 // zapíše stažená data do aplikace (zachová rozbalené předměty a hypotetické známky; keepSem = neměnit vybrané pololetí)
-function solApplyData(out, keepSem){
+// sys = který školní systém známky přinesl ('sol' | 'bak') — kvůli uložení času poslední synchronizace
+function solApplyData(out, keepSem, sys){
   solAttachHypo(out);
   const openIds = new Set((data.subjects||[]).filter(s=>s.open).map(s=>s.id));
   out.subjects.forEach(s=>{ if(openIds.has(s.id)) s.open = true; });
   if(keepSem) out.sem = (data && data.sem===2) ? 2 : 1;
   data = migrate(out);
   save();
-  localStorage.setItem('prumer_sol_lastsync', new Date().toISOString());
+  localStorage.setItem('prumer_'+(sys||'sol')+'_lastsync', new Date().toISOString());
   render(); renderSolStatus();
   if(!keepSem) setTimeout(maybeClassNudge, 2500);   // jen po ručním importu, ne po tiché synchronizaci
+}
+
+// který školní systém je momentálně propojený (auto-sync zapnutý + uložený refresh token)
+function schoolConn(){
+  if(localStorage.getItem('prumer_sol_auto')==='1' && localStorage.getItem('prumer_sol_refresh')) return { sys:'sol', name:'Škola OnLine' };
+  if(localStorage.getItem('prumer_bak_auto')==='1' && localStorage.getItem('prumer_bak_refresh')) return { sys:'bak', name:'Bakaláři' };
+  return null;
 }
 
 // stav pod tlačítkem (auto zapnuto / čas poslední synchronizace / odhlásit)
@@ -2239,17 +2270,18 @@ function renderSolStatus(msg){
   const el = document.getElementById('solStatus');
   if(!el) return;
   if(msg){ el.textContent = msg; return; }
-  const auto = localStorage.getItem('prumer_sol_auto')==='1';
-  if(!auto){ el.textContent = 'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.'; return; }
-  const last = localStorage.getItem('prumer_sol_lastsync');
+  const conn = schoolConn();
+  if(!conn){ el.textContent = 'Stáhne tvoje známky přímo ze školního systému. Heslo se nikam neukládá.'; return; }
+  const last = localStorage.getItem('prumer_'+conn.sys+'_lastsync');
   let t = '';
   if(last){ const d = new Date(last); t = ' · naposledy '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
-  el.innerHTML = '✓ Aktualizuje se samo'+t+' · <a href="#" onclick="solLogout();return false" style="color:var(--ink-dim)">odhlásit</a>';
+  el.innerHTML = '✓ '+conn.name+' se aktualizuje samo'+t+' · <a href="#" onclick="solLogout();return false" style="color:var(--ink-dim)">odhlásit</a>';
 }
 function solLogout(){
-  confirmDialog('Vypnout automatickou aktualizaci?', 'Smaže se uložené přihlášení. Známky v aplikaci zůstanou, ale dál se nebudou aktualizovat samy.', 'Vypnout', ()=>{
-    localStorage.removeItem('prumer_sol_refresh');
-    localStorage.setItem('prumer_sol_auto','0');
+  const conn = schoolConn(); const sys = conn ? conn.sys : 'sol'; const name = conn ? conn.name : 'školního systému';
+  confirmDialog('Vypnout automatickou aktualizaci?', 'Smaže se uložené přihlášení do '+name+'. Známky v aplikaci zůstanou, ale dál se nebudou aktualizovat samy.', 'Vypnout', ()=>{
+    localStorage.removeItem('prumer_'+sys+'_refresh');
+    localStorage.setItem('prumer_'+sys+'_auto','0');
     renderSolStatus();
     const pp = document.getElementById('pageProfile');
     if(pp && pp.style.display !== 'none') renderProfile();   // obnov kartu Školní systém v profilu
@@ -2318,12 +2350,162 @@ async function runSolImport(){
       'Pro '+(dl.uj.fullName||'tebe')+' se stáhlo '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+' (obě pololetí). Současné známky se přepíšou a od teď se budou aktualizovat samy.',
       'Načíst', ()=>{
         if(tk.j.refresh_token){ localStorage.setItem('prumer_sol_refresh', tk.j.refresh_token); localStorage.setItem('prumer_sol_auto','1'); }
+        localStorage.setItem('prumer_bak_auto','0');   // používá se jen jeden systém → vypni druhý auto-sync
         dl.out.sem = solCurrentSem();
         solApplyData(dl.out, false);
         alertDialog('Hotovo', 'Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
       });
   } catch(e){
     alertDialog('Chyba spojení', errMsg(e) + '\n(Zkus to na živé adrese, ne v náhledu — náhled může blokovat cizí spojení.)');
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+
+/* ===================== Bakaláři =====================
+   API v3 (github.com/bakalari-api/bakalari-api-v3). Každá škola má vlastní server
+   (uživatel vloží adresu). CORS je na moderních serverech otevřený (reflektuje origin),
+   takže se volá přímo z prohlížeče — heslo neprojde přes naše servery.
+   Token: POST {base}/api/login  (client_id=ANDR, grant_type=password|refresh_token)
+   Známky: GET {base}/api/3/marks (Bearer). Pololetí se odvodí z data známky. */
+function bakApiBase(url){
+  let s = String(url||'').trim();
+  if(!s) return '';
+  if(!/^https?:\/\//i.test(s)) s = 'https://' + s;
+  s = s.replace(/^http:/i,'https:');       // vynuť https
+  s = s.replace(/[?#].*$/,'');             // pryč query/hash
+  s = s.replace(/\/+$/,'');                // pryč koncová lomítka
+  s = s.replace(/\/(login)$/i,'');         // pryč koncové /login
+  s = s.replace(/\/api(\/.*)?$/i,'');      // kdyby někdo vložil rovnou .../api...
+  s = s.replace(/\/+$/,'');
+  return s;                                // root (může obsahovat i /bakaweb)
+}
+function bakSemFromDate(dateStr){
+  const mm = parseInt(String(dateStr||'').slice(5,7),10);
+  if(!mm) return solCurrentSem();
+  return (mm>=9 || mm===1) ? 1 : 2;        // září–leden = 1. pol, únor–srpen = 2. pol
+}
+async function bakTokenPassword(base, user, pass){
+  const r = await fetch(base + '/api/login', {
+    method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id:'ANDR', grant_type:'password', username:user, password:pass })
+  });
+  const j = await r.json().catch(()=>null);
+  return { ok: !!(r.ok && j && j.access_token), status:r.status, j:j };
+}
+async function bakTokenRefresh(base, refresh){
+  const r = await fetch(base + '/api/login', {
+    method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id:'ANDR', grant_type:'refresh_token', refresh_token:refresh })
+  });
+  const j = await r.json().catch(()=>null);
+  return { ok: !!(r.ok && j && j.access_token), status:r.status, j:j };
+}
+// poskládá známky z /api/3/marks do struktury aplikace (obě pololetí podle data známky)
+function bakBuildData(j){
+  const byId = {}, order = [];
+  (j.Subjects||[]).forEach(function(subj){
+    const s = subj.Subject || {};
+    const id = 'bak_' + (s.Id || s.Abbrev || s.Name || Math.random().toString(36).slice(2));
+    const name = s.Name || s.Abbrev || 'Předmět';
+    (subj.Marks||[]).forEach(function(mk){
+      if(subj.PointsOnly || mk.IsPoints) return;          // bodové/procentní hodnocení přeskoč
+      const val = solParseMark(mk.MarkText);
+      if(val==null) return;                                // slovní hodnocení přeskoč
+      if(!byId[id]){ byId[id] = { id:id, name:name, grades:[], open:false }; order.push(id); }
+      byId[id].grades.push({
+        id: 'g' + (mk.Id || (Date.now()+'_'+Math.random().toString(36).slice(2,6))),
+        mark: val,
+        weight: (typeof mk.Weight==='number' && mk.Weight>0) ? mk.Weight : 1,
+        desc: (mk.Theme || mk.Caption || ''),
+        date: String(mk.MarkDate||'').slice(0,10),
+        sem: bakSemFromDate(mk.MarkDate)
+      });
+    });
+  });
+  const subjects = order.map(function(id){ return byId[id]; }).filter(function(s){ return s.grades.length; });
+  return { sem: solCurrentSem(), subjects: subjects };
+}
+// stáhne jméno (nepovinné) + známky
+async function bakDownloadData(base, auth){
+  let name = '';
+  try { const ur = await fetch(base + '/api/3/user', { headers: auth }); const uj = await ur.json().catch(()=>null); if(uj && uj.FullName) name = uj.FullName; } catch(e){}
+  const r = await fetch(base + '/api/3/marks', { headers: auth });
+  if(!r.ok) return null;
+  const j = await r.json().catch(()=>null);
+  if(!j || !Array.isArray(j.Subjects)) return null;
+  return { name: name, out: bakBuildData(j) };
+}
+// tichá automatická synchronizace přes refresh token
+let bakSyncing = false;
+async function bakAutoSync(force){
+  if(bakSyncing) return;
+  if(localStorage.getItem('prumer_bak_auto')!=='1') return;
+  const refresh = localStorage.getItem('prumer_bak_refresh');
+  const base = localStorage.getItem('prumer_bak_url');
+  if(!refresh || !base) return;
+  const last = localStorage.getItem('prumer_bak_lastsync');
+  if(!force && last && (Date.now() - new Date(last).getTime()) < 2*60*1000) return;   // ne častěji než 1× za 2 min
+  bakSyncing = true; renderSolStatus('Aktualizuji známky…');
+  try {
+    const tk = await bakTokenRefresh(base, refresh);
+    if(!tk.ok){
+      if(tk.status===400 || (tk.j && tk.j.error)){ localStorage.removeItem('prumer_bak_refresh'); localStorage.setItem('prumer_bak_auto','0'); }
+      renderSolStatus(); return;
+    }
+    if(tk.j.refresh_token) localStorage.setItem('prumer_bak_refresh', tk.j.refresh_token);   // rotace
+    const auth = { 'Authorization':'Bearer '+tk.j.access_token };
+    const dl = await bakDownloadData(base, auth);
+    if(dl && dl.out.subjects.length) solApplyData(dl.out, true, 'bak');
+    else renderSolStatus();
+  } catch(e){ renderSolStatus(); }
+  finally { bakSyncing = false; }
+}
+function openBakSheet(){
+  document.getElementById('bakUrl').value = localStorage.getItem('prumer_bak_url') || '';
+  document.getElementById('bakUser').value = localStorage.getItem('prumer_bak_user') || '';
+  document.getElementById('bakPass').value = '';
+  showSheet('bak');
+}
+function closeBakSheet(){ hideSheet('bak'); }
+async function runBakImport(){
+  const url = document.getElementById('bakUrl').value.trim();
+  const user = document.getElementById('bakUser').value.trim();
+  const pass = document.getElementById('bakPass').value;
+  const base = bakApiBase(url);
+  if(!base){ alertDialog('Chybí adresa','Vlož adresu Bakalářů tvojí školy (najdeš ji v prohlížeči, když se přihlašuješ).'); return; }
+  if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
+  const btn = document.getElementById('bakBtn'); const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Přihlašuji…';
+  try {
+    const tk = await bakTokenPassword(base, user, pass);
+    if(!tk.ok){
+      let msg = (tk.j && tk.j.error==='invalid_grant') ? 'Špatné přihlašovací jméno nebo heslo.'
+              : (tk.j && tk.j.error_description ? tk.j.error_description : ('Přihlášení selhalo ('+tk.status+').'));
+      alertDialog('Nepovedlo se', msg);
+      return;
+    }
+    btn.textContent = 'Stahuji…';
+    const auth = { 'Authorization':'Bearer '+tk.j.access_token };
+    const dl = await bakDownloadData(base, auth);
+    if(!dl){ alertDialog('Nepovedlo se','Nepodařilo se načíst známky. Zkontroluj adresu školy.'); return; }
+    const subjN = dl.out.subjects.length;
+    const gradeN = dl.out.subjects.reduce((a,s)=>a+s.grades.length,0);
+    document.getElementById('bakPass').value = '';
+    localStorage.setItem('prumer_bak_url', base); localStorage.setItem('prumer_bak_user', user);
+    closeBakSheet();
+    if(!gradeN){ alertDialog('Žádné známky','Pro '+(dl.name||'tebe')+' se nepodařilo načíst žádné číselné známky.'); return; }
+    confirmDialog('Načíst známky?',
+      'Pro '+(dl.name||'tebe')+' se stáhlo '+subjN+' '+plur(subjN,'předmět','předměty','předmětů')+' a '+gradeN+' '+plur(gradeN,'známka','známky','známek')+'. Současné známky se přepíšou a od teď se budou aktualizovat samy.',
+      'Načíst', ()=>{
+        if(tk.j.refresh_token){ localStorage.setItem('prumer_bak_refresh', tk.j.refresh_token); localStorage.setItem('prumer_bak_auto','1'); }
+        localStorage.setItem('prumer_sol_auto','0');   // používá se jen jeden systém → vypni druhý auto-sync
+        dl.out.sem = solCurrentSem();
+        solApplyData(dl.out, false, 'bak');
+        alertDialog('Hotovo', 'Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
+      });
+  } catch(e){
+    alertDialog('Chyba spojení', errMsg(e) + '\n(Některé školy blokují přístup z prohlížeče — pak to bohužel nejde.)');
   } finally {
     btn.disabled = false; btn.textContent = label;
   }
@@ -2928,9 +3110,9 @@ function renderProfileView(wrap){
 function appendSolCard(wrap){
   const box = document.createElement('div');
   box.className = 'accent-pick'; box.style.marginTop = '16px';
-  const auto = localStorage.getItem('prumer_sol_auto')==='1' && localStorage.getItem('prumer_sol_refresh');
-  if(auto){
-    const last = localStorage.getItem('prumer_sol_lastsync');
+  const conn = schoolConn();
+  if(conn){
+    const last = localStorage.getItem('prumer_'+conn.sys+'_lastsync');
     let t = 'Aktualizuje se automaticky';
     if(last){
       const d = new Date(last);
@@ -2941,13 +3123,13 @@ function appendSolCard(wrap){
     }
     box.innerHTML = '<div class="accent-pick-t">Školní systém</div>'
       + '<div class="sol-line"><div style="flex:1;min-width:0">'
-      +   '<div style="font-size:14.5px;font-weight:700">Škola OnLine <span class="sol-badge"><span class="sol-dot"></span>auto-sync</span></div>'
+      +   '<div style="font-size:14.5px;font-weight:700">'+esc(conn.name)+' <span class="sol-badge"><span class="sol-dot"></span>auto-sync</span></div>'
       +   '<div style="font-size:12px;color:var(--ink-faint);margin-top:3px">'+esc(t)+'</div>'
       + '</div><button class="sol-out-btn" id="solOutBtn">Odhlásit</button></div>';
   } else {
     box.innerHTML = '<div class="accent-pick-t">Školní systém</div>'
       + '<div class="sol-line"><div style="flex:1;min-width:0">'
-      +   '<div style="font-size:14.5px;font-weight:700">Škola OnLine</div>'
+      +   '<div style="font-size:14.5px;font-weight:700">Škola OnLine · Bakaláři</div>'
       +   '<div style="font-size:12px;color:var(--ink-faint);margin-top:3px">Není propojeno — známky se neaktualizují samy.</div>'
       + '</div><button class="subj-action" id="solConnBtn" style="flex:0 0 auto">Připojit</button></div>';
   }
@@ -4451,7 +4633,7 @@ function obFinish(action){
   else if(action==='manual') setTimeout(openSubjectSheet, 250);
 }
 function obDots(){
-  const map={ system:'import', sol:'import', importing:'import' };   // pod-kroky importu svítí na posledním puntíku
+  const map={ system:'import', sol:'import', bak:'import', importing:'import' };   // pod-kroky importu svítí na posledním puntíku
   const i = OB_STEPS.indexOf(map[ob.step]||ob.step);
   return '<div class="ob-dots">'+OB_STEPS.map((s,j)=>'<span class="ob-dot'+(j<=i?' on':'')+'"></span>').join('')+'</div>';
 }
@@ -4460,7 +4642,7 @@ function obEnter(inputId, fn){ const el=document.getElementById(inputId); if(el)
 function renderOnboard(){
   const top=document.getElementById('obTop'), body=document.getElementById('obBody');
   if(!top||!body) return;
-  const backTo = { email:'name', code:'email', system:'import', sol:'system' }[ob.step] || null;   // po ověření kódu už zpět nejde (na účet), ale krok importu ano
+  const backTo = { email:'name', code:'email', system:'import', sol:'system', bak:'system' }[ob.step] || null;   // po ověření kódu už zpět nejde (na účet), ale krok importu ano
   top.innerHTML = (backTo ? '<button class="ob-back" aria-label="Zpět" onclick="obBack(\''+backTo+'\')">‹</button>' : '') + obDots();
   if(ob.step==='name'){
     body.innerHTML =
@@ -4517,7 +4699,7 @@ function renderOnboard(){
       +'<div class="ob-p">Přihlášení jde přímo z tvého prohlížeče — heslo se k nám nikdy nedostane.</div>'
       +'<div class="ob-fields" style="gap:10px">'
       +  '<button class="imp-sys" onclick="ob.step=\'sol\';renderOnboard()"><span class="imp-ic">S</span><span class="grow"><span class="imp-t">Škola OnLine</span><span class="imp-s">známky i s váhami, po pololetích</span></span>'+chev+'</button>'
-      +  '<button class="imp-sys" onclick="obSysSoon(\'Bakaláři\')"><span class="imp-ic">B</span><span class="grow"><span class="imp-t">Bakaláři</span><span class="imp-s">připravujeme</span></span><span class="imp-soon">Brzy</span></button>'
+      +  '<button class="imp-sys" onclick="ob.step=\'bak\';renderOnboard()"><span class="imp-ic">B</span><span class="grow"><span class="imp-t">Bakaláři</span><span class="imp-s">známky i s váhami</span></span>'+chev+'</button>'
       +  '<button class="imp-sys" onclick="obSysSoon(\'EduPage\')"><span class="imp-ic">E</span><span class="grow"><span class="imp-t">EduPage</span><span class="imp-s">připravujeme</span></span><span class="imp-soon">Brzy</span></button>'
       +'</div>';
   } else if(ob.step==='sol'){
@@ -4535,6 +4717,24 @@ function renderOnboard(){
     document.getElementById('obSolUser').value = localStorage.getItem('prumer_sol_user')||'';
     const p=document.getElementById('obSolPass'); if(p) p.onkeydown=(e)=>{ if(e.key==='Enter') obRunSol(); };
     setTimeout(()=>{ const u=document.getElementById('obSolUser'); if(u){ try{ u.focus(); }catch(e){} } }, 80);
+  } else if(ob.step==='bak'){
+    body.innerHTML =
+      '<div class="ob-emoji">🔐</div>'
+      +'<div class="ob-h">Přihlas se do Bakalářů</div>'
+      +'<div class="ob-p">Heslo se použije jen pro stažení a nikam se neuloží.</div>'
+      +'<div class="ob-fields">'
+      +  '<input id="obBakUrl" type="text" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://bakalari.tvojeskola.cz">'
+      +  '<input id="obBakUser" type="text" autocomplete="username" placeholder="přihlašovací jméno">'
+      +  '<input id="obBakPass" type="password" autocomplete="current-password" placeholder="heslo">'
+      +'</div>'
+      +'<div class="ob-actions">'
+      +  '<button class="btn btn-primary" id="obBakBtn" onclick="obRunBak()">Stáhnout známky</button>'
+      +'</div>'
+      +'<div class="ob-note">Adresu Bakalářů najdeš v prohlížeči, když se přihlašuješ (např. bakalari.tvojeskola.cz).</div>';
+    document.getElementById('obBakUrl').value = localStorage.getItem('prumer_bak_url')||'';
+    document.getElementById('obBakUser').value = localStorage.getItem('prumer_bak_user')||'';
+    const bp=document.getElementById('obBakPass'); if(bp) bp.onkeydown=(e)=>{ if(e.key==='Enter') obRunBak(); };
+    setTimeout(()=>{ const u=document.getElementById('obBakUrl'); if(u){ try{ u.focus(); }catch(e){} } }, 80);
   } else if(ob.step==='importing'){
     body.innerHTML = '<div class="ob-loading"><div class="ai-spin"></div><div>Stahuji tvoje známky…<br><span style="font-size:12.5px">Chvilku to potrvá.</span></div></div>';
   }
@@ -4631,6 +4831,38 @@ async function obRunSol(){
     alertDialog('Chyba spojení', errMsg(e));
   }
 }
+async function obRunBak(){
+  const url=(document.getElementById('obBakUrl').value||'').trim();
+  const user=(document.getElementById('obBakUser').value||'').trim();
+  const pass=(document.getElementById('obBakPass')||{}).value||'';
+  const base=bakApiBase(url);
+  if(!base){ alertDialog('Chybí adresa','Vlož adresu Bakalářů tvojí školy.'); return; }
+  if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
+  ob.step='importing'; renderOnboard();
+  try{
+    const tk=await bakTokenPassword(base, user, pass);
+    if(!tk.ok){
+      ob.step='bak'; renderOnboard();
+      const msg=(tk.j&&tk.j.error==='invalid_grant')?'Špatné přihlašovací jméno nebo heslo.'
+              :(tk.j&&tk.j.error_description?tk.j.error_description:('Přihlášení selhalo ('+tk.status+').'));
+      alertDialog('Nepovedlo se', msg); return;
+    }
+    const auth={ 'Authorization':'Bearer '+tk.j.access_token };
+    const dl=await bakDownloadData(base, auth);
+    if(!dl){ ob.step='bak'; renderOnboard(); alertDialog('Nepovedlo se','Nepodařilo se načíst známky. Zkontroluj adresu školy.'); return; }
+    const gradeN=dl.out.subjects.reduce((a,s)=>a+s.grades.length,0);
+    try{ localStorage.setItem('prumer_bak_url', base); localStorage.setItem('prumer_bak_user', user); }catch(e){}
+    if(!gradeN){ ob.step='bak'; renderOnboard(); alertDialog('Žádné známky','Nenašli jsme žádné číselné známky. Zkus to prosím ručně.'); return; }
+    if(tk.j.refresh_token){ try{ localStorage.setItem('prumer_bak_refresh', tk.j.refresh_token); localStorage.setItem('prumer_bak_auto','1'); localStorage.setItem('prumer_sol_auto','0'); }catch(e){} }
+    dl.out.sem=solCurrentSem();
+    solApplyData(dl.out, false, 'bak');
+    obFinish();
+    alertDialog('Hotovo','Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
+  }catch(e){
+    ob.step='bak'; renderOnboard();
+    alertDialog('Chyba spojení', errMsg(e));
+  }
+}
 
 
 applyTheme(initialTheme());   // nastaví režim (světlý/tmavý) + vykreslí
@@ -4660,10 +4892,10 @@ if(/[?&](calc|embed)/.test(location.search)){
 }
 initMaterials();
 renderSolStatus();
-solAutoSync();   // tichá aktualizace při otevření
+solAutoSync(); bakAutoSync();   // tichá aktualizace při otevření (každá si hlídá svůj flag)
 // znovu po návratu do popředí a periodicky, dokud je appka otevřená (jen iniciuje, throttle uvnitř)
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ solAutoSync(); renderUpcoming(); updateNotifBadge(); } });
-setInterval(()=>{ if(!document.hidden) solAutoSync(); }, 10*60*1000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ solAutoSync(); bakAutoSync(); renderUpcoming(); updateNotifBadge(); } });
+setInterval(()=>{ if(!document.hidden){ solAutoSync(); bakAutoSync(); } }, 10*60*1000);
 
 // Supabase i ikony/fonty se načítají až po tomto skriptu → dořeš po 'load'
 window.addEventListener('load', ()=>{
@@ -4695,7 +4927,8 @@ window.addEventListener('load', ()=>{
 'zatím bez známek':'no grades yet','hypotetická':'hypothetical','+ Přidat hypotetickou známku':'+ Add hypothetical grade','Přejmenovat':'Rename','Smazat předmět':'Delete subject','Smazat známku?':'Delete grade?','Tuto akci nelze vrátit.':'This cannot be undone.','Přejmenovat předmět':'Rename subject','Předmět zatím nemá žádné známky.':'This subject has no grades yet.',
 'Zadej platné maximum bodů.':'Enter a valid maximum of points.','Zadej získané body.':'Enter the points you scored.',
 'Prázdná zpráva':'Empty message','Napiš prosím nejdřív zprávu.':'Please write a message first.','Chybí e-mail':'Email missing','Vyplň prosím svůj e-mail, ať ti autor může odpovědět.':'Please enter your email so the author can reply.','Není připojení':'No connection','Odeslání potřebuje cloud (Supabase).':'Sending needs the cloud (Supabase).','Odesílám…':'Sending…','Děkuju!':'Thanks!','Zpráva byla odeslaná. Díky za zpětnou vazbu!':'Message sent. Thanks for the feedback!','Není nastaveno':'Not set up',
-'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.':'Pulls your grades straight from Škola OnLine. Your password is never stored.','Smaže se uložené přihlášení. Známky v aplikaci zůstanou, ale dál se nebudou aktualizovat samy.':'Your saved login will be removed. Grades stay in the app but will no longer auto-update.','Aktualizuji známky…':'Updating grades…','Chybí údaje':'Missing info','Vyplň přihlašovací jméno i heslo.':'Enter your username and password.','Přihlašuji…':'Signing in…','Špatné přihlašovací jméno nebo heslo.':'Wrong username or password.','Nepodařilo se načíst účet nebo známky.':'Could not load the account or grades.','Žádné známky':'No grades','Načíst známky?':'Load grades?','Načíst':'Load','Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.':'Grades loaded. From now on they update automatically every time you open the app.','Chyba spojení':'Connection error',
+'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.':'Pulls your grades straight from Škola OnLine. Your password is never stored.',
+'Stáhne tvoje známky přímo ze školního systému. Heslo se nikam neukládá.':'Pulls your grades straight from your school system. Your password is never stored.','Smaže se uložené přihlášení. Známky v aplikaci zůstanou, ale dál se nebudou aktualizovat samy.':'Your saved login will be removed. Grades stay in the app but will no longer auto-update.','Aktualizuji známky…':'Updating grades…','Chybí údaje':'Missing info','Vyplň přihlašovací jméno i heslo.':'Enter your username and password.','Přihlašuji…':'Signing in…','Špatné přihlašovací jméno nebo heslo.':'Wrong username or password.','Nepodařilo se načíst účet nebo známky.':'Could not load the account or grades.','Žádné známky':'No grades','Načíst známky?':'Load grades?','Načíst':'Load','Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.':'Grades loaded. From now on they update automatically every time you open the app.','Chyba spojení':'Connection error',
 'Není připojení (Supabase).':'No connection (Supabase).','Nejsi přihlášený.':'You are not signed in.','odhlásit':'sign out',
 'Vypadá to, že nejsi online. Zkontroluj připojení k internetu a zkus to prosím znovu.':'Looks like you are offline. Check your internet connection and try again.',
 'Nepodařilo se spojit se serverem. Zkontroluj připojení a zkus to prosím znovu.':'Could not reach the server. Check your connection and try again.',
@@ -4844,7 +5077,18 @@ window.addEventListener('load', ()=>{
 'Není propojeno — známky se neaktualizují samy.':'Not connected — grades do not update automatically.',
 'Aktualizuje se automaticky':'Updates automatically',
 'Zatím v žádné třídě':'Not in any class yet',
-'Připoj se přes kód nebo si vyber veřejnou třídu — tlačítkem „Přidat třídu" níže.':'Join with a code — use the "Add class" button below.'
+'Připoj se přes kód nebo si vyber veřejnou třídu — tlačítkem „Přidat třídu" níže.':'Join with a code — use the "Add class" button below.',
+/* --- Bakaláři import --- */
+'známky i s váhami':'grades with weights',
+'Načíst z Bakalářů':'Import from Bakaláři','Přihlas se do Bakalářů':'Sign in to Bakaláři',
+'Adresa Bakalářů tvojí školy':"Your school's Bakaláři address",
+'jméno do Bakalářů':'Bakaláři username',
+'Adresu najdeš v prohlížeči, když se přihlašuješ do Bakalářů (např. bakalari.tvojeskola.cz). Přihlášení jde z tvého prohlížeče přímo do školy — heslo nikdy neprojde přes naše servery a nikam se neukládá. Stažení přepíše současné známky.':"You can find the address in your browser when signing in to Bakaláři (e.g. bakalari.tvojeskola.cz). Sign-in goes from your browser straight to the school — your password never passes through our servers and is never stored. The download overwrites your current grades.",
+'Adresu Bakalářů najdeš v prohlížeči, když se přihlašuješ (např. bakalari.tvojeskola.cz).':'You can find the Bakaláři address in your browser when signing in (e.g. bakalari.tvojeskola.cz).',
+'Chybí adresa':'Address missing',
+'Vlož adresu Bakalářů tvojí školy (najdeš ji v prohlížeči, když se přihlašuješ).':"Enter your school's Bakaláři address (find it in your browser when signing in).",
+'Vlož adresu Bakalářů tvojí školy.':"Enter your school's Bakaláři address.",
+'Nepodařilo se načíst známky. Zkontroluj adresu školy.':'Could not load grades. Check the school address.'
   };
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;
@@ -4871,6 +5115,8 @@ window.addEventListener('load', ()=>{
       .replace(/Žádosti o přátelství \((\d+)\)/g,'Friend requests ($1)')
       .replace(/Poslední synchronizace dnes /g,'Last sync today at ')
       .replace(/Poslední synchronizace /g,'Last sync ')
+      .replace(/ se aktualizuje samo/g,' updates automatically')
+      .replace(/ · naposledy /g,' · last ')
       .replace(/· kód /g,'· code ')
       .replace(/· skoro stejně/g,'· about the same')
       .replace(/sdílíte si průměry/g,'you share averages')
