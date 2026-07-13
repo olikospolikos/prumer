@@ -1420,7 +1420,16 @@
   <div class="sheet-grab"></div>
   <h3>Načíst z Bakalářů</h3>
   <div class="fields">
-    <label class="fld"><span>Adresa Bakalářů tvojí školy</span>
+    <div id="bakPicker">
+      <label class="fld"><span>Město školy</span>
+        <input type="text" id="bakTown" list="bakTownList" autocapitalize="words" autocomplete="off" placeholder="začni psát město…">
+        <datalist id="bakTownList"></datalist>
+      </label>
+      <label class="fld" id="bakSchoolWrap" style="display:none;margin-top:13px"><span>Škola</span>
+        <select id="bakSchoolSel"></select>
+      </label>
+    </div>
+    <label class="fld" id="bakUrlWrap" style="display:none"><span>Adresa Bakalářů tvojí školy</span>
       <input type="text" id="bakUrl" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://bakalari.tvojeskola.cz">
     </label>
     <label class="fld"><span>Přihlašovací jméno</span>
@@ -1429,8 +1438,9 @@
     <label class="fld"><span>Heslo</span>
       <input type="password" id="bakPass" autocomplete="current-password" placeholder="heslo">
     </label>
+    <button type="button" class="ob-link" id="bakManualToggle" style="align-self:flex-start;margin:0;padding:2px 0">Moje škola není v seznamu → zadat adresu ručně</button>
   </div>
-  <p class="backup-note" style="margin:12px 2px 0">Adresu najdeš v prohlížeči, když se přihlašuješ do Bakalářů (např. bakalari.tvojeskola.cz). Přihlášení jde z tvého prohlížeče přímo do školy — heslo nikdy neprojde přes naše servery a nikam se neukládá. Stažení přepíše současné známky.</p>
+  <p class="backup-note" style="margin:8px 2px 0">Přihlášení jde z tvého prohlížeče přímo do školy — heslo nikdy neprojde přes naše servery a nikam se neukládá. Stažení přepíše současné známky.</p>
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeBakSheet()">Zrušit</button>
     <button class="btn btn-primary" id="bakBtn" onclick="runBakImport()">Stáhnout</button>
@@ -2461,19 +2471,80 @@ async function bakAutoSync(force){
   } catch(e){ renderSolStatus(); }
   finally { bakSyncing = false; }
 }
+/* ---- výběr školy přes veřejný registr (edge fce bakalari-schools) ---- */
+let _bakTowns = null;              // cache seznamu měst
+let bakPickedUrl = null;          // adresa školy vybraná v pickeru
+let bakManual = false;            // uživatel zvolil ruční zadání adresy
+async function bakFetchTowns(){
+  if(_bakTowns) return _bakTowns;
+  try {
+    const r = await fetch(SB_URL + '/functions/v1/bakalari-schools?towns=1', { headers:{ 'apikey': SB_KEY } });
+    const j = await r.json().catch(()=>null);
+    _bakTowns = (j && Array.isArray(j.towns)) ? j.towns : [];
+  } catch(e){ _bakTowns = []; }
+  return _bakTowns;
+}
+async function bakFetchSchools(town){
+  try {
+    const r = await fetch(SB_URL + '/functions/v1/bakalari-schools?town=' + encodeURIComponent(town), { headers:{ 'apikey': SB_KEY } });
+    const j = await r.json().catch(()=>null);
+    return (j && Array.isArray(j.schools)) ? j.schools : [];
+  } catch(e){ return []; }
+}
+// napojí picker město→škola na zadané elementy; onPick(url|null) hlásí výběr
+function bakWirePicker(townEl, listEl, wrapEl, selEl, onPick){
+  onPick(null);
+  bakFetchTowns().then(function(towns){
+    if(!listEl) return;
+    listEl.innerHTML = towns.map(function(t){ return '<option value="'+esc(t.name)+'"></option>'; }).join('');
+  });
+  let curTown = '';
+  townEl.oninput = function(){
+    const v = townEl.value.trim();
+    const match = (_bakTowns||[]).some(function(t){ return t.name.toLowerCase()===v.toLowerCase(); });
+    if(!match){ wrapEl.style.display='none'; selEl.innerHTML=''; curTown=''; onPick(null); return; }
+    if(v.toLowerCase()===curTown) return; curTown=v.toLowerCase();
+    wrapEl.style.display='none'; selEl.innerHTML=''; onPick(null);
+    bakFetchSchools(v).then(function(schools){
+      if(!schools.length){ return; }
+      selEl.innerHTML = '<option value="">Vyber školu…</option>' + schools.map(function(s){ return '<option value="'+esc(s.url)+'">'+esc(s.name)+'</option>'; }).join('');
+      wrapEl.style.display='';
+      selEl.onchange = function(){ onPick(selEl.value || null); };
+    });
+  };
+}
 function openBakSheet(){
+  bakManual = false; bakPickedUrl = null;
+  document.getElementById('bakUrlWrap').style.display = 'none';
+  document.getElementById('bakPicker').style.display = '';
+  document.getElementById('bakManualToggle').style.display = '';
+  document.getElementById('bakTown').value = '';
+  document.getElementById('bakSchoolWrap').style.display = 'none';
+  document.getElementById('bakSchoolSel').innerHTML = '';
   document.getElementById('bakUrl').value = localStorage.getItem('prumer_bak_url') || '';
   document.getElementById('bakUser').value = localStorage.getItem('prumer_bak_user') || '';
   document.getElementById('bakPass').value = '';
+  bakWirePicker(
+    document.getElementById('bakTown'), document.getElementById('bakTownList'),
+    document.getElementById('bakSchoolWrap'), document.getElementById('bakSchoolSel'),
+    function(url){ bakPickedUrl = url; }
+  );
+  document.getElementById('bakManualToggle').onclick = function(){
+    bakManual = true;
+    document.getElementById('bakPicker').style.display = 'none';
+    document.getElementById('bakManualToggle').style.display = 'none';
+    document.getElementById('bakUrlWrap').style.display = '';
+    const u = document.getElementById('bakUrl'); if(u) u.focus();
+  };
   showSheet('bak');
 }
 function closeBakSheet(){ hideSheet('bak'); }
 async function runBakImport(){
-  const url = document.getElementById('bakUrl').value.trim();
+  const url = bakManual ? document.getElementById('bakUrl').value.trim() : (bakPickedUrl || '');
   const user = document.getElementById('bakUser').value.trim();
   const pass = document.getElementById('bakPass').value;
   const base = bakApiBase(url);
-  if(!base){ alertDialog('Chybí adresa','Vlož adresu Bakalářů tvojí školy (najdeš ji v prohlížeči, když se přihlašuješ).'); return; }
+  if(!base){ alertDialog(bakManual?'Chybí adresa':'Chybí škola', bakManual?'Vlož adresu Bakalářů tvojí školy.':'Vyber svoji školu ze seznamu (napiš město a pak vyber školu).'); return; }
   if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
   const btn = document.getElementById('bakBtn'); const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Přihlašuji…';
@@ -4609,9 +4680,9 @@ if(avatarFileEl) avatarFileEl.addEventListener('change', async function(e){
 /* ===================== Onboarding (první spuštění) =====================
    Otázka po otázce: jméno → email → kód z emailu (OTP, založí účet) → ročník → nabídka importu.
    Jen pro nové uživatele (bez účtu a bez známek), nikdy v embed režimu. Flag: prumer_onboarded. */
-const OB_STEPS = ['name','email','code','rocnik','import'];
+const OB_STEPS = ['name','email','code','rocnik','school','import'];
 const OB_ROCNIK = ['Základka','1. ročník SŠ','2. ročník SŠ','3. ročník SŠ','4. ročník SŠ','Jiné'];
-let ob = { step:'name', name:'', email:'', rocnik:'', sending:false, returning:false };
+let ob = { step:'name', name:'', email:'', rocnik:'', school:'', sending:false, returning:false };
 function onboardActive(){ const el=document.getElementById('onboard'); return !!(el && el.classList.contains('show')); }
 function maybeOnboard(){
   try{
@@ -4619,7 +4690,7 @@ function maybeOnboard(){
     if(localStorage.getItem('prumer_onboarded')) return;
     if(authUser || (data.subjects && data.subjects.length)){ localStorage.setItem('prumer_onboarded','1'); return; }   // stávající uživatel — nic nevyskakuj
     if(!sbConfigured() || !window.supabase || !getSB()) return;   // bez cloudu nejde poslat kód; appka jede normálně, zkusí se to příště
-    ob = { step:'name', name:'', email:'', rocnik:'', sending:false, returning:false };
+    ob = { step:'name', name:'', email:'', rocnik:'', school:'', sending:false, returning:false };
     document.getElementById('onboard').classList.add('show');
     renderOnboard();
   }catch(e){}
@@ -4682,6 +4753,16 @@ function renderOnboard(){
       +'<div class="ob-p">Pomůže nám to appku vylepšovat pro tebe.</div>'
       +'<div class="ob-opts">'+OB_ROCNIK.map(r=>'<button class="ob-opt" onclick="obPickRocnik(this.textContent)">'+esc(r)+'</button>').join('')+'</div>'
       +'<div class="ob-actions"><button class="ob-link" onclick="obSkipRocnik()">Přeskočit</button></div>';
+  } else if(ob.step==='school'){
+    body.innerHTML =
+      '<div class="ob-emoji">🏫</div>'
+      +'<div class="ob-h">Kam chodíš do školy?</div>'
+      +'<div class="ob-p">Ukáže se na tvém profilu. Klidně přeskoč.</div>'
+      +'<div class="ob-fields"><input id="obSchool" type="text" autocomplete="organization" maxlength="80" placeholder="např. Gymnázium Botičská"></div>'
+      +'<div class="ob-actions"><button class="btn btn-primary" onclick="obSaveSchool()">Pokračovat</button>'
+      +'<button class="ob-link" onclick="obSkipSchool()">Přeskočit</button></div>';
+    document.getElementById('obSchool').value = ob.school || (profile && profile.school) || '';
+    obEnter('obSchool', obSaveSchool);
   } else if(ob.step==='import'){
     body.innerHTML =
       '<div class="ob-emoji">⚡</div>'
@@ -4718,23 +4799,40 @@ function renderOnboard(){
     const p=document.getElementById('obSolPass'); if(p) p.onkeydown=(e)=>{ if(e.key==='Enter') obRunSol(); };
     setTimeout(()=>{ const u=document.getElementById('obSolUser'); if(u){ try{ u.focus(); }catch(e){} } }, 80);
   } else if(ob.step==='bak'){
+    bakManual = false; bakPickedUrl = null;
     body.innerHTML =
       '<div class="ob-emoji">🔐</div>'
       +'<div class="ob-h">Přihlas se do Bakalářů</div>'
-      +'<div class="ob-p">Heslo se použije jen pro stažení a nikam se neuloží.</div>'
+      +'<div class="ob-p">Vyber svoji školu a přihlas se. Heslo se použije jen pro stažení a nikam se neuloží.</div>'
       +'<div class="ob-fields">'
-      +  '<input id="obBakUrl" type="text" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://bakalari.tvojeskola.cz">'
+      +  '<div id="obBakPicker">'
+      +    '<input id="obBakTown" type="text" list="obBakTownList" autocapitalize="words" autocomplete="off" placeholder="město školy">'
+      +    '<datalist id="obBakTownList"></datalist>'
+      +    '<select id="obBakSchoolSel" style="display:none;margin-top:12px"></select>'
+      +  '</div>'
+      +  '<input id="obBakUrl" type="text" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="https://bakalari.tvojeskola.cz" style="display:none">'
       +  '<input id="obBakUser" type="text" autocomplete="username" placeholder="přihlašovací jméno">'
       +  '<input id="obBakPass" type="password" autocomplete="current-password" placeholder="heslo">'
       +'</div>'
       +'<div class="ob-actions">'
       +  '<button class="btn btn-primary" id="obBakBtn" onclick="obRunBak()">Stáhnout známky</button>'
-      +'</div>'
-      +'<div class="ob-note">Adresu Bakalářů najdeš v prohlížeči, když se přihlašuješ (např. bakalari.tvojeskola.cz).</div>';
+      +  '<button class="ob-link" id="obBakManual">Moje škola není v seznamu → zadat adresu ručně</button>'
+      +'</div>';
     document.getElementById('obBakUrl').value = localStorage.getItem('prumer_bak_url')||'';
     document.getElementById('obBakUser').value = localStorage.getItem('prumer_bak_user')||'';
+    bakWirePicker(
+      document.getElementById('obBakTown'), document.getElementById('obBakTownList'),
+      document.getElementById('obBakSchoolSel'), document.getElementById('obBakSchoolSel'),
+      function(url){ bakPickedUrl = url; }
+    );
+    document.getElementById('obBakManual').onclick = function(){
+      bakManual = true;
+      document.getElementById('obBakPicker').style.display = 'none';
+      document.getElementById('obBakManual').style.display = 'none';
+      const u = document.getElementById('obBakUrl'); u.style.display = ''; u.focus();
+    };
     const bp=document.getElementById('obBakPass'); if(bp) bp.onkeydown=(e)=>{ if(e.key==='Enter') obRunBak(); };
-    setTimeout(()=>{ const u=document.getElementById('obBakUrl'); if(u){ try{ u.focus(); }catch(e){} } }, 80);
+    setTimeout(()=>{ const u=document.getElementById('obBakTown'); if(u){ try{ u.focus(); }catch(e){} } }, 80);
   } else if(ob.step==='importing'){
     body.innerHTML = '<div class="ob-loading"><div class="ai-spin"></div><div>Stahuji tvoje známky…<br><span style="font-size:12.5px">Chvilku to potrvá.</span></div></div>';
   }
@@ -4794,9 +4892,16 @@ function obPickRocnik(v){
   ob.rocnik=v;
   try{ localStorage.setItem('prumer_rocnik', v); }catch(e){}
   try{ saveProfile({ rocnik:v }); }catch(e){}   // samostatný zápis: když sloupec rocnik neexistuje, nic jiného se nerozbije
+  ob.step='school'; renderOnboard();
+}
+function obSkipRocnik(){ ob.step='school'; renderOnboard(); }
+function obSaveSchool(){
+  const v=(document.getElementById('obSchool').value||'').trim();
+  ob.school=v;
+  if(v){ try{ saveProfile({ school:v }); }catch(e){} }   // samostatný zápis, ať nic nerozbije
   ob.step='import'; renderOnboard();
 }
-function obSkipRocnik(){ ob.step='import'; renderOnboard(); }
+function obSkipSchool(){ ob.step='import'; renderOnboard(); }
 function obSysSoon(sys){
   // v onboardingu neotvíráme spodní feedback sheet (byl by pod overlayem) — jen hláška
   alertDialog('Už brzy', 'Import z '+sys+' připravujeme. Zatím zkus Škola OnLine, nebo zadej známky ručně.');
@@ -4832,36 +4937,35 @@ async function obRunSol(){
   }
 }
 async function obRunBak(){
-  const url=(document.getElementById('obBakUrl').value||'').trim();
+  const url = bakManual ? ((document.getElementById('obBakUrl').value||'').trim()) : (bakPickedUrl||'');
   const user=(document.getElementById('obBakUser').value||'').trim();
   const pass=(document.getElementById('obBakPass')||{}).value||'';
   const base=bakApiBase(url);
-  if(!base){ alertDialog('Chybí adresa','Vlož adresu Bakalářů tvojí školy.'); return; }
+  if(!base){ alertDialog(bakManual?'Chybí adresa':'Chybí škola', bakManual?'Vlož adresu Bakalářů tvojí školy.':'Vyber svoji školu (napiš město a pak vyber školu).'); return; }
   if(!user || !pass){ alertDialog('Chybí údaje','Vyplň přihlašovací jméno i heslo.'); return; }
-  ob.step='importing'; renderOnboard();
+  const btn=document.getElementById('obBakBtn'); const lab=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Přihlašuji…'; }
   try{
     const tk=await bakTokenPassword(base, user, pass);
     if(!tk.ok){
-      ob.step='bak'; renderOnboard();
       const msg=(tk.j&&tk.j.error==='invalid_grant')?'Špatné přihlašovací jméno nebo heslo.'
               :(tk.j&&tk.j.error_description?tk.j.error_description:('Přihlášení selhalo ('+tk.status+').'));
       alertDialog('Nepovedlo se', msg); return;
     }
+    if(btn) btn.textContent='Stahuji…';
     const auth={ 'Authorization':'Bearer '+tk.j.access_token };
     const dl=await bakDownloadData(base, auth);
-    if(!dl){ ob.step='bak'; renderOnboard(); alertDialog('Nepovedlo se','Nepodařilo se načíst známky. Zkontroluj adresu školy.'); return; }
+    if(!dl){ alertDialog('Nepovedlo se','Nepodařilo se načíst známky. Zkontroluj školu nebo adresu.'); return; }
     const gradeN=dl.out.subjects.reduce((a,s)=>a+s.grades.length,0);
     try{ localStorage.setItem('prumer_bak_url', base); localStorage.setItem('prumer_bak_user', user); }catch(e){}
-    if(!gradeN){ ob.step='bak'; renderOnboard(); alertDialog('Žádné známky','Nenašli jsme žádné číselné známky. Zkus to prosím ručně.'); return; }
+    if(!gradeN){ alertDialog('Žádné známky','Nenašli jsme žádné číselné známky. Zkus to prosím ručně.'); return; }
     if(tk.j.refresh_token){ try{ localStorage.setItem('prumer_bak_refresh', tk.j.refresh_token); localStorage.setItem('prumer_bak_auto','1'); localStorage.setItem('prumer_sol_auto','0'); }catch(e){} }
     dl.out.sem=solCurrentSem();
     solApplyData(dl.out, false, 'bak');
     obFinish();
     alertDialog('Hotovo','Známky jsou načtené. Od teď se aktualizují samy pokaždé, když aplikaci otevřeš.');
   }catch(e){
-    ob.step='bak'; renderOnboard();
     alertDialog('Chyba spojení', errMsg(e));
-  }
+  }finally{ if(btn){ btn.disabled=false; btn.textContent=lab; } }
 }
 
 
@@ -5038,6 +5142,9 @@ window.addEventListener('load', ()=>{
 'Kód nesedí nebo vypršel — pošli si nový.':'The code is wrong or expired — send yourself a new one.',
 'V jakém jsi ročníku?':'What year are you in?',
 'Pomůže nám to appku vylepšovat pro tebe.':'It helps us improve the app for you.',
+'Kam chodíš do školy?':'Which school do you go to?',
+'Ukáže se na tvém profilu. Klidně přeskoč.':'It shows on your profile. Feel free to skip.',
+'např. Gymnázium Botičská':'e.g. Lincoln High School',
 'Základka':'Primary school','1. ročník SŠ':'1st year of high school','2. ročník SŠ':'2nd year of high school','3. ročník SŠ':'3rd year of high school','4. ročník SŠ':'4th year of high school','Jiné':'Other',
 'Ročník':'Year','Přeskočit':'Skip',
 'Chceš načíst známky ze školního systému?':'Want to import grades from your school system?',
@@ -5088,7 +5195,16 @@ window.addEventListener('load', ()=>{
 'Chybí adresa':'Address missing',
 'Vlož adresu Bakalářů tvojí školy (najdeš ji v prohlížeči, když se přihlašuješ).':"Enter your school's Bakaláři address (find it in your browser when signing in).",
 'Vlož adresu Bakalářů tvojí školy.':"Enter your school's Bakaláři address.",
-'Nepodařilo se načíst známky. Zkontroluj adresu školy.':'Could not load grades. Check the school address.'
+'Nepodařilo se načíst známky. Zkontroluj adresu školy.':'Could not load grades. Check the school address.',
+'Nepodařilo se načíst známky. Zkontroluj školu nebo adresu.':'Could not load grades. Check the school or address.',
+'Město školy':'School town','začni psát město…':'start typing a town…',
+'Škola':'School','Vyber školu…':'Pick your school…','město školy':'school town',
+'Moje škola není v seznamu → zadat adresu ručně':"My school isn't listed → enter the address manually",
+'Přihlášení jde z tvého prohlížeče přímo do školy — heslo nikdy neprojde přes naše servery a nikam se neukládá. Stažení přepíše současné známky.':'Sign-in goes from your browser straight to the school — your password never passes through our servers and is never stored. The download overwrites your current grades.',
+'Vyber svoji školu a přihlas se. Heslo se použije jen pro stažení a nikam se neuloží.':'Pick your school and sign in. Your password is used only for the download and is never stored.',
+'Chybí škola':'School missing',
+'Vyber svoji školu ze seznamu (napiš město a pak vyber školu).':'Pick your school from the list (type the town, then pick the school).',
+'Vyber svoji školu (napiš město a pak vyber školu).':'Pick your school (type the town, then pick the school).'
   };
   var LANG='cs'; try{ LANG=localStorage.getItem('prumer_lang')||'cs'; }catch(e){}
   window.LANG=LANG;
