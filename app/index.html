@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0f1115">
+<meta name="theme-color" content="#f7f5ef">
 <title>Estudivo</title>
 <meta name="description" content="Estudivo – studentská aplikace pro přehled známek a výpočet průměru, sdílení materiálů ve třídě, kalendář testů a import známek ze Škola OnLine.">
 <link rel="canonical" href="https://estudivo.cz/app/">
@@ -35,7 +35,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap">
-<script>(function(){function sys(){try{return(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}catch(e){return'light';}}try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:sys();document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme',sys());}})();</script>
+<script>(function(){function sys(){try{return(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}catch(e){return'light';}}try{var s=localStorage.getItem('prumer_theme');var t=(s==='light'||s==='dark')?s:(s==='system'?sys():'light');document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
 <script>(function(){try{var a=localStorage.getItem('prumer_accent');if(a==='blue'||a==='pink'||a==='green'||a==='purple')document.documentElement.setAttribute('data-accent',a);}catch(e){}})();</script>
 <style>
   /* fonty se načítají přes <link rel="stylesheet"> v <head> (rychlejší než blokující @import) */
@@ -1724,8 +1724,8 @@ function markColor(m) {
 function initialTheme(){
   const s = localStorage.getItem('prumer_theme');
   if(s==='light' || s==='dark') return s;
-  try{ if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'; }catch(e){}
-  return 'light';   // výchozí pro nové uživatele = podle systému telefonu (fallback světlý)
+  if(s==='system'){ try{ if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'; }catch(e){} return 'light'; }
+  return 'light';   // výchozí pro nové uživatele = světlý (systém jen když si ho výslovně zvolí)
 }
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
@@ -3112,7 +3112,7 @@ async function renderProfile(){
 function appendAccentPicker(wrap){
   const curAccent = document.documentElement.getAttribute('data-accent') || 'yellow';
   let storedTheme = null; try{ storedTheme = localStorage.getItem('prumer_theme'); }catch(e){}
-  const curTheme = (storedTheme==='light'||storedTheme==='dark') ? storedTheme : 'system';
+  const curTheme = (storedTheme==='light'||storedTheme==='dark'||storedTheme==='system') ? storedTheme : 'light';
   const opts = [['yellow','Žlutá','#e8b84b'],['blue','Modrá','#5fb8e6'],['pink','Růžová','#f096bf'],['green','Zelená','#4fbe7d'],['purple','Fialová','#a687e8']];
   const box = document.createElement('div');
   box.className = 'accent-pick';
@@ -3138,7 +3138,7 @@ function appendAccentPicker(wrap){
 }
 function setThemeMode(mode){
   if(mode==='system'){
-    try{ localStorage.removeItem('prumer_theme'); }catch(e){}
+    try{ localStorage.setItem('prumer_theme','system'); }catch(e){}   // uložíme 'system' → prázdná hodnota = světlý default
     let t='light'; try{ if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) t='dark'; }catch(e){}
     applyTheme(t); renderProfile();
     return;
