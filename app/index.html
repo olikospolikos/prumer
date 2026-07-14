@@ -340,6 +340,14 @@
     cursor: pointer;
   }
   .add-grade-btn:active { background: var(--bg-elev2); }
+  /* dvě tlačítka pod sebou: hypotetická (přerušovaná) + opravdová (plná, akcent) */
+  .add-grade-wrap { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 14px; }
+  .add-grade-wrap .add-grade-btn { margin: 0; }
+  .add-grade-real {
+    border-style: solid; border-color: rgba(var(--accent-rgb),0.5);
+    background: var(--accent-soft); color: var(--accent-deep, var(--accent));
+  }
+  .add-grade-real:active { background: rgba(var(--accent-rgb),0.18); }
 
   /* hypothetical block */
   .hypo {
@@ -1311,7 +1319,7 @@
       <input type="date" id="gradeDate">
     </label>
   </div>
-  <p class="backup-note" style="margin:12px 2px 0">Hypotetická známka („co kdyby") se počítá do průměru a je v seznamu odlišená. Synchronizace ze Škola OnLine ji nepřepíše ani nesmaže.</p>
+  <p class="backup-note" id="gradeNote" style="margin:12px 2px 0">Hypotetická známka („co kdyby") se počítá do průměru a je v seznamu odlišená. Synchronizace ze Škola OnLine ji nepřepíše ani nesmaže.</p>
   <div class="sheet-actions">
     <button class="btn btn-ghost" onclick="closeGradeSheet()">Zrušit</button>
     <button class="btn btn-primary" onclick="saveGrade()">Uložit</button>
@@ -1898,11 +1906,19 @@ function renderSubject(s) {
       body.appendChild(row);
     });
 
+    const addWrap = document.createElement('div');
+    addWrap.className = 'add-grade-wrap';
     const addBtn = document.createElement('button');
     addBtn.className = 'add-grade-btn';
     addBtn.textContent = '+ Přidat hypotetickou známku';
-    addBtn.onclick = () => openGradeSheet(s.id);
-    body.appendChild(addBtn);
+    addBtn.onclick = () => openGradeSheet(s.id, true);
+    addWrap.appendChild(addBtn);
+    const addRealBtn = document.createElement('button');
+    addRealBtn.className = 'add-grade-btn add-grade-real';
+    addRealBtn.textContent = '+ Přidat opravdovou známku';
+    addRealBtn.onclick = () => openGradeSheet(s.id, false);
+    addWrap.appendChild(addRealBtn);
+    body.appendChild(addWrap);
 
     const actions = document.createElement('div');
     actions.className = 'subject-actions';
@@ -1928,9 +1944,14 @@ function isUuid(s){ return typeof s==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9
 function fmtDate(d){ const p=d.split('-'); return p.length===3 ? p[2]+'.'+p[1]+'.' : d; }
 
 /* ---- grade sheet ---- */
-function openGradeSheet(subjectId) {
-  editing = { subjectId, mark: 1, weight: 1 };
-  document.getElementById('gradeSheetTitle').textContent = 'Hypotetická známka · ' + data.sem + '. pololetí';
+function openGradeSheet(subjectId, isHypo) {
+  const hypo = isHypo !== false;   // výchozí = hypotetická (kvůli starým voláním)
+  editing = { subjectId, mark: 1, weight: 1, isHypo: hypo };
+  document.getElementById('gradeSheetTitle').textContent = (hypo ? 'Hypotetická známka · ' : 'Nová známka · ') + data.sem + '. pololetí';
+  const gnote = document.getElementById('gradeNote');
+  if(gnote) gnote.textContent = hypo
+    ? 'Hypotetická známka („co kdyby") se počítá do průměru a je v seznamu odlišená. Synchronizace ze Škola OnLine ji nepřepíše ani nesmaže.'
+    : 'Opravdová známka se natrvalo započítá do tvého průměru. Zůstane i po synchronizaci a po znovuotevření appky.';
   document.getElementById('gradeDesc').value = '';
   document.getElementById('gradeDate').value = new Date().toISOString().slice(0,10);
   buildMarkPicker();
@@ -1962,15 +1983,17 @@ function buildWeightPicker(){
 function saveGrade(){
   const s=data.subjects.find(x=>x.id===editing.subjectId);
   if(!s) return;
-  s.grades.push({
+  const ng = {
     id:'g'+Date.now()+Math.random().toString(36).slice(2,6),
     mark:editing.mark,
     weight:editing.weight,
     desc:document.getElementById('gradeDesc').value.trim(),
     date:document.getElementById('gradeDate').value,
-    sem:data.sem,
-    hypo:true            // ruční známka = hypotetická: počítá se do průměru, ale sync ji nepřepíše
-  });
+    sem:data.sem
+  };
+  if(editing.isHypo) ng.hypo = true;   // hypotetická „co kdyby": dočasná, sync/cloud ji ignoruje, maže se při načtení
+  else ng.manual = true;               // opravdová ruční známka: počítá se do reálného průměru a přežije sync i reload
+  s.grades.push(ng);
   s.open=true;
   save(); render(); closeGradeSheet();
   setTimeout(maybeClassNudge, 600);
@@ -2335,7 +2358,7 @@ async function solDownloadData(base, auth){
 function solAttachHypo(out){
   const byName = {};
   (data.subjects||[]).forEach(s=>{
-    (s.grades||[]).forEach(g=>{ if(g.hypo){ (byName[s.name] = byName[s.name] || []).push(g); } });
+    (s.grades||[]).forEach(g=>{ if(g.hypo || g.manual){ (byName[s.name] = byName[s.name] || []).push(g); } });   // zachovej hypotetické i ruční skutečné známky přes sync
   });
   Object.keys(byName).forEach(name=>{
     let s = out.subjects.find(x=>x.name===name);
@@ -5128,7 +5151,7 @@ window.addEventListener('load', ()=>{
 'Sdílet třídu':'Share class','Odkaz':'Link','Kopírovat':'Copy','Nebo zadej kód třídy':'Or enter the class code','Kdo otevře odkaz nebo naskenuje QR, připojí se do třídy (po přihlášení).':'Anyone who opens the link or scans the QR joins the class (after signing in).','Zavřít':'Close','Sdílet…':'Share…','Pozvat přátele':'Invite friends','Kdo otevře odkaz nebo naskenuje QR, pošle ti žádost o přátelství.':'Anyone who opens the link or scans the QR sends you a friend request.',
 'Oznámení':'Notifications','Načíst ze Škola OnLine':'Import from Škola OnLine','Přihlašovací jméno':'Username','Heslo':'Password','Server (většinou neměnit)':'Server (usually leave as is)','Heslo se použije jen pro stažení a nikam se neukládá. Stažení přepíše současné známky.':'The password is used only for the download and is never stored. The download overwrites your current grades.','Stáhnout':'Download',
 'Tvoje zpráva':'Your message','Tvůj e‑mail':'Your email','Tvůj e-mail':'Your email','Zpráva je soukromá — pošle se jen autorovi aplikace a nikde se veřejně nezobrazuje.':'The message is private — it goes only to the app author and is never shown publicly.','Odeslat':'Send','Otevřít / stáhnout':'Open / download',
-'zatím bez známek':'no grades yet','hypotetická':'hypothetical','Hypotetický průměr':'Hypothetical average','vč. hypotetických známek':'incl. hypothetical grades','+ Přidat hypotetickou známku':'+ Add hypothetical grade','Přejmenovat':'Rename','Smazat předmět':'Delete subject','Smazat známku?':'Delete grade?','Tuto akci nelze vrátit.':'This cannot be undone.','Přejmenovat předmět':'Rename subject','Předmět zatím nemá žádné známky.':'This subject has no grades yet.',
+'zatím bez známek':'no grades yet','hypotetická':'hypothetical','Hypotetický průměr':'Hypothetical average','vč. hypotetických známek':'incl. hypothetical grades','+ Přidat hypotetickou známku':'+ Add hypothetical grade','+ Přidat opravdovou známku':'+ Add real grade','Opravdová známka se natrvalo započítá do tvého průměru. Zůstane i po synchronizaci a po znovuotevření appky.':'A real grade is permanently counted toward your average. It stays after syncing and after reopening the app.','Přejmenovat':'Rename','Smazat předmět':'Delete subject','Smazat známku?':'Delete grade?','Tuto akci nelze vrátit.':'This cannot be undone.','Přejmenovat předmět':'Rename subject','Předmět zatím nemá žádné známky.':'This subject has no grades yet.',
 'Zadej platné maximum bodů.':'Enter a valid maximum of points.','Zadej získané body.':'Enter the points you scored.',
 'Prázdná zpráva':'Empty message','Napiš prosím nejdřív zprávu.':'Please write a message first.','Chybí e-mail':'Email missing','Vyplň prosím svůj e-mail, ať ti autor může odpovědět.':'Please enter your email so the author can reply.','Není připojení':'No connection','Odeslání potřebuje cloud (Supabase).':'Sending needs the cloud (Supabase).','Odesílám…':'Sending…','Děkuju!':'Thanks!','Zpráva byla odeslaná. Díky za zpětnou vazbu!':'Message sent. Thanks for the feedback!','Není nastaveno':'Not set up',
 'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.':'Pulls your grades straight from Škola OnLine. Your password is never stored.',
