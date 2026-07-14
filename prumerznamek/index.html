@@ -59,6 +59,8 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  /* zruší ~300ms prodlevu po klepnutí na mobilu (double-tap zoom), klik se pustí hned */
+  button, a, input, select, textarea, label { touch-action: manipulation; }
   html { scrollbar-gutter: stable; }
   html, body {
     background: var(--bg); color: var(--ink);
