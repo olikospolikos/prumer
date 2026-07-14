@@ -2,7 +2,7 @@
    Stránka (HTML) = network-first → vždy čerstvá, když jsi online; offline z cache.
    Fonty/ikony/knihovny = stale-while-revalidate (rychlé z cache, na pozadí se obnoví).
    Verzi cache zvyš (v3, v4…) při změnách, ať se stará vyhodí. */
-const CACHE = 'prumer-v84';
+const CACHE = 'prumer-v85';
 const ASSETS = [
   './',
   './index.html',

@@ -956,6 +956,55 @@
   .skel-l2{ height:9px; width:34%; }
   .skel-week{ display:flex; flex-direction:column; gap:8px; padding:0 16px; }
   .skel-day{ height:48px; border-radius:12px; }
+
+  /* ===== jemné animace a přechody (reduced-motion je vypne níž) ===== */
+  /* přepnutí hlavních stránek (Známky / Třídy / Profil) */
+  @keyframes pageIn { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:none; } }
+  .page-enter { animation: pageIn .3s cubic-bezier(.22,.61,.36,1); }
+
+  /* rozbalení předmětu – obsah se známkami se jemně vysune */
+  @keyframes gradesReveal { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  .subject.open .grades { animation: gradesReveal .26s cubic-bezier(.22,.61,.36,1); }
+
+  /* jemný stagger jednotlivých známek při rozbalení */
+  @keyframes rowIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+  .subject.open .grades .grade-row { animation: rowIn .3s cubic-bezier(.22,.61,.36,1) backwards; }
+  .subject.open .grades .grade-row:nth-child(1){ animation-delay:.02s; }
+  .subject.open .grades .grade-row:nth-child(2){ animation-delay:.05s; }
+  .subject.open .grades .grade-row:nth-child(3){ animation-delay:.08s; }
+  .subject.open .grades .grade-row:nth-child(4){ animation-delay:.11s; }
+  .subject.open .grades .grade-row:nth-child(5){ animation-delay:.14s; }
+  .subject.open .grades .grade-row:nth-child(n+6){ animation-delay:.16s; }
+
+  /* mazání známky – řádek se odsune a sbalí */
+  .grade-row.removing { overflow:hidden; pointer-events:none; animation: rowOut .26s cubic-bezier(.4,0,.2,1) forwards; }
+  @keyframes rowOut {
+    0%   { opacity:1; max-height:80px; }
+    45%  { opacity:0; transform:translateX(22px); max-height:80px; }
+    100% { opacity:0; transform:translateX(22px); max-height:0; padding-top:0; padding-bottom:0; border-top-width:0; }
+  }
+
+  /* hmatová odezva na klepnutí + plynulý výběr v pickerech */
+  .subject-head { transition: background .15s; }
+  .subject-head:active { background: var(--bg-elev2); }
+  .mark-opt, .weight-opt { transition: background .15s, border-color .15s, color .15s, transform .1s; }
+  .mark-opt:active, .weight-opt:active { transform: scale(.96); }
+  .add-grade-btn, .subj-action, .add-subject-btn { transition: background .15s, transform .1s; }
+  .add-grade-btn:active, .subj-action:active, .add-subject-btn:active { transform: scale(.98); }
+
+  /* obsah spodního panelu se jemně objeví poté, co se panel vysune */
+  @keyframes sheetIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+  .sheet.show .fields, .sheet.show .sheet-actions { animation: sheetIn .32s cubic-bezier(.22,.61,.36,1) both; }
+  .sheet.show .sheet-actions { animation-delay:.05s; }
+
+  /* přechod mezi kroky onboardingu */
+  @keyframes obStepIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  #obBody.ob-anim { animation: obStepIn .3s cubic-bezier(.22,.61,.36,1); }
+
+  /* odznáček notifikací lehce vyskočí při změně počtu */
+  @keyframes badgePop { 0%{ transform:scale(0); } 60%{ transform:scale(1.18); } 100%{ transform:scale(1); } }
+  .bell-badge.pop { animation: badgePop .32s cubic-bezier(.22,.61,.36,1); }
+
   @media(prefers-reduced-motion:reduce){
     .skel::after{ animation:none; }
     *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
@@ -1793,6 +1842,7 @@ function renderSubject(s) {
     gs.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).forEach(g => {
       const row = document.createElement('div');
       row.className = 'grade-row' + (g.hypo ? ' hypo' : '');
+      row.dataset.gid = g.id;
       const markStyle = g.hypo
         ? `color:${markColor(g.mark)};background:transparent;border:1px dashed ${markColor(g.mark)}`
         : `background:${markColor(g.mark)}22;color:${markColor(g.mark)}`;
@@ -1907,8 +1957,11 @@ function delGrade(subjectId,gradeId){
   const s=data.subjects.find(x=>x.id===subjectId);
   if(!s) return;
   confirmDialog('Smazat známku?', 'Tuto akci nelze vrátit.', 'Smazat', () => {
-    s.grades=s.grades.filter(g=>g.id!==gradeId);
-    save(); render();
+    const doDel = () => { s.grades=s.grades.filter(g=>g.id!==gradeId); save(); render(); };
+    let row = null;
+    document.querySelectorAll('.grade-row').forEach(r=>{ if(r.dataset.gid===gradeId) row=r; });
+    if(row && !reducedMotion()){ row.classList.add('removing'); setTimeout(doDel, 250); }
+    else doDel();
   });
 }
 
@@ -3263,6 +3316,9 @@ function setPage(p){
   if(materials) renderMaterials();
   else if(profilePg) renderProfile();
   else renderUpcoming();
+  // jemný přechod obsahu stránky
+  const shownEl = document.getElementById(grades ? 'pageGrades' : materials ? 'pageMaterials' : 'pageProfile');
+  if(shownEl){ shownEl.classList.remove('page-enter'); void shownEl.offsetWidth; shownEl.classList.add('page-enter'); }
 }
 
 let sb = null;
@@ -4570,7 +4626,12 @@ async function updateNotifBadge(){
   const items=await loadNotifications();
   const seen=notifSeen();
   const unread=items.filter(function(i){ return i.ts>seen; });
-  if(unread.length){ badge.textContent=unread.length>9?'9+':String(unread.length); badge.style.display=''; } else badge.style.display='none';
+  if(unread.length){
+    const txt=unread.length>9?'9+':String(unread.length);
+    const changed = badge.dataset.n!==txt || badge.style.display==='none';
+    badge.textContent=txt; badge.style.display=''; badge.dataset.n=txt;
+    if(changed && !reducedMotion()){ badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop'); }
+  } else { badge.style.display='none'; badge.dataset.n=''; }
   if(typeof Notification!=='undefined' && Notification.permission==='granted'){
     let done=[]; try{ done=JSON.parse(localStorage.getItem('prumer_notif_done')||'[]'); }catch(e){}
     let ch=false;
@@ -4713,6 +4774,7 @@ function obEnter(inputId, fn){ const el=document.getElementById(inputId); if(el)
 function renderOnboard(){
   const top=document.getElementById('obTop'), body=document.getElementById('obBody');
   if(!top||!body) return;
+  body.classList.remove('ob-anim'); void body.offsetWidth; body.classList.add('ob-anim');   // jemný přechod mezi kroky
   const backTo = { email:'name', code:'email', system:'import', sol:'system', bak:'system' }[ob.step] || null;   // po ověření kódu už zpět nejde (na účet), ale krok importu ano
   top.innerHTML = (backTo ? '<button class="ob-back" aria-label="Zpět" onclick="obBack(\''+backTo+'\')">‹</button>' : '') + obDots();
   if(ob.step==='name'){
