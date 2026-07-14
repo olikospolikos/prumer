@@ -233,6 +233,20 @@
   }
   .subject.open { border-color: #38404f; }
 
+  /* předmět s hypotetickou známkou: akcentový (žlutý) okraj + popisek nad kartou */
+  .subject-wrap { display: flex; flex-direction: column; }
+  .subject.has-hypo, .subject.has-hypo.open {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-sm), 0 0 0 1px rgba(var(--accent-rgb),0.35);
+  }
+  .hypo-note {
+    align-self: flex-start;
+    margin: 2px 4px 7px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.01em;
+    color: var(--accent-deep, var(--accent));
+  }
+  .hypo-note b { font-family: 'Fraunces', serif; font-weight: 600; font-size: 13.5px; }
+
   .subject-head {
     display: flex;
     align-items: center;
@@ -1755,10 +1769,17 @@ function updateTrend(overall){
   el.textContent = (diff<0 ? '▼ zlepšení o ' : '▲ zhoršení o ') + fmt(Math.abs(diff));
 }
 
+// skutečný průměr předmětu (bez hypotetických známek); fallback na všechny,
+// když má předmět jen hypotetické (aby pilulka i řazení pořád měly číslo)
+function realAvgOf(s){
+  const gs = gradesOf(s);
+  const real = gs.filter(g => !g.hypo);
+  return weightedAvg(real.length ? real : gs);
+}
 function render() {
   updateSemUI();
-  // overall = average of subject averages that have grades (jen aktuální pololetí)
-  const subjAvgs = data.subjects.map(s => weightedAvg(gradesOf(s))).filter(a => a != null);
+  // celkový průměr = ze SKUTEČNÝCH průměrů předmětů (hypotetické známky ho neovlivní)
+  const subjAvgs = data.subjects.map(s => weightedAvg(gradesOf(s).filter(g=>!g.hypo))).filter(a => a != null);
   const overall = subjAvgs.length ? subjAvgs.reduce((a,b)=>a+b,0)/subjAvgs.length : null;
   animateAvg(document.getElementById('overallNum'), overall);
   updateTrend(overall);
@@ -1791,16 +1812,9 @@ function render() {
     wrap.appendChild(empty);
     return;
   }
-  // řadíme podle SKUTEČNÉHO průměru (bez hypotetických známek), ať se pořadí
-  // předmětů nemění, když jen experimentuješ s hypotetickou známkou;
-  // předmět jen s hypotetickými známkami se řadí podle nich (nemá reálný průměr)
-  const sortAvg = s => {
-    const gs = gradesOf(s);
-    const real = gs.filter(g => !g.hypo);
-    return weightedAvg(real.length ? real : gs);
-  };
+  // řadíme podle SKUTEČNÉHO průměru (bez hypotetických), ať pořadí neposkakuje
   const sorted = data.subjects.slice().sort((a,b)=>{
-    const aa = sortAvg(a), bb = sortAvg(b);
+    const aa = realAvgOf(a), bb = realAvgOf(b);
     if (aa == null && bb == null) return 0;
     if (aa == null) return 1;
     if (bb == null) return -1;
@@ -1811,19 +1825,33 @@ function render() {
 
 function renderSubject(s) {
   const gs = gradesOf(s);
-  const avg = weightedAvg(gs);
+  const realGs = gs.filter(g => !g.hypo);
+  const hasHypo = realGs.length !== gs.length;                    // aspoň jedna hypotetická známka
+  const avg = weightedAvg(realGs.length ? realGs : gs);          // pilulka = SKUTEČNÝ průměr
+  const hypoAvg = (hasHypo && realGs.length) ? weightedAvg(gs) : null;  // projektovaný průměr s hypotetickými
+
+  // obal: nad kartou předmětu může být popisek s hypotetickým průměrem
+  const wrap = document.createElement('div');
+  wrap.className = 'subject-wrap';
+  if(hypoAvg != null){
+    const note = document.createElement('div');
+    note.className = 'hypo-note';
+    note.innerHTML = 'Hypotetický průměr <b>'+fmt(hypoAvg)+'</b>';
+    wrap.appendChild(note);
+  }
+
   const el = document.createElement('div');
-  el.className = 'subject' + (s.open ? ' open' : '');
+  el.className = 'subject' + (s.open ? ' open' : '') + (hasHypo ? ' has-hypo' : '');
 
   const head = document.createElement('div');
   head.className = 'subject-head';
-  head.onclick = () => { s.open = !s.open; save(); el.replaceWith(renderSubject(s)); };   // částečný render: jen tento předmět (nezahodí pozici scrollu)
+  head.onclick = () => { s.open = !s.open; save(); wrap.replaceWith(renderSubject(s)); };   // částečný render: jen tento předmět (nezahodí pozici scrollu)
   const pc = avg==null ? null : markColor(avg);
   const pillStyle = pc ? `color:${pc};background:${pc}1a;border-color:${pc}55` : 'color:var(--ink-faint)';
-  // vliv poslední známky na průměr předmětu (▼ = průměr klesl → zlepšení)
+  // vliv poslední SKUTEČNÉ známky na průměr předmětu (▼ = průměr klesl → zlepšení)
   let trend = '';
-  if(gs.length > 1 && avg != null){
-    const byDate = gs.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(realGs.length > 1 && avg != null){
+    const byDate = realGs.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
     const before = weightedAvg(byDate.slice(0,-1));
     if(before != null){
       const diff = avg - before;
@@ -1890,7 +1918,8 @@ function renderSubject(s) {
 
     el.appendChild(body);
   }
-  return el;
+  wrap.appendChild(el);
+  return wrap;
 }
 
 function esc(t){ return (t||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -5098,7 +5127,7 @@ window.addEventListener('load', ()=>{
 'Sdílet třídu':'Share class','Odkaz':'Link','Kopírovat':'Copy','Nebo zadej kód třídy':'Or enter the class code','Kdo otevře odkaz nebo naskenuje QR, připojí se do třídy (po přihlášení).':'Anyone who opens the link or scans the QR joins the class (after signing in).','Zavřít':'Close','Sdílet…':'Share…','Pozvat přátele':'Invite friends','Kdo otevře odkaz nebo naskenuje QR, pošle ti žádost o přátelství.':'Anyone who opens the link or scans the QR sends you a friend request.',
 'Oznámení':'Notifications','Načíst ze Škola OnLine':'Import from Škola OnLine','Přihlašovací jméno':'Username','Heslo':'Password','Server (většinou neměnit)':'Server (usually leave as is)','Heslo se použije jen pro stažení a nikam se neukládá. Stažení přepíše současné známky.':'The password is used only for the download and is never stored. The download overwrites your current grades.','Stáhnout':'Download',
 'Tvoje zpráva':'Your message','Tvůj e‑mail':'Your email','Tvůj e-mail':'Your email','Zpráva je soukromá — pošle se jen autorovi aplikace a nikde se veřejně nezobrazuje.':'The message is private — it goes only to the app author and is never shown publicly.','Odeslat':'Send','Otevřít / stáhnout':'Open / download',
-'zatím bez známek':'no grades yet','hypotetická':'hypothetical','+ Přidat hypotetickou známku':'+ Add hypothetical grade','Přejmenovat':'Rename','Smazat předmět':'Delete subject','Smazat známku?':'Delete grade?','Tuto akci nelze vrátit.':'This cannot be undone.','Přejmenovat předmět':'Rename subject','Předmět zatím nemá žádné známky.':'This subject has no grades yet.',
+'zatím bez známek':'no grades yet','hypotetická':'hypothetical','Hypotetický průměr':'Hypothetical average','+ Přidat hypotetickou známku':'+ Add hypothetical grade','Přejmenovat':'Rename','Smazat předmět':'Delete subject','Smazat známku?':'Delete grade?','Tuto akci nelze vrátit.':'This cannot be undone.','Přejmenovat předmět':'Rename subject','Předmět zatím nemá žádné známky.':'This subject has no grades yet.',
 'Zadej platné maximum bodů.':'Enter a valid maximum of points.','Zadej získané body.':'Enter the points you scored.',
 'Prázdná zpráva':'Empty message','Napiš prosím nejdřív zprávu.':'Please write a message first.','Chybí e-mail':'Email missing','Vyplň prosím svůj e-mail, ať ti autor může odpovědět.':'Please enter your email so the author can reply.','Není připojení':'No connection','Odeslání potřebuje cloud (Supabase).':'Sending needs the cloud (Supabase).','Odesílám…':'Sending…','Děkuju!':'Thanks!','Zpráva byla odeslaná. Díky za zpětnou vazbu!':'Message sent. Thanks for the feedback!','Není nastaveno':'Not set up',
 'Stáhne tvoje známky přímo ze Škola OnLine. Heslo se nikam neukládá.':'Pulls your grades straight from Škola OnLine. Your password is never stored.',
