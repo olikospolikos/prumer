@@ -219,6 +219,42 @@
   footer a:hover { color: var(--ink); }
   .foot-lang { background: none; border: none; padding: 0; font: inherit; color: var(--ink-dim); cursor: pointer; text-decoration: underline; }
   .foot-lang:hover { color: var(--ink); }
+
+  /* ===== jemné animace a přechody (stejné jako v appce) ===== */
+  /* rozbalení předmětu – obsah se známkami se jemně vysune */
+  @keyframes gradesReveal { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  .subject.open .grades { animation: gradesReveal .26s cubic-bezier(.22,.61,.36,1); }
+  /* jemný stagger jednotlivých známek při rozbalení */
+  @keyframes rowIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+  .subject.open .grades .grade-row { animation: rowIn .3s cubic-bezier(.22,.61,.36,1) backwards; }
+  .subject.open .grades .grade-row:nth-child(1){ animation-delay:.02s; }
+  .subject.open .grades .grade-row:nth-child(2){ animation-delay:.05s; }
+  .subject.open .grades .grade-row:nth-child(3){ animation-delay:.08s; }
+  .subject.open .grades .grade-row:nth-child(4){ animation-delay:.11s; }
+  .subject.open .grades .grade-row:nth-child(5){ animation-delay:.14s; }
+  .subject.open .grades .grade-row:nth-child(n+6){ animation-delay:.16s; }
+  /* mazání známky – řádek se odsune a sbalí */
+  .grade-row.removing { overflow:hidden; pointer-events:none; animation: rowOut .26s cubic-bezier(.4,0,.2,1) forwards; }
+  @keyframes rowOut {
+    0%   { opacity:1; max-height:80px; }
+    45%  { opacity:0; transform:translateX(22px); max-height:80px; }
+    100% { opacity:0; transform:translateX(22px); max-height:0; padding-top:0; padding-bottom:0; border-top-width:0; }
+  }
+  /* hmatová odezva na klepnutí */
+  .subject-head { transition: background .15s; }
+  .subject-head:active { background: var(--bg-elev2); }
+  .mark-opt, .weight-opt { transition: background .15s, border-color .15s, color .15s, transform .1s; }
+  .mark-opt:active, .weight-opt:active { transform: scale(.96); }
+  .add-grade-btn, .subj-action, .add-subject-btn { transition: background .15s, transform .1s; }
+  .add-grade-btn:active, .subj-action:active, .add-subject-btn:active { transform: scale(.98); }
+  /* obsah spodního panelu se jemně objeví po vysunutí */
+  @keyframes sheetIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+  .sheet.show .fields, .sheet.show .sheet-actions { animation: sheetIn .32s cubic-bezier(.22,.61,.36,1) both; }
+  .sheet.show .sheet-actions { animation-delay:.05s; }
+
+  @media(prefers-reduced-motion:reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  }
 </style>
 </head>
 <body>
@@ -504,6 +540,7 @@ function renderSubject(s) {
     gs.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'')).forEach(g => {
       const row = document.createElement('div');
       row.className = 'grade-row';
+      row.dataset.gid = g.id;
       row.innerHTML = `
         <div class="grade-mark" style="background:${markColor(g.mark)}22;color:${markColor(g.mark)}">${g.mark}</div>
         <div class="grade-info">
@@ -608,10 +645,15 @@ function saveGrade(){
   s.open=true;
   save(); render(); closeGradeSheet();
 }
+function reducedMotion(){ try{ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
 function delGrade(subjectId,gradeId){
   const s=data.subjects.find(x=>x.id===subjectId); if(!s) return;
   confirmDialog('Smazat známku?', 'Tuto akci nelze vrátit.', 'Smazat', () => {
-    s.grades=s.grades.filter(g=>g.id!==gradeId); save(); render();
+    const doDel = () => { s.grades=s.grades.filter(g=>g.id!==gradeId); save(); render(); };
+    let row = null;
+    document.querySelectorAll('.grade-row').forEach(r=>{ if(r.dataset.gid===gradeId) row=r; });
+    if(row && !reducedMotion()){ row.classList.add('removing'); setTimeout(doDel, 250); }
+    else doDel();
   });
 }
 function renameSubject(subjectId){
