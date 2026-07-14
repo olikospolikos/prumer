@@ -1791,8 +1791,16 @@ function render() {
     wrap.appendChild(empty);
     return;
   }
+  // řadíme podle SKUTEČNÉHO průměru (bez hypotetických známek), ať se pořadí
+  // předmětů nemění, když jen experimentuješ s hypotetickou známkou;
+  // předmět jen s hypotetickými známkami se řadí podle nich (nemá reálný průměr)
+  const sortAvg = s => {
+    const gs = gradesOf(s);
+    const real = gs.filter(g => !g.hypo);
+    return weightedAvg(real.length ? real : gs);
+  };
   const sorted = data.subjects.slice().sort((a,b)=>{
-    const aa = weightedAvg(gradesOf(a)), bb = weightedAvg(gradesOf(b));
+    const aa = sortAvg(a), bb = sortAvg(b);
     if (aa == null && bb == null) return 0;
     if (aa == null) return 1;
     if (bb == null) return -1;
