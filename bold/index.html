@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boldo — Talk to strangers. On purpose.</title>
+<meta name="description" content="Boldo gives you one small social dare a day, so the fear of being judged loses its grip. Join the waitlist for early access.">
+<meta property="og:title" content="Boldo — Talk to strangers. On purpose.">
+<meta property="og:description" content="One social dare a day. Streaks, XP, friends. Join the waitlist.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://estudivo.cz/bold/">
+<link rel="canonical" href="https://estudivo.cz/bold/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230C0F0E'/%3E%3Ctext x='32' y='44' font-family='Arial,sans-serif' font-size='34' font-weight='900' fill='%232EE59D' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0C0F0E;
+    --surface: #151A18;
+    --surface-2: #1D2422;
+    --border: #242C29;
+    --accent: #2EE59D;
+    --accent-dim: #1B8A61;
+    --flame: #FF8A3D;
+    --ink: #F2F5F4;
+    --ink-dim: #9BA8A3;
+    --ink-faint: #5C6763;
+    --danger: #FF5D5D;
+    --gold: #FFD166;
+    --hero-top: #0E3B2B;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100svh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Emerald cast bleeding down from the top, like the app's onboarding heroes */
+  .glow {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(90rem 48rem at 50% -18rem, rgba(14, 59, 43, 0.85), transparent 60%),
+      radial-gradient(40rem 30rem at 85% 110%, rgba(14, 59, 43, 0.35), transparent 65%);
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.75rem 0;
+  }
+
+  .wordmark {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    color: var(--ink);
+  }
+  .wordmark span { color: var(--accent); }
+
+  .badge-soon {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    background: rgba(21, 26, 24, 0.6);
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 3rem;
+    align-items: center;
+    padding: 3.5rem 0 4rem;
+  }
+
+  h1 {
+    font-size: clamp(2.6rem, 6vw, 4.4rem);
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+  h1 .accent { color: var(--accent); }
+
+  .sub {
+    margin-top: 1.25rem;
+    font-size: 1.125rem;
+    line-height: 1.65;
+    color: var(--ink-dim);
+    max-width: 34rem;
+  }
+
+  .prove {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+  }
+
+  /* ---- form card ---- */
+  .card {
+    margin-top: 2.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    max-width: 30rem;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  .card h2 small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--ink-dim);
+  }
+
+  .field { margin-bottom: 0.9rem; }
+
+  input[type="text"], input[type="email"] {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 1rem;
+    font-family: inherit;
+    padding: 0.85rem 1.25rem;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input::placeholder { color: var(--ink-faint); }
+  input:focus {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 3px rgba(46, 229, 157, 0.12);
+  }
+
+  .hp { position: absolute; left: -9999px; opacity: 0; height: 0; overflow: hidden; }
+
+  button.cta {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #06231A;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    padding: 0.95rem 1.5rem;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.15s ease, opacity 0.15s ease;
+  }
+  button.cta:hover { background: #3BF0A9; }
+  button.cta:active { transform: scale(0.96); }
+  button.cta:disabled { opacity: 0.55; cursor: default; transform: none; }
+
+  .msg {
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    min-height: 1.2em;
+  }
+  .msg.error { color: var(--danger); }
+  .msg.fine { color: var(--ink-faint); }
+
+  /* success state */
+  .done { text-align: center; padding: 1rem 0.5rem; }
+  .done .flame { font-size: 2.4rem; display: block; margin-bottom: 0.75rem; }
+  .done h3 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .done p { color: var(--ink-dim); line-height: 1.6; font-size: 0.98rem; }
+  .done p strong { color: var(--accent); font-weight: 700; }
+
+  /* ---- dare card stack ---- */
+  .stack {
+    position: relative;
+    min-height: 24rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dare {
+    position: absolute;
+    width: min(21rem, 85%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.4rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  .dare.back {
+    transform: rotate(6deg) translate(2.2rem, -4.6rem) scale(0.94);
+    opacity: 0.55;
+    filter: saturate(0.7);
+  }
+  .dare.front { transform: rotate(-3deg) translateY(2.2rem); }
+
+  .dare-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.9rem;
+  }
+  .dare-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .streak {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--flame);
+    background: rgba(255, 138, 61, 0.1);
+    border-radius: 999px;
+    padding: 0.28rem 0.7rem;
+  }
+
+  .dare-text {
+    font-size: 1.32rem;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.1rem;
+  }
+
+  .dare-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .xp { font-size: 1rem; font-weight: 800; color: var(--accent); }
+  .pill {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #06231A;
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 0.45rem 1.1rem;
+  }
+  .pill.ghost {
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+  }
+
+  /* ---- features ---- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding: 0 0 4rem;
+  }
+  .feat {
+    background: rgba(21, 26, 24, 0.55);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.4rem;
+  }
+  .feat .ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: rgba(46, 229, 157, 0.1);
+    margin-bottom: 0.85rem;
+  }
+  .feat h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+  .feat p { font-size: 0.9rem; line-height: 1.55; color: var(--ink-dim); }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.6rem 0 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+  }
+
+  /* ---- load animation ---- */
+  .up { opacity: 0; transform: translateY(14px); animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+  .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.14s; }
+  .d3 { animation-delay: 0.23s; } .d4 { animation-delay: 0.32s; }
+  .d5 { animation-delay: 0.45s; }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .up { animation: none; opacity: 1; transform: none; }
+    button.cta, input { transition: none; }
+  }
+
+  @media (max-width: 56rem) {
+    .hero { grid-template-columns: 1fr; padding-top: 2rem; gap: 1.5rem; }
+    .stack { order: -1; min-height: 19rem; }
+    .dare.back { transform: rotate(5deg) translate(1.6rem, -3.4rem) scale(0.94); }
+    .dare.front { transform: rotate(-2.5deg) translateY(1.4rem); }
+    .features { grid-template-columns: 1fr; padding-bottom: 3rem; }
+    .card { max-width: none; }
+  }
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+<div class="page">
+
+  <header class="up d1">
+    <div class="wordmark">BOLD<span>O</span></div>
+    <div class="badge-soon">Coming soon</div>
+  </header>
+
+  <main class="hero">
+    <div>
+      <h1 class="up d2">Talk to strangers.<br><span class="accent">On purpose.</span></h1>
+      <p class="sub up d3">Boldo hands you one small social dare every day — say hi, ask for
+        directions, give a compliment. Do it, bank the XP, keep the streak alive.
+        Day by day, the fear of being judged loses its grip.</p>
+      <p class="prove up d3">Nobody's watching. Prove it.</p>
+
+      <div class="card up d4" id="card">
+        <form id="waitlist-form" novalidate>
+          <h2>Get early access
+            <small>Be first in line when Boldo drops. One email, no spam.</small>
+          </h2>
+          <div class="field">
+            <label class="hp" for="website">Leave this empty</label>
+            <input class="hp" type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" maxlength="100" required>
+          </div>
+          <div class="field">
+            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" maxlength="255" required>
+          </div>
+          <button class="cta" type="submit" id="submit-btn">Lock in my spot</button>
+          <p class="msg fine" id="msg" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+
+    <div class="stack up d5" aria-hidden="true">
+      <div class="dare back">
+        <div class="dare-top">
+          <span class="dare-label">Yesterday</span>
+          <span class="streak">🔥 6</span>
+        </div>
+        <p class="dare-text">Give one honest compliment to a stranger.</p>
+        <div class="dare-bottom">
+          <span class="xp">+30 XP</span>
+          <span class="pill ghost">Done</span>
+        </div>
+      </div>
+      <div class="dare front">
+        <div class="dare-top">
+          <span class="dare-label">Today's dare</span>
+          <span class="streak">🔥 7</span>
+        </div>
+        <p class="dare-text">Ask a stranger for a restaurant recommendation.</p>
+        <div class="dare-bottom">
+          <span class="xp">+40 XP</span>
+          <span class="pill">Done</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="features">
+    <div class="feat up d3">
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="4"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </span>
+      <h3>One dare a day</h3>
+      <p>A single random challenge, sized to your comfort level. Two rerolls — then you lock in.</p>
+    </div>
+    <div class="feat up d4">
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg>
+      </span>
+      <h3>Streaks &amp; XP</h3>
+      <p>Every dare done feeds your streak and your rank. Miss a day and the flame goes out.</p>
+    </div>
+    <div class="feat up d5">
+      <span class="ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+      <h3>Friends on the board</h3>
+      <p>Invite friends, climb the leaderboard, and let a little friendly pressure do its job.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Boldo</span>
+    <span>Made for the ones who go first.</span>
+  </footer>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://jdlgnwrsaoyremcdsvll.supabase.co";
+  const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkbGdud3JzYW95cmVtY2RzdmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjk2MjIsImV4cCI6MjA5OTcwNTYyMn0.t-hisFwEjMUpDmoyEs6YjdXIXbPg7HckXDh8BXW5HXU";
+
+  const form = document.getElementById("waitlist-form");
+  const btn = document.getElementById("submit-btn");
+  const msg = document.getElementById("msg");
+  const card = document.getElementById("card");
+
+  function showSuccess(name, already) {
+    const first = (name.trim().split(/\s+/)[0] || "you");
+    card.innerHTML = already
+      ? '<div class="done"><span class="flame">🔥</span>' +
+        "<h3>Already locked in.</h3>" +
+        "<p>This email is on the list — <strong>no need to sign up twice</strong>. We'll shout when Boldo drops.</p></div>"
+      : '<div class="done"><span class="flame">🔥</span>' +
+        "<h3>You're in, " + escapeHtml(first) + ".</h3>" +
+        "<p>That's the first dare done. Check your inbox for a confirmation — " +
+        "and we'll email you the moment <strong>Boldo</strong> is ready.</p></div>";
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const honeypot = document.getElementById("website").value;
+
+    msg.className = "msg fine";
+    msg.textContent = "";
+
+    if (!name) { msg.className = "msg error"; msg.textContent = "Tell us your name."; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      msg.className = "msg error"; msg.textContent = "That email doesn't look right."; return;
+    }
+    if (honeypot) { showSuccess(name, false); return; }
+
+    btn.disabled = true;
+    btn.textContent = "Locking in…";
+
+    try {
+      const res = await fetch(SUPABASE_URL + "/functions/v1/waitlist-signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + ANON_KEY,
+          "apikey": ANON_KEY,
+        },
+        body: JSON.stringify({ name, email }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok) {
+        showSuccess(name, !!data.already);
+      } else {
+        msg.className = "msg error";
+        msg.textContent = data.error || "Something went wrong. Try again in a minute.";
+        btn.disabled = false;
+        btn.textContent = "Lock in my spot";
+      }
+    } catch {
+      msg.className = "msg error";
+      msg.textContent = "Couldn't reach the server. Check your connection and try again.";
+      btn.disabled = false;
+      btn.textContent = "Lock in my spot";
+    }
+  });
+</script>
+</body>
+</html>
