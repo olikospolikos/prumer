@@ -308,9 +308,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
     font-size: 0.82rem;
     color: var(--ink-faint);
   }
+  footer a { color: var(--ink-dim); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
 
   /* ---- load animation ---- */
   .up { opacity: 0; transform: translateY(14px); animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
@@ -422,6 +426,7 @@
 
   <footer>
     <span>© 2026 Boldo</span>
+    <span><a href="https://estudivo.cz/boldo/privacy/">Privacy</a> &nbsp;·&nbsp; <a href="https://estudivo.cz/boldo/terms/">Terms</a></span>
     <span>Made for the ones who go first.</span>
   </footer>
 </div>
