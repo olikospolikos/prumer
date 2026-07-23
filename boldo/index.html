@@ -276,32 +276,6 @@
     border: 1px solid var(--border);
   }
 
-  /* ---- features ---- */
-  .features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    padding: 0 0 4rem;
-  }
-  .feat {
-    background: rgba(21, 26, 24, 0.55);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 1.4rem;
-  }
-  .feat .ico {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.4rem;
-    height: 2.4rem;
-    border-radius: 50%;
-    background: rgba(46, 229, 157, 0.1);
-    margin-bottom: 0.85rem;
-  }
-  .feat h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
-  .feat p { font-size: 0.9rem; line-height: 1.55; color: var(--ink-dim); }
-
   footer {
     border-top: 1px solid var(--border);
     padding: 1.6rem 0 2.2rem;
@@ -333,7 +307,6 @@
     .stack { order: -1; min-height: 19rem; }
     .dare.back { transform: rotate(5deg) translate(1.6rem, -3.4rem) scale(0.94); }
     .dare.front { transform: rotate(-2.5deg) translateY(1.4rem); }
-    .features { grid-template-columns: 1fr; padding-bottom: 3rem; }
     .card { max-width: none; }
   }
 </style>
@@ -399,30 +372,6 @@
       </div>
     </div>
   </main>
-
-  <section class="features">
-    <div class="feat up d3">
-      <span class="ico">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="4"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      </span>
-      <h3>One dare a day</h3>
-      <p>A single random challenge, sized to your comfort level. Two rerolls — then you lock in.</p>
-    </div>
-    <div class="feat up d4">
-      <span class="ico">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg>
-      </span>
-      <h3>Streaks &amp; XP</h3>
-      <p>Every dare done feeds your streak and your rank. Miss a day and the flame goes out.</p>
-    </div>
-    <div class="feat up d5">
-      <span class="ico">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </span>
-      <h3>Friends on the board</h3>
-      <p>Invite friends, climb the leaderboard, and let a little friendly pressure do its job.</p>
-    </div>
-  </section>
 
   <footer>
     <span>© 2026 Boldo</span>
