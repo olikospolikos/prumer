@@ -22,7 +22,9 @@
     --flame: #FF8A3D;
     --ink: #F2F5F4;
     --ink-dim: #9BA8A3;
-    --ink-faint: #5C6763;
+    /* Was #5C6763 — 3.28:1 on --bg, under the 4.5:1 WCAG AA floor for text.
+       #828F8B is 5.73:1 on --bg and 5.24:1 on --surface. */
+    --ink-faint: #828F8B;
     --danger: #FF5D5D;
     --gold: #FFD166;
     --hero-top: #0E3B2B;
@@ -31,6 +33,42 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html { scroll-behavior: smooth; }
+
+  /* Available to screen readers, invisible on screen. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: -4rem;
+    left: 0.75rem;
+    z-index: 20;
+    background: var(--accent);
+    color: #06231A;
+    font-weight: 800;
+    padding: 0.7rem 1.1rem;
+    border-radius: 0 0 12px 12px;
+    text-decoration: none;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* WCAG 2.4.7 — every interactive element needs a visible keyboard focus
+     indicator. Previously only inputs had one. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -143,6 +181,13 @@
   }
 
   .field { margin-bottom: 0.9rem; }
+  .field label:not(.sr-only) {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-dim);
+    margin-bottom: 0.4rem;
+  }
 
   input[type="text"], input[type="email"] {
     width: 100%;
@@ -161,6 +206,7 @@
     border-color: var(--accent-dim);
     box-shadow: 0 0 0 3px rgba(46, 229, 157, 0.12);
   }
+  input[aria-invalid="true"] { border-color: var(--danger); }
 
   .hp { position: absolute; left: -9999px; opacity: 0; height: 0; overflow: hidden; }
 
@@ -298,8 +344,10 @@
   @keyframes rise { to { opacity: 1; transform: translateY(0); } }
 
   @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
     .up { animation: none; opacity: 1; transform: none; }
-    button.cta, input { transition: none; }
+    button.cta, input, .skip-link { transition: none; }
+    button.cta:active { transform: none; }
   }
 
   @media (max-width: 56rem) {
@@ -312,6 +360,7 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#waitlist-form">Skip to the sign-up form</a>
 <div class="glow" aria-hidden="true"></div>
 <div class="page">
 
@@ -329,29 +378,49 @@
       <p class="prove up d3">Nobody's watching. Prove it.</p>
 
       <div class="card up d4" id="card">
-        <form id="waitlist-form" novalidate>
-          <h2>Get early access
+        <form id="waitlist-form" novalidate aria-labelledby="form-heading">
+          <h2 id="form-heading">Get early access
             <small>Be first in line when Boldo drops. One email, no spam.</small>
           </h2>
+
+          <!-- Spam trap: hidden from sight AND from assistive tech, so screen
+               reader users are never asked to "leave this empty". -->
+          <div class="hp" aria-hidden="true">
+            <label for="website">Leave this empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
           <div class="field">
-            <label class="hp" for="website">Leave this empty</label>
-            <input class="hp" type="text" id="website" name="website" tabindex="-1" autocomplete="off">
-            <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" maxlength="100" required>
+            <label for="name">Your name</label>
+            <!-- Placeholder is an example, not a repeat of the label — a
+                 duplicate makes screen readers say the same thing twice. -->
+            <input type="text" id="name" name="name" placeholder="e.g. Alex"
+                   autocomplete="name" maxlength="100" required
+                   aria-describedby="msg">
           </div>
           <div class="field">
-            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" maxlength="255" required>
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com"
+                   autocomplete="email" maxlength="255" required
+                   aria-describedby="msg">
           </div>
           <button class="cta" type="submit" id="submit-btn">Lock in my spot</button>
-          <p class="msg fine" id="msg" role="status" aria-live="polite"></p>
+          <!-- role="alert" so validation errors are announced immediately
+               rather than waiting for the user to wander back to this text. -->
+          <p class="msg fine" id="msg" role="alert"></p>
         </form>
       </div>
     </div>
 
-    <div class="stack up d5" aria-hidden="true">
+    <!-- These cards were aria-hidden, which meant screen reader users got the
+         pitch without a single example of what the app actually asks of you.
+         They are illustrations, not controls, so they are exposed as text. -->
+    <section class="stack up d5" aria-labelledby="examples-heading">
+      <h2 id="examples-heading" class="sr-only">Example daily dares</h2>
       <div class="dare back">
         <div class="dare-top">
           <span class="dare-label">Yesterday</span>
-          <span class="streak">🔥 6</span>
+          <span class="streak"><span aria-hidden="true">🔥</span> 6<span class="sr-only"> day streak</span></span>
         </div>
         <p class="dare-text">Give one honest compliment to a stranger.</p>
         <div class="dare-bottom">
@@ -362,7 +431,7 @@
       <div class="dare front">
         <div class="dare-top">
           <span class="dare-label">Today's dare</span>
-          <span class="streak">🔥 7</span>
+          <span class="streak"><span aria-hidden="true">🔥</span> 7<span class="sr-only"> day streak</span></span>
         </div>
         <p class="dare-text">Ask a stranger for a restaurant recommendation.</p>
         <div class="dare-bottom">
@@ -370,12 +439,16 @@
           <span class="pill">Done</span>
         </div>
       </div>
-    </div>
+    </section>
   </main>
 
   <footer>
     <span>© 2026 Boldo</span>
-    <span><a href="https://estudivo.cz/boldo/privacy/">Privacy</a> &nbsp;·&nbsp; <a href="https://estudivo.cz/boldo/terms/">Terms</a></span>
+    <span>
+      <a href="https://estudivo.cz/boldo/privacy/">Privacy</a> &nbsp;·&nbsp;
+      <a href="https://estudivo.cz/boldo/terms/">Terms</a> &nbsp;·&nbsp;
+      <a href="https://estudivo.cz/boldo/accessibility/">Accessibility</a>
+    </span>
     <span>Made for the ones who go first.</span>
   </footer>
 </div>
@@ -391,14 +464,41 @@
 
   function showSuccess(name, already) {
     const first = (name.trim().split(/\s+/)[0] || "you");
+    // h2, not h3: the form's own heading was an h2 and is being replaced, so an
+    // h3 here would skip a level (WCAG 1.3.1).
     card.innerHTML = already
-      ? '<div class="done"><span class="flame">🔥</span>' +
-        "<h3>Already locked in.</h3>" +
+      ? '<div class="done"><span class="flame" aria-hidden="true">🔥</span>' +
+        '<h2 tabindex="-1" id="done-heading">Already locked in.</h2>' +
         "<p>This email is on the list — <strong>no need to sign up twice</strong>. We'll shout when Boldo drops.</p></div>"
-      : '<div class="done"><span class="flame">🔥</span>' +
-        "<h3>You're in, " + escapeHtml(first) + ".</h3>" +
+      : '<div class="done"><span class="flame" aria-hidden="true">🔥</span>' +
+        '<h2 tabindex="-1" id="done-heading">You\'re in, ' + escapeHtml(first) + ".</h2>" +
         "<p>That's the first dare done. Check your inbox for a confirmation — " +
         "and we'll email you the moment <strong>Boldo</strong> is ready.</p></div>";
+
+    // The submit button the user was standing on has just been removed from the
+    // DOM; without this, focus falls back to <body> and a screen reader user is
+    // never told the sign-up worked.
+    const heading = document.getElementById("done-heading");
+    if (heading) heading.focus();
+  }
+
+  const nameInput = document.getElementById("name");
+  const emailInput = document.getElementById("email");
+
+  function fail(field, text) {
+    msg.className = "msg error";
+    msg.textContent = text;
+    if (field) {
+      field.setAttribute("aria-invalid", "true");
+      field.focus();
+    }
+  }
+
+  function clearErrors() {
+    msg.className = "msg fine";
+    msg.textContent = "";
+    nameInput.removeAttribute("aria-invalid");
+    emailInput.removeAttribute("aria-invalid");
   }
 
   function escapeHtml(s) {
@@ -409,20 +509,20 @@
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
     const honeypot = document.getElementById("website").value;
 
-    msg.className = "msg fine";
-    msg.textContent = "";
+    clearErrors();
 
-    if (!name) { msg.className = "msg error"; msg.textContent = "Tell us your name."; return; }
+    if (!name) { fail(nameInput, "Tell us your name."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-      msg.className = "msg error"; msg.textContent = "That email doesn't look right."; return;
+      fail(emailInput, "That email doesn't look right."); return;
     }
     if (honeypot) { showSuccess(name, false); return; }
 
     btn.disabled = true;
+    btn.setAttribute("aria-busy", "true");
     btn.textContent = "Locking in…";
 
     try {
@@ -440,18 +540,20 @@
       if (res.ok && data.ok) {
         showSuccess(name, !!data.already);
       } else {
-        msg.className = "msg error";
-        msg.textContent = data.error || "Something went wrong. Try again in a minute.";
-        btn.disabled = false;
-        btn.textContent = "Lock in my spot";
+        resetButton();
+        fail(null, data.error || "Something went wrong. Try again in a minute.");
       }
     } catch {
-      msg.className = "msg error";
-      msg.textContent = "Couldn't reach the server. Check your connection and try again.";
-      btn.disabled = false;
-      btn.textContent = "Lock in my spot";
+      resetButton();
+      fail(null, "Couldn't reach the server. Check your connection and try again.");
     }
   });
+
+  function resetButton() {
+    btn.disabled = false;
+    btn.removeAttribute("aria-busy");
+    btn.textContent = "Lock in my spot";
+  }
 </script>
 </body>
 </html>

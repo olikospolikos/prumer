@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accessibility — Boldo</title>
+<meta name="description" content="Boldo's accessibility statement: our conformance target, what we have tested, the barriers we know about, and how to tell us about one.">
+<meta property="og:title" content="Accessibility — Boldo">
+<meta property="og:description" content="Boldo's accessibility statement, known limitations, and how to report a barrier.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://estudivo.cz/boldo/accessibility/">
+<link rel="canonical" href="https://estudivo.cz/boldo/accessibility/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230C0F0E'/%3E%3Ctext x='32' y='44' font-family='Arial,sans-serif' font-size='34' font-weight='900' fill='%232EE59D' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0C0F0E;
+    --surface: #151A18;
+    --surface-2: #1D2422;
+    --border: #242C29;
+    --accent: #2EE59D;
+    --accent-dim: #1B8A61;
+    --ink: #F2F5F4;
+    --ink-dim: #9BA8A3;
+    --ink-faint: #828F8B;
+    --gold: #FFD166;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100svh;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.65;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: -4rem;
+    left: 0.75rem;
+    z-index: 20;
+    background: var(--accent);
+    color: #06231A;
+    font-weight: 800;
+    padding: 0.7rem 1.1rem;
+    border-radius: 0 0 12px 12px;
+    text-decoration: none;
+  }
+  .skip-link:focus { top: 0; }
+
+  a:focus-visible, button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .wordmark {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .wordmark span { color: var(--accent); }
+  header a.back { color: var(--ink-dim); font-size: 0.9rem; }
+
+  main { padding: 3rem 0 1rem; }
+
+  h1 {
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .updated {
+    margin-top: 0.9rem;
+    color: var(--ink-faint);
+    font-size: 0.92rem;
+  }
+
+  .lede {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--ink-dim);
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 2.75rem 0 0.9rem;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 1.5rem 0 0.5rem;
+  }
+
+  p { margin-bottom: 1rem; color: var(--ink-dim); }
+  p strong, li strong { color: var(--ink); font-weight: 700; }
+
+  ul { margin: 0 0 1rem 1.25rem; color: var(--ink-dim); }
+  li { margin-bottom: 0.55rem; }
+
+  a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  a:hover { color: #3BF0A9; }
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 1.15rem 1.35rem;
+    margin: 1.5rem 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .status {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: rgba(255, 209, 102, 0.1);
+    border: 1px solid rgba(255, 209, 102, 0.25);
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    margin-top: 1.25rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+  }
+  caption {
+    text-align: left;
+    color: var(--ink-faint);
+    font-size: 0.88rem;
+    padding-bottom: 0.6rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { color: var(--ink); font-weight: 700; }
+  td { color: var(--ink-dim); }
+  .scroller { overflow-x: auto; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+    padding: 1.6rem 0 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+  }
+  footer a { color: var(--ink-dim); text-decoration: none; }
+  footer a:hover { color: var(--ink); text-decoration: underline; }
+
+  @media (max-width: 34rem) {
+    header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div class="page">
+
+  <header>
+    <a class="wordmark" href="https://estudivo.cz/boldo/">BOLD<span>O</span></a>
+    <a class="back" href="https://estudivo.cz/boldo/">← Back to the waitlist</a>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <h1>Accessibility at Boldo</h1>
+    <p class="updated">Last reviewed: 4 August 2026</p>
+
+    <p class="lede">Boldo is about walking up to a stranger and saying something.
+      A website that locks people out is a poor advertisement for that. This page
+      says plainly what we have built, what we have actually tested, and what is
+      still broken.</p>
+
+    <span class="status">Partially conformant</span>
+
+    <h2>Conformance target</h2>
+    <p>We aim to meet <strong>Web Content Accessibility Guidelines (WCAG) 2.1,
+      Level AA</strong>. "Partially conformant" means most of the standard is met,
+      but not all of it — the gaps we know about are listed below rather than
+      papered over.</p>
+    <p>This statement covers the Boldo waitlist site at
+      <code>estudivo.cz/boldo</code>. The Boldo mobile app ships separately; its
+      accessibility work is summarised at the bottom of this page.</p>
+
+    <h2>What this site does</h2>
+    <ul>
+      <li><strong>Text contrast.</strong> Every text and background pair on this
+        site meets or exceeds the 4.5:1 AA ratio for body text. The lowest pair
+        currently measures 4.7:1.</li>
+      <li><strong>Keyboard.</strong> Everything interactive can be reached and
+        operated with a keyboard alone, in a sensible order, with a visible focus
+        ring on each stop. A skip link jumps past the header.</li>
+      <li><strong>Labels.</strong> Form fields have real, visible
+        <code>&lt;label&gt;</code> elements — not placeholder text, which vanishes
+        the moment you start typing.</li>
+      <li><strong>Errors.</strong> Validation messages are announced by screen
+        readers, are tied to the field they describe, and never rely on colour
+        alone to signal a problem.</li>
+      <li><strong>Success.</strong> After you join the waitlist, focus moves to
+        the confirmation heading, so screen reader users hear that it worked.</li>
+      <li><strong>Motion.</strong> If your system asks for reduced motion, the
+        entrance animations and smooth scrolling switch off.</li>
+      <li><strong>Zoom and reflow.</strong> The page reflows to a single column
+        and stays usable at 200% zoom and at 320px wide.</li>
+      <li><strong>Structure.</strong> Headings run in order, landmarks are marked
+        up, and the example dare cards are readable by a screen reader instead of
+        being hidden from it.</li>
+    </ul>
+
+    <h2>How we tested</h2>
+    <div class="scroller">
+      <table>
+        <caption>Testing performed on this site.</caption>
+        <thead>
+          <tr><th scope="col">Method</th><th scope="col">Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Contrast ratios computed against the WCAG formula for every colour pair in the palette</td>
+            <td>Done</td>
+          </tr>
+          <tr>
+            <td>Manual keyboard-only walkthrough of the whole page and the sign-up flow</td>
+            <td>Done</td>
+          </tr>
+          <tr>
+            <td>Markup and ARIA reviewed by hand against WCAG 2.1 AA</td>
+            <td>Done</td>
+          </tr>
+          <tr>
+            <td>End-to-end testing with a real screen reader (VoiceOver, NVDA, TalkBack)</td>
+            <td><strong>Not yet done</strong></td>
+          </tr>
+          <tr>
+            <td>Testing with disabled users</td>
+            <td><strong>Not yet done</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <p><strong>Being straight with you:</strong> an accessibility statement is
+        not the same thing as an accessible site, and automated checks are not
+        the same thing as testing. The last two rows above are the ones that find
+        the barriers a checklist misses, and we have not done them yet. Until we
+        have, treat the list above as our best effort rather than a guarantee.</p>
+    </div>
+
+    <h2>Known limitations</h2>
+    <ul>
+      <li><strong>No screen reader test pass.</strong> The markup is written to
+        be announced correctly, but nobody has yet listened to the whole page
+        through VoiceOver, NVDA or TalkBack. There may be barriers here that only
+        show up in real use.</li>
+      <li><strong>Decorative background.</strong> The green glow behind the page
+        is hidden from assistive technology on purpose. It carries no information.</li>
+      <li><strong>The dare cards are illustrations.</strong> They are announced as
+        text, but they are examples of the product, not live content.</li>
+      <li><strong>Confirmation email.</strong> The waitlist confirmation email is
+        sent through a third party. We have not audited its HTML for screen
+        reader friendliness.</li>
+      <li><strong>English only.</strong> This site is not currently translated,
+        though the app itself ships in English, Czech and Spanish.</li>
+    </ul>
+
+    <h2>The Boldo app</h2>
+    <p>The mobile app is built against the same WCAG 2.1 AA target, adapted to
+      iOS and Android conventions:</p>
+    <ul>
+      <li>All controls carry accessibility roles, labels and selection state, so
+        VoiceOver and TalkBack announce what they are and whether they are chosen.</li>
+      <li>Text colours meet the same 4.5:1 minimum as this site.</li>
+      <li>The app honours the system "Reduce Motion" setting throughout its
+        animations and its onboarding.</li>
+      <li>Charts and decorative graphics are hidden from screen readers, with the
+        same information given in text next to them.</li>
+      <li><strong>Known gap:</strong> the app has not yet had a full screen reader
+        test pass either, and dynamic type support above the largest system size
+        is untested.</li>
+    </ul>
+
+    <h2>Found a barrier? Tell us</h2>
+    <p>This is the part that actually matters. If something on this site or in
+      the app blocks you, we want to hear it — including the boring details, like
+      which screen reader and browser you were using and what you expected to
+      happen.</p>
+    <p>Email <a href="mailto:olikoskral@gmail.com">olikoskral@gmail.com</a> with
+      "Accessibility" in the subject line. We aim to reply within
+      <strong>5 working days</strong> and to tell you either when it will be fixed
+      or why it will not be.</p>
+    <p>If you would rather not email, say so in your message and we will find
+      another way to reach you.</p>
+
+    <h2>Enforcement</h2>
+    <p>Boldo is operated from the Czech Republic. If you are in the EU and you are
+      not satisfied with how we have handled your report, you can escalate to your
+      national accessibility enforcement body. In the Czech Republic that is the
+      Ministry of the Interior
+      (<a href="https://www.mvcr.cz/">mvcr.cz</a>).</p>
+  </main>
+
+  <footer>
+    <span>© 2026 Boldo</span>
+    <span>
+      <a href="https://estudivo.cz/boldo/privacy/">Privacy</a> &nbsp;·&nbsp;
+      <a href="https://estudivo.cz/boldo/terms/">Terms</a> &nbsp;·&nbsp;
+      <a href="./accessibility.html" aria-current="page">Accessibility</a>
+    </span>
+    <span>Made for the ones who go first.</span>
+  </footer>
+</div>
+</body>
+</html>
