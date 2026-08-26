@@ -3,19 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy Policy — Boldo</title>
+<title>Privacy Policy · Boldo</title>
 <meta name="description" content="Privacy policy for Boldo, the daily social-courage app.">
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://estudivo.cz/boldo/privacy/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230C0F0E'/%3E%3Ctext x='32' y='44' font-family='Arial,sans-serif' font-size='34' font-weight='900' fill='%232EE59D' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='22'%20fill='%230f0f12'/%3E%3Cg%20transform='translate(10,14)%20scale(0.8)'%3E%3Cpath%20d='M28%2044%20C%2014%2040,%2010%2024,%2018%2012%20C%2022%2026,%2028%2032,%2038%2035%20Z'%20fill='%23e9c93a'/%3E%3Cpath%20d='M72%2044%20C%2086%2040,%2090%2024,%2082%2012%20C%2078%2026,%2072%2032,%2062%2035%20Z'%20fill='%23e9c93a'/%3E%3Crect%20x='26'%20y='32'%20width='48'%20height='52'%20rx='22'%20fill='%23e9c93a'/%3E%3Ccircle%20cx='41'%20cy='52'%20r='5.5'%20fill='%230f0f12'/%3E%3Ccircle%20cx='59'%20cy='52'%20r='5.5'%20fill='%230f0f12'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
 <style>
+  /* The app's palette, same tokens as the waitlist page. --ink-faint was
+     #5C6763, 3.28:1 on the background and under the 4.5:1 WCAG AA floor for
+     body text; this one is 5.5:1. */
   :root {
-    --bg: #0C0F0E; --surface: #151A18; --border: #242C29;
-    --accent: #2EE59D; --ink: #F2F5F4; --ink-dim: #9BA8A3; --ink-faint: #5C6763;
+    --bg: #0f0f12; --surface: #17171c; --border: rgba(255, 255, 255, 0.09);
+    --accent: #e9c93a; --ink: #f3f1ea; --ink-dim: #a3a29e; --ink-faint: #8b8a86;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: Archivo, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased;
   }
   .page { max-width: 44rem; margin: 0 auto; padding: 0 1.5rem 4rem; }
@@ -23,17 +29,23 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 1.75rem 0 2.5rem;
   }
-  .wordmark { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.28em; color: var(--ink); text-decoration: none; }
-  .wordmark span { color: var(--accent); }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 0.44rem;
+    font-size: 1.22rem; font-weight: 900; letter-spacing: -0.03em;
+    color: var(--ink); text-decoration: none;
+  }
+  .wordmark .mark { white-space: nowrap; }
+  .wordmark .dot { color: var(--accent); }
+  .wordmark .bull { color: var(--accent); }
   .badge {
-    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: 0.66rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
     color: var(--ink-dim); border: 1px solid var(--border); border-radius: 999px;
     padding: 0.4rem 0.9rem; background: var(--surface);
   }
-  h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 800; letter-spacing: -0.02em; }
+  h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight: 900; letter-spacing: -0.035em; }
   .date { margin-top: 0.6rem; font-size: 0.88rem; color: var(--ink-faint); }
   .intro { margin-top: 1.5rem; }
-  h2 { font-size: 1.25rem; font-weight: 800; margin: 2.4rem 0 0.8rem; letter-spacing: -0.01em; }
+  h2 { font-size: 1.3rem; font-weight: 900; margin: 2.4rem 0 0.8rem; letter-spacing: -0.028em; }
   p { font-size: 1rem; line-height: 1.7; color: var(--ink-dim); margin-bottom: 0.9rem; }
   p strong, li strong { color: var(--ink); font-weight: 700; }
   ul { margin: 0 0 0.9rem 1.2rem; }
@@ -51,7 +63,16 @@
 <body>
 <div class="page">
   <header>
-    <a class="wordmark" href="https://estudivo.cz/boldo/">BOLD<span>O</span></a>
+    <a class="wordmark" href="https://estudivo.cz/boldo/">
+      <svg class="bull" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <path d="M28 44 C 14 40, 10 24, 18 12 C 22 26, 28 32, 38 35 Z" fill="currentColor"/>
+        <path d="M72 44 C 86 40, 90 24, 82 12 C 78 26, 72 32, 62 35 Z" fill="currentColor"/>
+        <rect x="26" y="32" width="48" height="52" rx="22" fill="currentColor"/>
+        <circle cx="41" cy="52" r="5.5" fill="#0f0f12"/>
+        <circle cx="59" cy="52" r="5.5" fill="#0f0f12"/>
+      </svg>
+      <span class="mark">BOLDO<span class="dot">.</span></span>
+    </a>
     <span class="badge">Legal</span>
   </header>
 

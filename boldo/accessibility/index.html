@@ -3,32 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Accessibility — Boldo</title>
+<title>Accessibility · Boldo</title>
 <meta name="description" content="Boldo's accessibility statement: our conformance target, what we have tested, the barriers we know about, and how to tell us about one.">
-<meta property="og:title" content="Accessibility — Boldo">
+<meta property="og:title" content="Accessibility · Boldo">
 <meta property="og:description" content="Boldo's accessibility statement, known limitations, and how to report a barrier.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://estudivo.cz/boldo/accessibility/">
 <link rel="canonical" href="https://estudivo.cz/boldo/accessibility/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230C0F0E'/%3E%3Ctext x='32' y='44' font-family='Arial,sans-serif' font-size='34' font-weight='900' fill='%232EE59D' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<!-- The bull mark on the app's near-black tile, same geometry as BullLogo.tsx. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='22'%20fill='%230f0f12'/%3E%3Cg%20transform='translate(10,14)%20scale(0.8)'%3E%3Cpath%20d='M28%2044%20C%2014%2040,%2010%2024,%2018%2012%20C%2022%2026,%2028%2032,%2038%2035%20Z'%20fill='%23e9c93a'/%3E%3Cpath%20d='M72%2044%20C%2086%2040,%2090%2024,%2082%2012%20C%2078%2026,%2072%2032,%2062%2035%20Z'%20fill='%23e9c93a'/%3E%3Crect%20x='26'%20y='32'%20width='48'%20height='52'%20rx='22'%20fill='%23e9c93a'/%3E%3Ccircle%20cx='41'%20cy='52'%20r='5.5'%20fill='%230f0f12'/%3E%3Ccircle%20cx='59'%20cy='52'%20r='5.5'%20fill='%230f0f12'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap">
 <style>
+  /* Same tokens as the waitlist page: the app's palette, with the two text
+     greys flattened onto the near-black so their contrast is fixed. */
   :root {
-    --bg: #0C0F0E;
-    --surface: #151A18;
-    --surface-2: #1D2422;
-    --border: #242C29;
-    --accent: #2EE59D;
-    --accent-dim: #1B8A61;
-    --ink: #F2F5F4;
-    --ink-dim: #9BA8A3;
-    --ink-faint: #828F8B;
-    --gold: #FFD166;
+    --bg: #0f0f12;
+    --surface-2: #17171c;
+    --border: rgba(255, 255, 255, 0.09);
+    --accent: #e9c93a;
+    --accent-ink: #141104;
+    --accent-soft: rgba(233, 201, 58, 0.12);
+    --ink: #f3f1ea;
+    --ink-dim: #a3a29e;
+    --ink-faint: #8b8a86;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: Archivo, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--bg);
     color: var(--ink);
     min-height: 100svh;
@@ -54,10 +59,10 @@
     left: 0.75rem;
     z-index: 20;
     background: var(--accent);
-    color: #06231A;
+    color: var(--accent-ink);
     font-weight: 800;
     padding: 0.7rem 1.1rem;
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 14px 14px;
     text-decoration: none;
   }
   .skip-link:focus { top: 0; }
@@ -82,22 +87,27 @@
     border-bottom: 1px solid var(--border);
   }
   .wordmark {
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: 0.28em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.44rem;
+    font-size: 1.22rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
     color: var(--ink);
     text-decoration: none;
   }
-  .wordmark span { color: var(--accent); }
-  header a.back { color: var(--ink-dim); font-size: 0.9rem; }
+  .wordmark .mark { white-space: nowrap; }
+  .wordmark .dot { color: var(--accent); }
+  .wordmark .bull { color: var(--accent); }
+  header a.back { color: var(--ink-dim); font-size: 0.9rem; font-weight: 600; }
 
   main { padding: 3rem 0 1rem; }
 
   h1 {
     font-size: clamp(2.1rem, 5vw, 3rem);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
+    font-weight: 900;
+    line-height: 1.06;
+    letter-spacing: -0.035em;
   }
 
   .updated {
@@ -113,15 +123,16 @@
   }
 
   h2 {
-    font-size: 1.35rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.028em;
     margin: 2.75rem 0 0.9rem;
   }
 
   h3 {
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     margin: 1.5rem 0 0.5rem;
   }
 
@@ -132,29 +143,30 @@
   li { margin-bottom: 0.55rem; }
 
   a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-  a:hover { color: #3BF0A9; }
+  a:hover { color: #f2d75a; }
 
   .callout {
-    background: var(--surface);
+    background: var(--surface-2);
     border: 1px solid var(--border);
     border-left: 4px solid var(--accent);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 1.15rem 1.35rem;
     margin: 1.5rem 0;
   }
   .callout p:last-child { margin-bottom: 0; }
 
+  /* The app's category chip, reused as a status marker. */
   .status {
     display: inline-block;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--gold);
-    background: rgba(255, 209, 102, 0.1);
-    border: 1px solid rgba(255, 209, 102, 0.25);
-    border-radius: 999px;
-    padding: 0.35rem 0.85rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid rgba(233, 201, 58, 0.35);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
     margin-top: 1.25rem;
   }
 
@@ -205,13 +217,22 @@
 <div class="page">
 
   <header>
-    <a class="wordmark" href="https://estudivo.cz/boldo/">BOLD<span>O</span></a>
+    <a class="wordmark" href="https://estudivo.cz/boldo/">
+      <svg class="bull" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <path d="M28 44 C 14 40, 10 24, 18 12 C 22 26, 28 32, 38 35 Z" fill="currentColor"/>
+        <path d="M72 44 C 86 40, 90 24, 82 12 C 78 26, 72 32, 62 35 Z" fill="currentColor"/>
+        <rect x="26" y="32" width="48" height="52" rx="22" fill="currentColor"/>
+        <circle cx="41" cy="52" r="5.5" fill="#0f0f12"/>
+        <circle cx="59" cy="52" r="5.5" fill="#0f0f12"/>
+      </svg>
+      <span class="mark">BOLDO<span class="dot">.</span></span>
+    </a>
     <a class="back" href="https://estudivo.cz/boldo/">← Back to the waitlist</a>
   </header>
 
   <main id="main" tabindex="-1">
     <h1>Accessibility at Boldo</h1>
-    <p class="updated">Last reviewed: 4 August 2026</p>
+    <p class="updated">Last reviewed: 26 August 2026</p>
 
     <p class="lede">Boldo is about walking up to a stranger and saying something.
       A website that locks people out is a poor advertisement for that. This page
@@ -223,7 +244,7 @@
     <h2>Conformance target</h2>
     <p>We aim to meet <strong>Web Content Accessibility Guidelines (WCAG) 2.1,
       Level AA</strong>. "Partially conformant" means most of the standard is met,
-      but not all of it — the gaps we know about are listed below rather than
+      but not all of it. The gaps we know about are listed below rather than
       papered over.</p>
     <p>This statement covers the Boldo waitlist site at
       <code>estudivo.cz/boldo</code>. The Boldo mobile app ships separately; its
@@ -233,12 +254,12 @@
     <ul>
       <li><strong>Text contrast.</strong> Every text and background pair on this
         site meets or exceeds the 4.5:1 AA ratio for body text. The lowest pair
-        currently measures 4.7:1.</li>
+        currently measures 4.85:1.</li>
       <li><strong>Keyboard.</strong> Everything interactive can be reached and
         operated with a keyboard alone, in a sensible order, with a visible focus
         ring on each stop. A skip link jumps past the header.</li>
       <li><strong>Labels.</strong> Form fields have real, visible
-        <code>&lt;label&gt;</code> elements — not placeholder text, which vanishes
+        <code>&lt;label&gt;</code> elements. Not placeholder text, which vanishes
         the moment you start typing.</li>
       <li><strong>Errors.</strong> Validation messages are announced by screen
         readers, are tied to the field they describe, and never rely on colour
@@ -250,8 +271,8 @@
       <li><strong>Zoom and reflow.</strong> The page reflows to a single column
         and stays usable at 200% zoom and at 320px wide.</li>
       <li><strong>Structure.</strong> Headings run in order, landmarks are marked
-        up, and the example dare cards are readable by a screen reader instead of
-        being hidden from it.</li>
+        up, and the example challenge inside the phone mock is
+        readable by a screen reader instead of being hidden from it.</li>
     </ul>
 
     <h2>How we tested</h2>
@@ -300,10 +321,11 @@
         be announced correctly, but nobody has yet listened to the whole page
         through VoiceOver, NVDA or TalkBack. There may be barriers here that only
         show up in real use.</li>
-      <li><strong>Decorative background.</strong> The green glow behind the page
-        is hidden from assistive technology on purpose. It carries no information.</li>
-      <li><strong>The dare cards are illustrations.</strong> They are announced as
-        text, but they are examples of the product, not live content.</li>
+      <li><strong>Decorative background.</strong> The warm glow behind the page is
+        hidden from assistive technology on purpose. It carries no information.</li>
+      <li><strong>The phone mock is an illustration.</strong> Its example challenge is
+        announced as text, but it is a picture of the product, not live content.
+        The surrounding chrome - status bar, progress bar, tab bar - is hidden.</li>
       <li><strong>Confirmation email.</strong> The waitlist confirmation email is
         sent through a third party. We have not audited its HTML for screen
         reader friendliness.</li>
@@ -329,7 +351,7 @@
 
     <h2>Found a barrier? Tell us</h2>
     <p>This is the part that actually matters. If something on this site or in
-      the app blocks you, we want to hear it — including the boring details, like
+      the app blocks you, we want to hear it, including the boring details, like
       which screen reader and browser you were using and what you expected to
       happen.</p>
     <p>Email <a href="mailto:olikoskral@gmail.com">olikoskral@gmail.com</a> with
